@@ -1,0 +1,96 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-marfil: #F3EFEA;
+  --color-marfil-deep: #EAE4DC;
+  --color-text: #3A3733;
+  --color-text-sec: #6F6A64;
+  --color-accent: #C4B6A5;
+  --color-border: #D8CFC4;
+  --color-crisis: #8B6F5E;
+  --color-crisis-bg: #F5ECE3;
+  --font-serif: 'Cormorant Garamond', Georgia, serif;
+  --font-sans: 'Inter', 'Helvetica Neue', sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--color-marfil);
+  color: var(--color-text);
+  font-family: var(--font-serif), Georgia, serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Animaciones */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+@keyframes dissolve {
+  from {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    filter: blur(6px);
+    transform: translateY(-20px);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeInUp 0.6s ease forwards;
+}
+
+.animate-pulse-slow {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.animate-dissolve {
+  animation: dissolve 3.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Textarea */
+textarea:focus {
+  border-color: var(--color-accent) !important;
+  outline: none;
+}
+
+/* Selection */
+::selection {
+  background: var(--color-accent);
+  color: white;
+}
+
+/* Scrollbar sutil */
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 2px;
+}
