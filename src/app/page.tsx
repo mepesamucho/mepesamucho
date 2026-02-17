@@ -123,6 +123,12 @@ const FONT_SIZES = [
 ];
 
 // ── SHARED STYLES ──────────────────────────────
+// Color theory: bg #F3EFEA (luminance ~0.87)
+// #3A3733 = primary text (ratio ~12:1 ✓ AAA)
+// #5C5751 = strong secondary (ratio ~6:1 ✓ AA)
+// #6F6A64 = secondary text (ratio ~4.5:1 ✓ AA)
+// #857F78 = tertiary text (ratio ~3.2:1 ✓ AA large)
+// NEVER use opacity on text — kills contrast
 
 const S = {
   page: "min-h-screen bg-[#F3EFEA] text-[#3A3733] font-[var(--font-serif)] flex flex-col items-center justify-center px-5 py-8 leading-relaxed",
@@ -132,6 +138,7 @@ const S = {
   btn: "font-[var(--font-serif)] text-base px-7 py-3 bg-[#EAE4DC] text-[#3A3733] border border-[#D8CFC4] rounded cursor-pointer transition-all duration-300 hover:bg-[#C4B6A5] hover:text-white hover:border-[#C4B6A5]",
   btnSm: "font-[var(--font-serif)] text-sm px-5 py-2 bg-[#EAE4DC] text-[#3A3733] border border-[#D8CFC4] rounded cursor-pointer transition-all duration-300 hover:bg-[#C4B6A5] hover:text-white hover:border-[#C4B6A5]",
   sub: "font-[var(--font-sans)] text-[#6F6A64] font-light leading-relaxed",
+  subStrong: "font-[var(--font-sans)] text-[#5C5751] font-light leading-relaxed",
   link: "font-[var(--font-sans)] text-[#6F6A64] font-light text-xs cursor-pointer underline decoration-[#D8CFC4] underline-offset-4 hover:text-[#C4B6A5] transition-colors bg-transparent border-none",
   textarea: "w-full min-h-[120px] p-4 font-[var(--font-serif)] text-[1.1rem] leading-relaxed bg-transparent border border-[#D8CFC4] rounded resize-y outline-none text-left",
   textareaLg: "w-full min-h-[240px] p-5 font-[var(--font-serif)] text-lg leading-relaxed bg-transparent border border-[#D8CFC4] rounded resize-y outline-none",
@@ -164,6 +171,7 @@ export default function MePesaMucho() {
   const [fontSize, setFontSize] = useState(0);
   const [showCrisisBanner, setShowCrisisBanner] = useState(false);
   const [crisisDetectedInText, setCrisisDetectedInText] = useState(false);
+  const [showFuentes, setShowFuentes] = useState(false);
   const crisisShownOnce = useRef(false);
 
   // Init
@@ -194,29 +202,57 @@ export default function MePesaMucho() {
 
   useEffect(() => { setFadeKey((k) => k + 1); }, [step, preguntaStep, cierreStep]);
 
-  // ── HANDLERS ─────────────────────────────────
+  // ── CRISIS CHECK (universal — used on ALL textareas) ─
 
-  const handleTextoChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const v = e.target.value;
-    setTexto(v);
-    // Crisis detection: show modal IMMEDIATELY when trigger detected
-    if (v.length > 5 && detectarCrisis(v)) {
+  const checkCrisisInText = useCallback((value: string) => {
+    if (value.length > 5 && detectarCrisis(value)) {
       setCrisisDetectedInText(true);
+      setShowCrisisBanner(true);
       if (!crisisShownOnce.current) {
         crisisShownOnce.current = true;
         setShowCrisis(true);
       }
     }
+  }, []);
+
+  // ── HANDLERS ─────────────────────────────────
+
+  const handleTextoChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const v = e.target.value;
+    setTexto(v);
+    checkCrisisInText(v);
+  };
+
+  const handleResp1Change = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const v = e.target.value;
+    setResp1(v);
+    checkCrisisInText(v);
+  };
+
+  const handleResp2Change = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const v = e.target.value;
+    setResp2(v);
+    checkCrisisInText(v);
+  };
+
+  const handleCierreTextoChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const v = e.target.value;
+    setCierreTexto(v);
+    checkCrisisInText(v);
+  };
+
+  const handleCierreTexto2Change = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const v = e.target.value;
+    setCierreTexto2(v);
+    checkCrisisInText(v);
   };
 
   const iniciarDisolucion = useCallback(() => {
     if (!texto.trim()) return;
-    // Always block if crisis detected and not acknowledged
     if (crisisDetectedInText && !crisisAck) {
       setShowCrisis(true);
       return;
     }
-    // If crisis was detected and acknowledged, show persistent banner
     if (crisisDetectedInText) {
       setShowCrisisBanner(true);
     }
@@ -255,7 +291,7 @@ export default function MePesaMucho() {
       saveUsosHoy(n);
       if (getSinglePass()) useSinglePass();
     } catch {
-      setApiError("Hubo un error generando tu reflexion. Intenta de nuevo.");
+      setApiError("Hubo un error generando tu reflexión. Intenta de nuevo.");
       setStep("framework");
     }
     setTexto("");
@@ -269,6 +305,7 @@ export default function MePesaMucho() {
     setCierreStep(0); setCierreTexto(""); setCierreTexto2(""); setShowCierreInput(false);
     setMsgOpacity(0); setApiError(""); setShowCrisisBanner(false);
     setCrisisDetectedInText(false); crisisShownOnce.current = false;
+    setShowFuentes(false);
     setDayPass(getDayPass()); setUsosHoy(getUsosHoy());
   };
 
@@ -277,25 +314,25 @@ export default function MePesaMucho() {
   // ── CIERRE DATA ──────────────────────────────
 
   const PREGUNTAS_CIERRE = [
-    "Que te hace reflexionar esto?",
-    "Que se mueve dentro de ti al leer estas palabras?",
-    "Hay alguna idea aqui que sientas que necesitabas escuchar hoy?",
-    "Que parte de esta reflexion te gustaria llevar contigo?",
-    "Si esta reflexion fuera un espejo, que te devuelve?",
+    "¿Qué te hace reflexionar esto?",
+    "¿Qué se mueve dentro de ti al leer estas palabras?",
+    "¿Hay alguna idea aquí que sientas que necesitabas escuchar hoy?",
+    "¿Qué parte de esta reflexión te gustaría llevar contigo?",
+    "Si esta reflexión fuera un espejo, ¿qué te devuelve?",
   ];
   const PROFUNDIZACIONES = [
-    "Eso que mencionas tiene mas capas de las que parece. A veces lo que nos hace reflexionar no es la idea en si, sino el momento en que nos encuentra.",
-    "Es interesante que eso sea lo que resuena. Muchas veces lo que se mueve dentro de nosotros senala algo que llevamos tiempo sin mirar.",
+    "Eso que mencionas tiene más capas de las que parece. A veces lo que nos hace reflexionar no es la idea en sí, sino el momento en que nos encuentra.",
+    "Es interesante que eso sea lo que resuena. Muchas veces lo que se mueve dentro de nosotros señala algo que llevamos tiempo sin mirar.",
     "Hay algo valioso en reconocer eso. Las palabras que necesitamos escuchar suelen llegar disfrazadas de cosas simples.",
-    "Lo que eliges llevar contigo dice mucho de donde estas hoy. Y eso ya es una forma de avanzar.",
-    "Lo que el espejo devuelve no siempre es comodo, pero siempre es honesto. Ahi hay algo que vale la pena explorar.",
+    "Lo que eliges llevar contigo dice mucho de dónde estás hoy. Y eso ya es una forma de avanzar.",
+    "Lo que el espejo devuelve no siempre es cómodo, pero siempre es honesto. Ahí hay algo que vale la pena explorar.",
   ];
   const PREGUNTAS_SEGUNDO = [
-    "Y si pudieras sentarte con esa reflexion un momento mas... que crees que encontrarias?",
-    "Hay algo detras de eso que todavia no te has dicho a ti mismo?",
-    "Si pudieras profundizar en esto con alguien que realmente entiende, que le preguntarias?",
-    "Que pasaria si te permitieras explorar esto un poco mas?",
-    "Sientes que hay algo mas ahi, esperando salir?",
+    "Y si pudieras sentarte con esa reflexión un momento más... ¿qué crees que encontrarías?",
+    "¿Hay algo detrás de eso que todavía no te has dicho a ti mismo?",
+    "Si pudieras profundizar en esto con alguien que realmente entiende, ¿qué le preguntarías?",
+    "¿Qué pasaría si te permitieras explorar esto un poco más?",
+    "¿Sientes que hay algo más ahí, esperando salir?",
   ];
   const cIdx = Math.abs((reflexion || "").length + (marco || "").length) % PREGUNTAS_CIERRE.length;
 
@@ -314,13 +351,13 @@ export default function MePesaMucho() {
       <div className={`${S.divider} mb-6`} style={{ width: 40 }} />
       <h2 className="text-xl font-medium text-center mb-6">Aviso importante</h2>
       {[
-        ["Esto no es terapia ni consejeria profesional", "mepesamucho.com es un espacio de reflexion personal. No sustituye la atencion psicologica, psiquiatrica o medica."],
-        ["No es consejo medico ni legal", "Las reflexiones son de caracter espiritual y contemplativo. No deben interpretarse como diagnostico o recomendacion profesional."],
-        ["Exencion de responsabilidad por interpretacion", "mepesamucho.com no se hace responsable por las interpretaciones, decisiones o acciones que el usuario tome a partir del contenido."],
+        ["Esto no es terapia ni consejería profesional", "mepesamucho.com es un espacio de reflexión personal. No sustituye la atención psicológica, psiquiátrica o médica."],
+        ["No es consejo médico ni legal", "Las reflexiones son de carácter espiritual y contemplativo. No deben interpretarse como diagnóstico o recomendación profesional."],
+        ["Exención de responsabilidad por interpretación", "mepesamucho.com no se hace responsable por las interpretaciones, decisiones o acciones que el usuario tome a partir del contenido."],
         ["Tu privacidad es prioridad", "No almacenamos tu texto. Se procesa en el momento y se elimina. No se construyen perfiles de usuario."],
         ["Fuentes verificadas", "Las citas provienen de fuentes verificadas y documentadas. No se inventan ni modifican citas."],
-        ["En caso de crisis", "Si estas en una emergencia emocional o situacion de riesgo, busca ayuda profesional inmediata."],
-        ["Uso bajo tu propia responsabilidad", "Al utilizar mepesamucho.com aceptas que el servicio se ofrece tal cual, sin garantias."],
+        ["En caso de crisis", "Si estás en una emergencia emocional o situación de riesgo, busca ayuda profesional inmediata."],
+        ["Uso bajo tu propia responsabilidad", "Al utilizar mepesamucho.com aceptas que el servicio se ofrece tal cual, sin garantías."],
       ].map(([t, b], i) => (
         <div key={i} className="mb-4">
           <p className="text-[1.05rem] font-semibold mb-0.5">{t}</p>
@@ -341,22 +378,43 @@ export default function MePesaMucho() {
       <div className="text-left">
         {CRISIS_RESOURCES.lines.map((l, i) => (
           <div key={i} className={`p-3 mb-1 rounded ${i % 2 === 0 ? "bg-[#F5ECE3]" : ""}`}>
-            <p className={`${S.sub} text-[0.7rem] uppercase tracking-widest opacity-70 mb-0.5`}>{l.country}</p>
+            <p className={`${S.sub} text-[0.7rem] uppercase tracking-widest mb-0.5`} style={{ opacity: 0.7 }}>{l.country}</p>
             <p className="text-[1.05rem] font-medium">{l.name}</p>
             {l.isWeb ? (
               <a href={l.url} target="_blank" rel="noopener noreferrer" className={`${S.sub} text-sm text-[#8B6F5E] underline`}>{l.phone}</a>
             ) : (
               <p className="font-[var(--font-sans)] text-lg text-[#8B6F5E] font-medium tracking-wide">{l.phone}</p>
             )}
-            {l.note && <p className={`${S.sub} text-xs opacity-60 mt-0.5`}>{l.note}</p>}
+            {l.note && <p className={`${S.sub} text-xs mt-0.5`} style={{ opacity: 0.6 }}>{l.note}</p>}
           </div>
         ))}
       </div>
       <div className="mt-6 pt-6 border-t border-[#D8CFC4] text-center">
-        <p className={`${S.sub} text-sm italic mb-4`}>Si deseas continuar con tu reflexion, puedes hacerlo.</p>
+        <p className={`${S.sub} text-sm italic mb-4`}>Si deseas continuar con tu reflexión, puedes hacerlo.</p>
         <button className={S.btn} onClick={() => { setShowCrisis(false); setCrisisAck(true); }}>
-          Continuar con mi reflexion
+          Continuar con mi reflexión
         </button>
+      </div>
+    </Overlay>
+  );
+
+  // ── FUENTES CITADAS MODAL ──────────────────────
+
+  const FuentesModal = () => (
+    <Overlay>
+      <div className={`${S.divider} mb-6`} style={{ width: 40 }} />
+      <h2 className="text-xl font-medium text-center mb-6">Fuentes citadas</h2>
+      <p className={`${S.sub} text-sm mb-6 text-center`}>
+        Todas las citas utilizadas en tu reflexión provienen de fuentes verificadas.
+      </p>
+      {citasUsadas.map((c, i) => (
+        <div key={i} className="mb-5 pl-4" style={{ borderLeftWidth: "2px", borderLeftStyle: "solid", borderLeftColor: "#D8CFC4" }}>
+          <p className="text-sm font-medium mb-0.5">{c.source}</p>
+          <p className={`${S.sub} text-sm italic leading-snug`}>{c.text}</p>
+        </div>
+      ))}
+      <div className="mt-6 pt-6 border-t border-[#D8CFC4] text-center">
+        <button className={S.btn} onClick={() => setShowFuentes(false)}>Cerrar</button>
       </div>
     </Overlay>
   );
@@ -374,7 +432,7 @@ export default function MePesaMucho() {
               onClick={() => setShowCrisis(true)}
               className="underline font-medium bg-transparent border-none text-white cursor-pointer"
             >
-              Ver lineas de ayuda
+              Ver líneas de ayuda
             </button>
           </p>
         </div>
@@ -396,7 +454,7 @@ export default function MePesaMucho() {
       <button
         onClick={() => setFontSize((f) => (f + 1) % FONT_SIZES.length)}
         className="w-11 h-11 rounded-full bg-[#EAE4DC] border border-[#D8CFC4] text-[#3A3733] font-[var(--font-serif)] text-sm cursor-pointer transition-all duration-300 hover:bg-[#C4B6A5] hover:text-white hover:border-[#C4B6A5] shadow-md flex items-center justify-center"
-        aria-label="Cambiar tamano de letra"
+        aria-label="Cambiar tamaño de letra"
       >
         {FONT_SIZES[fontSize].label}
       </button>
@@ -415,11 +473,11 @@ export default function MePesaMucho() {
         {showDisclaimer && <DisclaimerModal />}
         <div className={`${S.box} text-center`}>
           <h1 className="text-xl font-light mb-4">Has usado tus dos reflexiones de hoy.</h1>
-          <p className={`${S.sub} text-base mb-8`}>Vuelve manana, o elige una opcion para continuar.</p>
+          <p className={`${S.sub} text-base mb-8`}>Vuelve mañana, o elige una opción para continuar.</p>
 
           <div className="border border-[#D8CFC4] rounded-md p-5 mb-3 flex items-center justify-between flex-wrap gap-3">
             <div className="text-left">
-              <p className="text-[1.05rem] font-medium">Solo una reflexion mas</p>
+              <p className="text-[1.05rem] font-medium">Solo una reflexión más</p>
               <p className={`${S.sub} text-sm`}>$0.50 USD · Acceso inmediato</p>
             </div>
             <button className={S.btnSm} onClick={() => checkout("single")}>Desbloquear</button>
@@ -433,8 +491,8 @@ export default function MePesaMucho() {
           </div>
 
           <div className="border border-[#D8CFC4] rounded-md p-6 mb-6 text-center">
-            <p className="text-lg font-medium mb-1">Suscripcion mensual</p>
-            <p className={`${S.sub} text-sm mb-2`}>Sin limite. Reflexiones personalizadas. Cancela cuando quieras.</p>
+            <p className="text-lg font-medium mb-1">Suscripción mensual</p>
+            <p className={`${S.sub} text-sm mb-2`}>Sin límite. Reflexiones personalizadas. Cancela cuando quieras.</p>
             <p className="text-xl mb-3">$4.99 USD / mes</p>
             <button className={S.btn} onClick={() => checkout("subscription")}>Suscribirme</button>
           </div>
@@ -461,23 +519,23 @@ export default function MePesaMucho() {
           <p className="text-lg text-[#6F6A64] italic leading-relaxed mb-3">
             A veces las cosas pesan menos cuando las sueltas.
           </p>
-          <p className={`${S.sub} text-sm mb-10 opacity-60`}>
-            Escribe lo que cargas. Nadie mas lo leera.
+          <p className={`${S.sub} text-sm mb-10`}>
+            Escribe lo que cargas. Nadie más lo leerá.
           </p>
           <button className={`${S.btn} text-lg px-8 py-3`} onClick={() => setStep("writing")}>
             Empezar
           </button>
 
           {dayPass.active ? (
-            <p className={`${S.sub} text-xs mt-6 opacity-50`}>Acceso ampliado activo — {dayPass.hoursLeft}h restantes</p>
+            <p className={`${S.sub} text-xs mt-6`}>Acceso ampliado activo — {dayPass.hoursLeft}h restantes</p>
           ) : (
-            <p className={`${S.sub} text-xs mt-6 opacity-50`}>
-              {2 - usosHoy} {2 - usosHoy === 1 ? "reflexion disponible" : "reflexiones disponibles"} hoy
+            <p className={`${S.sub} text-xs mt-6`}>
+              {2 - usosHoy} {2 - usosHoy === 1 ? "reflexión disponible" : "reflexiones disponibles"} hoy
             </p>
           )}
 
           <div className="mt-8">
-            <button className={`${S.link} text-[0.7rem] opacity-40`} onClick={() => setShowDisclaimer(true)}>
+            <button className={`${S.link} text-xs`} onClick={() => setShowDisclaimer(true)}>
               Aviso legal
             </button>
           </div>
@@ -492,8 +550,9 @@ export default function MePesaMucho() {
     return (
       <div className={`${S.page} animate-fade-in`} key={fadeKey}>
         {showCrisis && <CrisisModal />}
+        {showCrisisBanner && <CrisisBanner />}
         <div className={`${S.box}`}>
-          <p className={`${S.sub} text-sm text-center mb-6 opacity-60`}>Nadie mas leera esto. No se guarda.</p>
+          <p className={`${S.sub} text-sm text-center mb-6`}>Nadie más leerá esto. No se guarda.</p>
           <textarea
             value={texto}
             onChange={handleTextoChange}
@@ -554,9 +613,9 @@ export default function MePesaMucho() {
         {showCrisisBanner && <CrisisBanner />}
         {showCrisis && <CrisisModal />}
         <div className={`${S.box} text-center`}>
-          <div className={`${S.divider} mb-6 opacity-50`} />
-          <p className={`${S.sub} text-sm mb-2 opacity-60`}>Ahora elige como quieres escucharte.</p>
-          <p className="text-lg text-[#6F6A64] italic mb-8">Desde que tradicion?</p>
+          <div className={`${S.divider} mb-6`} style={{ opacity: 0.5 }} />
+          <p className={`${S.sub} text-sm mb-2`}>Ahora elige cómo quieres escucharte.</p>
+          <p className="text-lg text-[#6F6A64] italic mb-8">¿Desde qué tradición?</p>
           {apiError && <p className={`${S.sub} text-sm text-[#8B6F5E] mb-4`}>{apiError}</p>}
           <div className="flex flex-col gap-3">
             {(Object.entries(MARCOS) as [Marco, { nombre: string; descripcion: string }][]).map(([key, val]) => (
@@ -575,24 +634,38 @@ export default function MePesaMucho() {
     );
   }
 
-  // ── PREGUNTAS ────────────────────────────────
+  // ── PREGUNTAS (with crisis detection) ─────────
 
   if (step === "preguntas") {
     const isQ1 = preguntaStep === 0;
     const val = isQ1 ? resp1 : resp2;
-    const setVal = isQ1 ? setResp1 : setResp2;
+    const handleChange = isQ1 ? handleResp1Change : handleResp2Change;
+
+    // Block advancing if crisis detected and not acknowledged
+    const handleContinue = () => {
+      if (crisisDetectedInText && !crisisAck) {
+        setShowCrisis(true);
+        return;
+      }
+      if (isQ1) {
+        setPreguntaStep(1);
+      } else {
+        generarReflexion();
+      }
+    };
+
     return (
       <div className={`${S.page} animate-fade-in`} key={`q${fadeKey}`}>
         {showCrisisBanner && <CrisisBanner />}
         {showCrisis && <CrisisModal />}
         <div className={`${S.box} text-center`}>
-          <p className={`${S.sub} text-sm mb-3 opacity-50`}>{isQ1 ? "Antes de tu reflexion:" : "Una mas:"}</p>
+          <p className={`${S.sub} text-sm mb-3`}>{isQ1 ? "Antes de tu reflexión:" : "Una más:"}</p>
           <h2 className="text-xl font-normal italic leading-snug mb-6">
-            {isQ1 ? "Que es lo que mas necesitas en este momento?" : "Esto que te pesa viene de hace tiempo o es reciente?"}
+            {isQ1 ? "¿Qué es lo que más necesitas en este momento?" : "¿Esto que te pesa viene de hace tiempo o es reciente?"}
           </h2>
           <textarea
             value={val}
-            onChange={(e) => setVal(e.target.value)}
+            onChange={handleChange}
             placeholder="Escribe con tus palabras..."
             autoFocus
             className={S.textarea}
@@ -600,13 +673,13 @@ export default function MePesaMucho() {
           <div className="mt-5">
             <button
               disabled={!val.trim()}
-              onClick={() => { isQ1 ? setPreguntaStep(1) : generarReflexion(); }}
+              onClick={handleContinue}
               className={`${S.btn} ${!val.trim() ? "opacity-40 cursor-default" : ""}`}
             >
               Continuar
             </button>
           </div>
-          <p className={`${S.sub} text-[0.7rem] mt-6 opacity-30`}>{isQ1 ? "1 de 2" : "2 de 2"}</p>
+          <p className={`${S.sub} text-[0.75rem] mt-6`}>{isQ1 ? "1 de 2" : "2 de 2"}</p>
         </div>
       </div>
     );
@@ -626,9 +699,9 @@ export default function MePesaMucho() {
             </div>
           </div>
           <p className={`${S.sub} italic text-base animate-text-breath`}>
-            Preparando tu reflexion...
+            Preparando tu reflexión...
           </p>
-          <p className={`${S.sub} text-xs mt-4 opacity-30`}>
+          <p className={`${S.sub} text-xs mt-4`}>
             Esto puede tomar unos segundos
           </p>
         </div>
@@ -636,7 +709,7 @@ export default function MePesaMucho() {
     );
   }
 
-  // ── ESSAY (redesigned, centered at 800px) ────
+  // ── ESSAY (redesigned — scrollable reflection + visible closing) ────
 
   if (step === "essay") {
     const cleanMarkdown = (text: string): string => {
@@ -665,8 +738,8 @@ export default function MePesaMucho() {
         if (isCita) return (
           <blockquote
             key={i}
-            className="my-8 py-5 px-6 bg-[#EAE4DC]/50 border-[#C4B6A5] rounded-r-md italic leading-loose"
-            style={{ fontSize: fs.cita, borderLeftWidth: "3px", borderLeftStyle: "solid" }}
+            className="my-8 py-5 px-6 bg-[#EAE4DC]/50 rounded-r-md italic leading-loose"
+            style={{ fontSize: fs.cita, borderLeftWidth: "3px", borderLeftStyle: "solid", borderLeftColor: "#C4B6A5" }}
           >
             {cleaned}
           </blockquote>
@@ -690,44 +763,51 @@ export default function MePesaMucho() {
         {showDisclaimer && <DisclaimerModal />}
         {showCrisis && <CrisisModal />}
         {showCrisisBanner && <CrisisBanner />}
+        {showFuentes && <FuentesModal />}
         <FontSizeToggle />
 
         {/* ── Logo header section ── */}
-        <div className="flex flex-col items-center pt-10 pb-4 sm:pt-14 sm:pb-6" style={{ minHeight: "20vh" }}>
-          <div className="flex flex-col items-center justify-end flex-1 pb-4">
-            <LogoIcon size={30} />
+        <div className="flex flex-col items-center pt-8 pb-3 sm:pt-10 sm:pb-4" style={{ minHeight: "14vh" }}>
+          <div className="flex flex-col items-center justify-end flex-1 pb-3">
+            <LogoIcon size={28} />
             <p className="text-lg sm:text-xl font-light tracking-tight mt-2 text-[#3A3733]/80">mepesamucho</p>
-            <div className="w-10 h-px bg-[#C4B6A5] mt-4 mb-3" />
-            <p className="font-[var(--font-sans)] text-xs uppercase tracking-[0.2em] text-[#6F6A64]/70 font-light">
+            <div className="w-10 h-px bg-[#C4B6A5] mt-3 mb-2" />
+            <p className="font-[var(--font-sans)] text-xs uppercase tracking-[0.2em] text-[#6F6A64] font-light">
               {MARCOS[marco!]?.nombre}
             </p>
           </div>
         </div>
 
         {/* ── "Lee despacio" ── */}
-        <div className="text-center mb-8 px-5">
+        <div className="text-center mb-4 px-5">
           <p className="font-[var(--font-sans)] text-sm sm:text-base italic text-[#8B6F5E] font-light tracking-wide">
             Lee despacio. Esto fue escrito para ti.
           </p>
         </div>
 
-        {/* ── Reflection body (centered 800px) ── */}
+        {/* ── Main content area (centered 800px) ── */}
         <div style={{ maxWidth: "800px", width: "100%", margin: "0 auto", paddingLeft: "1.5rem", paddingRight: "1.5rem", paddingBottom: "3rem" }}>
-          <div className="leading-loose">{renderReflexion()}</div>
 
-          {/* Sources */}
-          <div className="mt-12 pt-6 border-t border-[#D8CFC4]">
-            <p className={`${S.sub} text-[0.7rem] uppercase tracking-widest mb-4`}>Fuentes citadas</p>
-            {citasUsadas.map((c, i) => (
-              <div key={i} className="mb-4 pl-4 border-l-2 border-[#D8CFC4]">
-                <p className="text-sm font-medium mb-0.5">{c.source}</p>
-                <p className={`${S.sub} text-sm italic leading-snug`}>{c.text}</p>
-              </div>
-            ))}
+          {/* ── Reflection body in scrollable card ── */}
+          <div
+            className="bg-white/40 border border-[#D8CFC4] rounded-lg p-6 sm:p-8"
+            style={{ maxHeight: "60vh", overflowY: "auto" }}
+          >
+            <div className="leading-loose">{renderReflexion()}</div>
+          </div>
+
+          {/* ── "Ver fuentes citadas" button ── */}
+          <div className="text-center mt-5">
+            <button
+              className={`${S.link} text-sm`}
+              onClick={() => setShowFuentes(true)}
+            >
+              Ver fuentes citadas ({citasUsadas.length})
+            </button>
           </div>
 
           {/* Closing question flow */}
-          <div className="mt-10 py-8 px-5 sm:px-6 text-center border-t border-b border-[#D8CFC4]">
+          <div className="mt-6 py-6 px-5 sm:px-6 text-center border-t border-b border-[#D8CFC4]">
 
             {cierreStep === 0 && (
               <>
@@ -736,7 +816,7 @@ export default function MePesaMucho() {
                   <button className={S.btnSm} onClick={() => setShowCierreInput(true)}>Quiero responder</button>
                 ) : (
                   <div>
-                    <textarea value={cierreTexto} onChange={(e) => setCierreTexto(e.target.value)} placeholder="Escribe lo que quieras..." autoFocus className={`${S.textarea} mb-3`} />
+                    <textarea value={cierreTexto} onChange={handleCierreTextoChange} placeholder="Escribe lo que quieras..." autoFocus className={`${S.textarea} mb-3`} />
                     {cierreTexto.trim() && <button className={S.btnSm} onClick={() => setCierreStep(1)}>Compartir</button>}
                   </div>
                 )}
@@ -745,10 +825,10 @@ export default function MePesaMucho() {
 
             {cierreStep === 1 && (
               <div className="text-left animate-fade-in">
-                <p className="text-sm italic text-[#6F6A64] mb-4 border-l-2 border-[#D8CFC4] pl-3">{cierreTexto}</p>
+                <p className="text-sm italic text-[#6F6A64] mb-4 pl-3" style={{ borderLeftWidth: "2px", borderLeftStyle: "solid", borderLeftColor: "#D8CFC4" }}>{cierreTexto}</p>
                 <p className="text-[1.05rem] leading-loose mb-5">{PROFUNDIZACIONES[cIdx]}</p>
                 <p className="text-lg italic text-center leading-relaxed mb-4">{PREGUNTAS_SEGUNDO[cIdx]}</p>
-                <textarea value={cierreTexto2} onChange={(e) => setCierreTexto2(e.target.value)} placeholder="Escribe lo que quieras..." autoFocus className={`${S.textarea} mb-3`} />
+                <textarea value={cierreTexto2} onChange={handleCierreTexto2Change} placeholder="Escribe lo que quieras..." autoFocus className={`${S.textarea} mb-3`} />
                 {cierreTexto2.trim() && (
                   <div className="text-center"><button className={S.btnSm} onClick={() => setCierreStep(2)}>Continuar</button></div>
                 )}
@@ -757,17 +837,17 @@ export default function MePesaMucho() {
 
             {cierreStep === 2 && (
               <div className="animate-fade-in">
-                <p className="text-[1.05rem] leading-loose mb-5">Lo que estas tocando merece mas espacio.</p>
+                <p className="text-[1.05rem] leading-loose mb-5">Lo que estás tocando merece más espacio.</p>
                 <div className="bg-[#EAE4DC] border border-[#D8CFC4] rounded p-5">
-                  <p className="text-[1.05rem] mb-1">Este nivel de conversacion es parte de la experiencia completa.</p>
-                  <p className={`${S.sub} text-sm mb-4`}>Cada respuesta tuya abre una reflexion mas profunda, mas tuya.</p>
+                  <p className="text-[1.05rem] mb-1">Este nivel de conversación es parte de la experiencia completa.</p>
+                  <p className={`${S.sub} text-sm mb-4`}>Cada respuesta tuya abre una reflexión más profunda, más tuya.</p>
                   <div className="flex flex-col gap-2 items-center">
                     <button className={S.btn} onClick={() => checkout("subscription")}>Suscribirme — $4.99/mes</button>
                     <button className={`${S.sub} text-sm cursor-pointer bg-transparent border-none hover:text-[#C4B6A5] transition-colors`} onClick={() => checkout("daypass")}>
                       Acceso 24h por $0.99
                     </button>
-                    <button className={`${S.sub} text-xs opacity-70 cursor-pointer bg-transparent border-none hover:text-[#C4B6A5] transition-colors`} onClick={() => checkout("single")}>
-                      Solo esta reflexion · $0.50
+                    <button className={`${S.sub} text-xs cursor-pointer bg-transparent border-none hover:text-[#C4B6A5] transition-colors`} onClick={() => checkout("single")}>
+                      Solo esta reflexión · $0.50
                     </button>
                   </div>
                 </div>
@@ -782,12 +862,12 @@ export default function MePesaMucho() {
             </button>
           </div>
 
-          {/* Footer */}
+          {/* Footer — legible colors, no opacity tricks */}
           <div className="mt-12 text-center">
             <div className={`${S.divider} mb-5`} />
-            <p className={`${S.sub} text-[0.7rem] opacity-50`}>mepesamucho.com · Un espacio de reflexion, no de consejeria.</p>
-            <p className={`${S.sub} text-[0.7rem] opacity-40 mt-1`}>Lo que escribiste ya fue soltado. No queda registro.</p>
-            <button className={`${S.link} text-[0.65rem] opacity-30 mt-2`} onClick={() => setShowDisclaimer(true)}>Aviso legal</button>
+            <p className="font-[var(--font-sans)] text-xs text-[#857F78] leading-relaxed">mepesamucho.com · Un espacio de reflexión, no de consejería.</p>
+            <p className="font-[var(--font-sans)] text-xs text-[#857F78] leading-relaxed mt-1">Lo que escribiste ya fue soltado. No quedó registro.</p>
+            <button className="font-[var(--font-sans)] text-xs text-[#6F6A64] cursor-pointer underline decoration-[#D8CFC4] underline-offset-4 hover:text-[#C4B6A5] transition-colors bg-transparent border-none mt-3" onClick={() => setShowDisclaimer(true)}>Aviso legal</button>
           </div>
         </div>
       </div>

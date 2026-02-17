@@ -35,6 +35,12 @@ export const CRISIS_TRIGGERS = [
   // Metodos (detectar menciones de metodos)
   "pastillas para morir", "tirarme", "aventarme", "lanzarme",
   "colgarme", "ahorcarme", "envenenarme",
+  // Violencia hacia otros
+  "quiero matar", "voy a matar", "matar a alguien", "quiero hacerle dano",
+  "quiero lastimar", "voy a lastimar", "quiero herir", "voy a herir",
+  "quiero golpear", "voy a golpear", "le voy a pegar", "lo voy a matar",
+  "la voy a matar", "los voy a matar", "ganas de matar",
+  "quiero hacerles dano", "quiero venganza", "voy a vengarme",
 ];
 
 export interface CrisisLine {
@@ -47,16 +53,16 @@ export interface CrisisLine {
 }
 
 export const CRISIS_RESOURCES: { title: string; subtitle: string; lines: CrisisLine[] } = {
-  title: "No estas solo. Hay personas preparadas para escucharte ahora mismo.",
-  subtitle: "Si estas en peligro inmediato, llama a emergencias de tu pais.",
+  title: "No estás solo. Hay personas preparadas para escucharte ahora mismo.",
+  subtitle: "Si estás en peligro inmediato, llama a emergencias de tu país.",
   lines: [
-    { country: "Internacional", name: "Linea de crisis por chat", phone: "befrienders.org/find-support", url: "https://www.befrienders.org/find-support", isWeb: true },
-    { country: "Mexico", name: "Linea de la Vida", phone: "800 911 2000", note: "24 horas, gratuita" },
-    { country: "Mexico", name: "SAPTEL", phone: "55 5259 8121", note: "24 horas" },
-    { country: "Estados Unidos", name: "988 Linea de Crisis (espanol)", phone: "988", note: "24 horas, llamar o enviar mensaje" },
-    { country: "Espana", name: "Telefono de la Esperanza", phone: "717 003 717", note: "24 horas" },
+    { country: "Internacional", name: "Línea de crisis por chat", phone: "befrienders.org/find-support", url: "https://www.befrienders.org/find-support", isWeb: true },
+    { country: "México", name: "Línea de la Vida", phone: "800 911 2000", note: "24 horas, gratuita" },
+    { country: "México", name: "SAPTEL", phone: "55 5259 8121", note: "24 horas" },
+    { country: "Estados Unidos", name: "988 Línea de Crisis (español)", phone: "988", note: "24 horas, llamar o enviar mensaje" },
+    { country: "España", name: "Teléfono de la Esperanza", phone: "717 003 717", note: "24 horas" },
     { country: "Argentina", name: "Centro de Asistencia al Suicida", phone: "(011) 5275-1135", note: "24 horas" },
-    { country: "Colombia", name: "Linea 106", phone: "106", note: "24 horas, gratuita" },
+    { country: "Colombia", name: "Línea 106", phone: "106", note: "24 horas, gratuita" },
     { country: "Chile", name: "Salud Responde", phone: "600 360 7777", note: "24 horas" },
   ],
 };
