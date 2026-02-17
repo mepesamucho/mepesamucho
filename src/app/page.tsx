@@ -83,6 +83,65 @@ function useSinglePass() {
   } catch {}
 }
 
+// ── DOWNLOAD REFLECTION HELPER ─────────────────
+
+function descargarReflexion(reflexion: string, citas: { source: string; text: string }[], marcoNombre: string) {
+  const fecha = new Date().toLocaleDateString("es-MX", { year: "numeric", month: "long", day: "numeric" });
+  const paragraphs = reflexion.split("\n\n").map((p) => {
+    const t = p.trim();
+    if (!t) return "";
+    if (t.startsWith("<<") || t.startsWith("\u00AB") || t.startsWith('"')) return `<blockquote>${t}</blockquote>`;
+    if (t.startsWith("\u2014") || t.startsWith("--")) return `<p class="attrib">${t}</p>`;
+    if (t.endsWith("?") && t.length < 200) return `<p class="question">${t}</p>`;
+    return `<p>${t}</p>`;
+  }).join("\n");
+
+  const citasHtml = citas.map((c) =>
+    `<div class="cita"><strong>${c.source}</strong><br><em>${c.text}</em></div>`
+  ).join("\n");
+
+  const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mi reflexión — mepesamucho</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Georgia,'Times New Roman',serif;background:#F3EFEA;color:#3A3733;max-width:700px;margin:0 auto;padding:3rem 2rem;line-height:1.8}
+h1{font-size:1.8rem;font-weight:300;text-align:center;margin-bottom:0.3rem}
+.subtitle{font-family:system-ui,sans-serif;text-align:center;color:#6F6A64;font-size:0.85rem;margin-bottom:0.5rem}
+.divider{width:40px;height:1px;background:#C4B6A5;margin:1.5rem auto}
+.marco{font-family:system-ui,sans-serif;text-align:center;text-transform:uppercase;letter-spacing:0.2em;color:#6F6A64;font-size:0.75rem;margin-bottom:2rem}
+p{margin-bottom:1.2rem;font-size:1.1rem;text-align:justify}
+blockquote{margin:2rem 0;padding:1.2rem 1.5rem;background:rgba(234,228,220,0.5);border-left:3px solid #C4B6A5;font-style:italic;font-size:1.1rem;border-radius:0 6px 6px 0}
+.attrib{font-family:system-ui,sans-serif;color:#6F6A64;font-size:0.9rem;padding-left:1.5rem;margin-bottom:1.5rem}
+.question{text-align:center;font-style:italic;color:#8B6F5E;font-size:1.15rem;margin:2rem 0}
+.fuentes-title{font-size:1.2rem;font-weight:400;margin-top:3rem;margin-bottom:1rem;padding-top:1.5rem;border-top:1px solid #D8CFC4}
+.cita{margin-bottom:1rem;padding-left:1rem;border-left:2px solid #D8CFC4;font-size:0.9rem;font-family:system-ui,sans-serif;color:#5C5751}
+.cita em{color:#6F6A64}
+.footer{margin-top:3rem;padding-top:1rem;border-top:1px solid #D8CFC4;text-align:center;font-family:system-ui,sans-serif;font-size:0.75rem;color:#857F78}
+</style></head><body>
+<h1>mepesamucho</h1>
+<p class="subtitle">${fecha}</p>
+<div class="divider"></div>
+<p class="marco">${marcoNombre}</p>
+${paragraphs}
+<h2 class="fuentes-title">Fuentes citadas</h2>
+${citasHtml}
+<div class="footer">
+<p>mepesamucho.com · Un espacio de reflexión, no de consejería.</p>
+<p>Lo que escribes no se almacena ni se comparte.</p>
+</div>
+</body></html>`;
+
+  const blob = new Blob([html], { type: "text/html" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `reflexion-mepesamucho-${new Date().toISOString().slice(0, 10)}.html`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 // ── CHECKOUT HELPER ────────────────────────────
 
 async function checkout(type: "subscription" | "daypass" | "single", beforeRedirect?: () => void) {
@@ -141,9 +200,9 @@ const PrivacyBadge = ({ onClick }: { onClick?: () => void }) => (
 // ── FONT SIZE BUTTON ──────────────────────────
 
 const FONT_SIZES = [
-  { label: "A", base: "1.1rem", lg: "1.2rem", xl: "1.3rem", cita: "1.25rem" },
-  { label: "A+", base: "1.25rem", lg: "1.35rem", xl: "1.45rem", cita: "1.4rem" },
-  { label: "A++", base: "1.4rem", lg: "1.5rem", xl: "1.6rem", cita: "1.55rem" },
+  { label: "A", base: "1.2rem", lg: "1.3rem", xl: "1.4rem", cita: "1.35rem" },
+  { label: "A+", base: "1.35rem", lg: "1.45rem", xl: "1.55rem", cita: "1.5rem" },
+  { label: "A++", base: "1.5rem", lg: "1.6rem", xl: "1.7rem", cita: "1.65rem" },
 ];
 
 // ── GENERATING MESSAGES ───────────────────────
@@ -168,14 +227,14 @@ const S = {
   pageTop: "min-h-screen bg-[#F3EFEA] text-[#3A3733] font-[var(--font-serif)] flex flex-col items-center justify-start px-5 pt-14 pb-12 leading-relaxed",
   box: "max-w-[640px] w-full",
   boxWide: "max-w-[800px] w-full",
-  btn: "font-[var(--font-serif)] text-base px-8 py-3.5 bg-[#C4B6A5] text-white border border-[#C4B6A5] rounded-lg cursor-pointer transition-all duration-300 hover:bg-[#B0A292] hover:border-[#B0A292] btn-primary-glow",
-  btnSecondary: "font-[var(--font-serif)] text-base px-7 py-3 bg-[#EAE4DC] text-[#3A3733] border border-[#D8CFC4] rounded-lg cursor-pointer transition-all duration-300 hover:bg-[#C4B6A5] hover:text-white hover:border-[#C4B6A5]",
-  btnSm: "font-[var(--font-serif)] text-sm px-5 py-2.5 bg-[#EAE4DC] text-[#3A3733] border border-[#D8CFC4] rounded-lg cursor-pointer transition-all duration-300 hover:bg-[#C4B6A5] hover:text-white hover:border-[#C4B6A5]",
+  btn: "font-[var(--font-serif)] text-lg px-8 py-3.5 bg-[#C4B6A5] text-white border border-[#C4B6A5] rounded-lg cursor-pointer transition-all duration-300 hover:bg-[#B0A292] hover:border-[#B0A292] btn-primary-glow",
+  btnSecondary: "font-[var(--font-serif)] text-lg px-7 py-3 bg-[#EAE4DC] text-[#3A3733] border border-[#D8CFC4] rounded-lg cursor-pointer transition-all duration-300 hover:bg-[#C4B6A5] hover:text-white hover:border-[#C4B6A5]",
+  btnSm: "font-[var(--font-serif)] text-base px-5 py-2.5 bg-[#EAE4DC] text-[#3A3733] border border-[#D8CFC4] rounded-lg cursor-pointer transition-all duration-300 hover:bg-[#C4B6A5] hover:text-white hover:border-[#C4B6A5]",
   sub: "font-[var(--font-sans)] text-[#6F6A64] font-light leading-relaxed",
   subStrong: "font-[var(--font-sans)] text-[#5C5751] font-light leading-relaxed",
   link: "font-[var(--font-sans)] text-[#6F6A64] font-light text-xs cursor-pointer underline decoration-[#D8CFC4] underline-offset-4 hover:text-[#C4B6A5] transition-colors bg-transparent border-none",
-  textarea: "w-full min-h-[120px] p-4 font-[var(--font-serif)] text-[1.1rem] leading-relaxed bg-transparent border border-[#D8CFC4] rounded-lg resize-y outline-none text-left",
-  textareaLg: "w-full min-h-[240px] p-5 font-[var(--font-serif)] text-lg leading-relaxed bg-transparent border border-[#D8CFC4] rounded-lg resize-y outline-none",
+  textarea: "w-full min-h-[120px] p-4 font-[var(--font-serif)] text-[1.2rem] leading-relaxed bg-transparent border border-[#D8CFC4] rounded-lg resize-y outline-none text-left",
+  textareaLg: "w-full min-h-[240px] p-5 font-[var(--font-serif)] text-xl leading-relaxed bg-transparent border border-[#D8CFC4] rounded-lg resize-y outline-none",
   divider: "w-8 h-px bg-[#C4B6A5] mx-auto",
 };
 
@@ -760,7 +819,7 @@ export default function MePesaMucho() {
           {/* Day pass — standard */}
           <div className="border border-[#D8CFC4] rounded-lg p-5 mb-4 text-center">
             <p className="text-base font-medium mb-1">Acceso 24 horas</p>
-            <p className="text-xl font-light mb-1">$2.99 <span className={`${S.sub} text-sm`}>USD</span></p>
+            <p className="text-xl font-light mb-1">$0.99 <span className={`${S.sub} text-sm`}>USD</span></p>
             <p className={`${S.sub} text-sm mb-3`}>Reflexiones ilimitadas por un día completo.</p>
             <button className={S.btnSecondary + " w-full"} onClick={() => checkout("daypass")}>Activar acceso 24h</button>
           </div>
@@ -884,8 +943,8 @@ export default function MePesaMucho() {
             </p>
           )}
 
-          {/* Accordion: ¿Cómo funciona? */}
-          <div className="mt-10">
+          {/* Accordion: ¿Cómo funciona? — separated section */}
+          <div className="mt-20 pt-10" style={{ borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "#D8CFC4" }}>
             <button
               className="font-[var(--font-sans)] text-sm text-[#6F6A64] font-light cursor-pointer bg-transparent border-none underline decoration-[#D8CFC4] underline-offset-4 hover:text-[#C4B6A5] transition-colors"
               onClick={() => setShowHowItWorks(!showHowItWorks)}
@@ -1155,55 +1214,29 @@ export default function MePesaMucho() {
     );
   }
 
-  // ── ESSAY (scrollable reflection + visible closing) ────
+  // ── ESSAY + CIERRE (clean separated screens) ────
 
-  if (step === "essay") {
-    const cleanMarkdown = (text: string): string => {
-      return text.replace(/\*\*(.*?)\*\*/g, "$1").replace(/\*(.*?)\*/g, "$1");
-    };
+  // Helper: render paragraphs with formatting
+  const renderParagraphs = (text: string, baseSize: string = "1.15rem") => {
+    const cleanMarkdown = (t: string): string => t.replace(/\*\*(.*?)\*\*/g, "$1").replace(/\*(.*?)\*/g, "$1");
+    return text.split("\n\n").map((p, i) => {
+      const t = p.trim();
+      if (!t) return null;
+      const headerMatch = t.match(/^#{1,3}\s+(.+)$/);
+      if (headerMatch) return <h2 key={i} className="text-center font-light italic mb-6 mt-2 text-[#6F6A64]" style={{ fontSize: fs.xl }}>{cleanMarkdown(headerMatch[1])}</h2>;
+      const cleaned = cleanMarkdown(t);
+      const isCita = cleaned.startsWith("<<") || cleaned.startsWith("\u00AB") || cleaned.startsWith('"');
+      const isAttrib = cleaned.startsWith("\u2014") || cleaned.startsWith("--");
+      const isQ = cleaned.endsWith("?") && cleaned.length < 200;
+      if (isCita) return <blockquote key={i} className="my-8 py-5 px-6 bg-[#EAE4DC]/50 rounded-r-md italic leading-loose" style={{ fontSize: fs.cita, borderLeftWidth: "3px", borderLeftStyle: "solid", borderLeftColor: "#C4B6A5" }}>{cleaned}</blockquote>;
+      if (isAttrib) return <p key={i} className={`${S.sub} text-sm pl-6 mb-6 font-medium`}>{cleaned}</p>;
+      if (isQ) return <p key={i} className="my-8 italic text-[#8B6F5E] text-center leading-relaxed" style={{ fontSize: fs.lg }}>{cleaned}</p>;
+      return <p key={i} className="mb-5 text-justify leading-loose" style={{ fontSize: baseSize }}>{cleaned}</p>;
+    });
+  };
 
-    const renderReflexion = () => {
-      return reflexion.split("\n\n").map((p, i) => {
-        const t = p.trim();
-        if (!t) return null;
-
-        const headerMatch = t.match(/^#{1,3}\s+(.+)$/);
-        if (headerMatch) {
-          return (
-            <h2 key={i} className="text-center font-light italic mb-6 mt-2 text-[#6F6A64]" style={{ fontSize: fs.xl }}>
-              {cleanMarkdown(headerMatch[1])}
-            </h2>
-          );
-        }
-
-        const cleaned = cleanMarkdown(t);
-        const isCita = cleaned.startsWith("<<") || cleaned.startsWith("\u00AB") || cleaned.startsWith('"');
-        const isAttrib = cleaned.startsWith("\u2014") || cleaned.startsWith("--");
-        const isQ = cleaned.endsWith("?") && cleaned.length < 200;
-
-        if (isCita) return (
-          <blockquote
-            key={i}
-            className="my-8 py-5 px-6 bg-[#EAE4DC]/50 rounded-r-md italic leading-loose"
-            style={{ fontSize: fs.cita, borderLeftWidth: "3px", borderLeftStyle: "solid", borderLeftColor: "#C4B6A5" }}
-          >
-            {cleaned}
-          </blockquote>
-        );
-        if (isAttrib) return <p key={i} className={`${S.sub} text-sm pl-6 mb-6 font-medium`}>{cleaned}</p>;
-        if (isQ) return (
-          <p key={i} className="my-8 italic text-[#8B6F5E] text-center leading-relaxed" style={{ fontSize: fs.lg }}>
-            {cleaned}
-          </p>
-        );
-        return (
-          <p key={i} className="mb-5 text-justify leading-loose" style={{ fontSize: fs.base }}>
-            {cleaned}
-          </p>
-        );
-      });
-    };
-
+  // Essay page — main reflection (cierreStep 0 = reading, click "Quiero responder" goes to cierreStep 1)
+  if (step === "essay" && cierreStep <= 0) {
     return (
       <div className={`min-h-screen bg-[#F3EFEA] text-[#3A3733] font-[var(--font-serif)] animate-fade-in`} key={fadeKey}>
         {showDisclaimer && <DisclaimerModal />}
@@ -1213,7 +1246,6 @@ export default function MePesaMucho() {
         {showFuentes && <FuentesModal />}
         <FontSizeToggle />
 
-        {/* ── Logo header section ── */}
         <div className="flex flex-col items-center pt-8 pb-3 sm:pt-10 sm:pb-4" style={{ minHeight: "14vh" }}>
           <div className="flex flex-col items-center justify-end flex-1 pb-3">
             <button onClick={reiniciar} className="flex flex-col items-center bg-transparent border-none cursor-pointer" aria-label="Volver al inicio">
@@ -1221,281 +1253,275 @@ export default function MePesaMucho() {
               <p className="text-lg sm:text-xl font-light tracking-tight mt-2 text-[#3A3733]/80">mepesamucho</p>
             </button>
             <div className="w-10 h-px bg-[#C4B6A5] mt-3 mb-2" />
-            <p className="font-[var(--font-sans)] text-xs uppercase tracking-[0.2em] text-[#6F6A64] font-light">
-              {MARCOS[marco!]?.nombre}
-            </p>
+            <p className="font-[var(--font-sans)] text-xs uppercase tracking-[0.2em] text-[#6F6A64] font-light">{MARCOS[marco!]?.nombre}</p>
           </div>
         </div>
 
-        {/* ── "Lee despacio" ── */}
         <div className="text-center mb-4 px-5">
-          <p className="font-[var(--font-sans)] text-sm sm:text-base italic text-[#8B6F5E] font-light tracking-wide">
-            Lee despacio. Esto fue escrito para ti.
-          </p>
+          <p className="font-[var(--font-sans)] text-sm sm:text-base italic text-[#8B6F5E] font-light tracking-wide">Lee despacio. Esto fue escrito para ti.</p>
         </div>
 
-        {/* ── Main content area (centered 800px) ── */}
         <div style={{ maxWidth: "800px", width: "100%", margin: "0 auto", paddingLeft: "1.5rem", paddingRight: "1.5rem", paddingBottom: "3rem" }}>
-
-          {/* ── Reflection body in scrollable card with scroll hint ── */}
           <div className={`relative ${showScrollHint ? "scroll-hint-bottom" : ""}`}>
-            <div
-              ref={scrollCardRef}
-              className="bg-white/40 border border-[#D8CFC4] rounded-lg p-6 sm:p-8"
-              style={{ maxHeight: "60vh", overflowY: "auto" }}
-              role="article"
-              aria-label="Tu reflexión personalizada"
-            >
-              <div className="leading-loose">{renderReflexion()}</div>
+            <div ref={scrollCardRef} className="bg-white/40 border border-[#D8CFC4] rounded-lg p-6 sm:p-8" style={{ maxHeight: "60vh", overflowY: "auto" }} role="article" aria-label="Tu reflexión personalizada">
+              <div className="leading-loose">{renderParagraphs(reflexion)}</div>
             </div>
           </div>
 
-          {/* ── "Ver fuentes citadas" button ── */}
-          <div className="text-center mt-5">
-            <button
-              className={`${S.link} text-sm`}
-              onClick={() => setShowFuentes(true)}
-              aria-label={`Ver ${citasUsadas.length} fuentes citadas`}
-            >
+          <div className="flex justify-center gap-4 mt-6 flex-wrap">
+            <button className={S.btnSm} onClick={() => setShowFuentes(true)}>
               Ver fuentes citadas ({citasUsadas.length})
             </button>
-          </div>
-
-          {/* Closing question flow */}
-          <div className="mt-6 py-6 px-5 sm:px-6 text-center border-t border-b border-[#D8CFC4]">
-
-            {cierreStep === 0 && (
-              <>
-                <p className="text-lg italic leading-relaxed mb-4">{PREGUNTAS_CIERRE[cIdx]}</p>
-                {!showCierreInput ? (
-                  <button className={S.btnSm} onClick={() => setShowCierreInput(true)}>Quiero responder</button>
-                ) : (
-                  <div>
-                    <label htmlFor="cierre-resp" className="sr-only">Tu respuesta</label>
-                    <textarea id="cierre-resp" value={cierreTexto} onChange={handleCierreTextoChange} placeholder="Escribe lo que quieras..." autoFocus className={`${S.textarea} mb-3`} />
-                    {cierreTexto.trim() && <button className={S.btnSm} onClick={() => setCierreStep(1)}>Compartir</button>}
-                  </div>
-                )}
-              </>
-            )}
-
-            {cierreStep === 1 && (
-              <div className="text-left animate-fade-in">
-                <p className="text-sm italic text-[#6F6A64] mb-4 pl-3" style={{ borderLeftWidth: "2px", borderLeftStyle: "solid", borderLeftColor: "#D8CFC4" }}>{cierreTexto}</p>
-                <p className="text-[1.05rem] leading-loose mb-5">{PROFUNDIZACIONES[cIdx]}</p>
-                <p className="text-lg italic text-center leading-relaxed mb-4">{PREGUNTAS_SEGUNDO[cIdx]}</p>
-                <label htmlFor="cierre-resp2" className="sr-only">Tu respuesta a la segunda pregunta</label>
-                <textarea id="cierre-resp2" value={cierreTexto2} onChange={handleCierreTexto2Change} placeholder="Escribe lo que quieras..." autoFocus className={`${S.textarea} mb-3`} />
-                {cierreTexto2.trim() && (
-                  <div className="text-center">
-                    <button className={S.btnSm} onClick={() => { setCierreStep(2); generarContinuacion(); }}>Continuar</button>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {cierreStep === 2 && (
-              <div className="animate-fade-in">
-                {/* Loading state */}
-                {continuacionLoading && (
-                  <div className="py-8 flex flex-col items-center">
-                    <div className="relative mb-6">
-                      <div className="w-12 h-12 rounded-full bg-[#C4B6A5]/20 animate-breathe-glow" />
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-6 h-6 rounded-full bg-[#C4B6A5]/30 animate-breathe" />
-                      </div>
-                    </div>
-                    <p className={`${S.sub} italic text-sm`}>Preparando algo más para ti...</p>
-                  </div>
-                )}
-
-                {/* Continuation ready — censored preview or unlocked */}
-                {!continuacionLoading && continuacion && (() => {
-                  const paragraphs = continuacion.split("\n\n").filter((p: string) => p.trim());
-                  const visibleCount = 2;
-                  const visibleParagraphs = paragraphs.slice(0, visibleCount);
-                  const censoredParagraphs = paragraphs.slice(visibleCount);
-
-                  return (
-                    <div className="text-left">
-                      {/* Visible paragraphs */}
-                      {visibleParagraphs.map((p: string, i: number) => {
-                        const t = p.trim();
-                        const isCita = t.startsWith("<<") || t.startsWith("\u00AB") || t.startsWith('"');
-                        const isAttrib = t.startsWith("\u2014") || t.startsWith("--");
-                        if (isCita) return (
-                          <blockquote key={i} className="my-6 py-4 px-5 bg-[#EAE4DC]/50 rounded-r-md italic leading-loose text-base" style={{ borderLeftWidth: "3px", borderLeftStyle: "solid", borderLeftColor: "#C4B6A5" }}>
-                            {t}
-                          </blockquote>
-                        );
-                        if (isAttrib) return <p key={i} className={`${S.sub} text-sm pl-5 mb-5 font-medium`}>{t}</p>;
-                        return <p key={i} className="mb-4 text-[1.05rem] leading-loose">{t}</p>;
-                      })}
-
-                      {/* Censored section or unlocked */}
-                      {continuacionDesbloqueada ? (
-                        <>
-                          {censoredParagraphs.map((p: string, i: number) => {
-                            const t = p.trim();
-                            const isCita = t.startsWith("<<") || t.startsWith("\u00AB") || t.startsWith('"');
-                            const isAttrib = t.startsWith("\u2014") || t.startsWith("--");
-                            if (isCita) return (
-                              <blockquote key={`u${i}`} className="my-6 py-4 px-5 bg-[#EAE4DC]/50 rounded-r-md italic leading-loose text-base" style={{ borderLeftWidth: "3px", borderLeftStyle: "solid", borderLeftColor: "#C4B6A5" }}>
-                                {t}
-                              </blockquote>
-                            );
-                            if (isAttrib) return <p key={`u${i}`} className={`${S.sub} text-sm pl-5 mb-5 font-medium`}>{t}</p>;
-                            return <p key={`u${i}`} className="mb-4 text-[1.05rem] leading-loose">{t}</p>;
-                          })}
-                          {/* Dialog section */}
-                          <div className="mt-8 pt-6" style={{ borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "#D8CFC4" }}>
-
-                            {/* Dialog turns */}
-                            {dialogTurnos.map((turno, i) => (
-                              <div key={i} className={`mb-5 animate-fade-in ${turno.role === "user" ? "text-right" : "text-left"}`}>
-                                {turno.role === "user" ? (
-                                  <div className="inline-block text-left bg-[#EAE4DC]/60 rounded-lg p-4 max-w-[85%]">
-                                    <p className="text-sm leading-relaxed">{turno.content}</p>
-                                  </div>
-                                ) : (
-                                  <div className="max-w-[95%]">
-                                    {turno.content.split("\n\n").map((p, j) => {
-                                      const t = p.trim();
-                                      if (!t) return null;
-                                      const isCita = t.startsWith("<<") || t.startsWith("\u00AB") || t.startsWith('"');
-                                      const isAttrib = t.startsWith("\u2014") || t.startsWith("--");
-                                      if (isCita) return (
-                                        <blockquote key={j} className="my-4 py-3 px-4 bg-[#EAE4DC]/40 rounded-r-md italic text-sm leading-relaxed" style={{ borderLeftWidth: "2px", borderLeftStyle: "solid", borderLeftColor: "#C4B6A5" }}>
-                                          {t}
-                                        </blockquote>
-                                      );
-                                      if (isAttrib) return <p key={j} className={`${S.sub} text-xs pl-4 mb-3 font-medium`}>{t}</p>;
-                                      return <p key={j} className="mb-3 text-sm leading-relaxed">{t}</p>;
-                                    })}
-                                  </div>
-                                )}
-                              </div>
-                            ))}
-
-                            {/* Loading indicator */}
-                            {dialogLoading && (
-                              <div className="mb-5 flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full bg-[#C4B6A5] animate-pulse-slow" />
-                                <div className="w-2 h-2 rounded-full bg-[#C4B6A5] animate-pulse-slow" style={{ animationDelay: "0.3s" }} />
-                                <div className="w-2 h-2 rounded-full bg-[#C4B6A5] animate-pulse-slow" style={{ animationDelay: "0.6s" }} />
-                              </div>
-                            )}
-
-                            <div ref={dialogEndRef} />
-
-                            {/* Dialog closed — show all citas */}
-                            {dialogCerrado ? (
-                              <div className="text-center animate-fade-in mt-6">
-                                <div className="w-10 h-px bg-[#C4B6A5] mx-auto mb-5" />
-                                <p className="text-lg italic mb-2">Gracias por este momento.</p>
-                                <p className={`${S.sub} text-sm mb-6`}>Aquí están todas las fuentes que acompañaron tu reflexión.</p>
-                                <div className="text-left">
-                                  {allCitas.map((c, i) => (
-                                    <div key={i} className="mb-4 pl-4" style={{ borderLeftWidth: "2px", borderLeftStyle: "solid", borderLeftColor: "#D8CFC4" }}>
-                                      <p className="text-sm font-medium mb-0.5">{c.source}</p>
-                                      <p className={`${S.sub} text-sm italic leading-snug`}>{c.text}</p>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            ) : (
-                              /* Dialog input */
-                              <div className="mt-4">
-                                <label htmlFor="dialog-input" className="sr-only">Tu respuesta</label>
-                                <textarea
-                                  id="dialog-input"
-                                  value={dialogInput}
-                                  onChange={(e) => { setDialogInput(e.target.value); checkCrisisInText(e.target.value); }}
-                                  placeholder="Escribe lo que quieras..."
-                                  className={`${S.textarea} text-sm`}
-                                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && dialogInput.trim()) { e.preventDefault(); enviarDialogo(dialogInput); } }}
-                                />
-                                <div className="flex items-center justify-between mt-3">
-                                  <button
-                                    className={`${S.btn} text-sm px-6 py-2.5 ${!dialogInput.trim() || dialogLoading ? "opacity-40 cursor-default" : ""}`}
-                                    disabled={!dialogInput.trim() || dialogLoading}
-                                    onClick={() => enviarDialogo(dialogInput)}
-                                  >
-                                    {dialogLoading ? "..." : "Responder"}
-                                  </button>
-                                  {dialogTurnos.length >= 2 && (
-                                    <button
-                                      className={`${S.link} text-sm`}
-                                      onClick={cerrarDialogo}
-                                    >
-                                      Cerrar conversación
-                                    </button>
-                                  )}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          {/* Blurred/censored paragraphs with overlay */}
-                          <div className="reflection-censored" style={{ minHeight: "180px" }}>
-                            <div className="censored-blur">
-                              {censoredParagraphs.map((p: string, i: number) => (
-                                <p key={`b${i}`} className="mb-4 text-[1.05rem] leading-loose">{p.trim()}</p>
-                              ))}
-                            </div>
-                            <div className="censored-overlay" />
-                          </div>
-
-                          {/* Paywall */}
-                          <div className="text-center mt-4">
-                            <p className="text-lg italic leading-relaxed mb-1">Lo que estás tocando merece más espacio.</p>
-                            <p className={`${S.sub} text-sm mb-5`}>Desbloquea la reflexión completa.</p>
-                            <div className="flex flex-col gap-3 items-center max-w-[360px] mx-auto">
-                              <button className={`${S.btn} w-full`} onClick={() => checkout("single")}>Solo esta reflexión — $0.50</button>
-                              <button className={`${S.sub} text-sm cursor-pointer bg-transparent border-none hover:text-[#C4B6A5] transition-colors`} onClick={() => checkout("daypass")}>
-                                Acceso 24h · $2.99
-                              </button>
-                              <button className={`${S.sub} text-xs cursor-pointer bg-transparent border-none hover:text-[#C4B6A5] transition-colors`} onClick={() => checkout("subscription")}>
-                                Suscripción mensual · $4.99/mes
-                              </button>
-                            </div>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  );
-                })()}
-
-                {/* Error state — fallback to simple paywall */}
-                {!continuacionLoading && !continuacion && (
-                  <div className="text-center">
-                    <p className="text-[1.05rem] italic leading-loose mb-2">Lo que estás tocando merece más espacio.</p>
-                    <p className={`${S.sub} text-sm mb-5`}>Puedes seguir profundizando ahora mismo.</p>
-                    <div className="flex flex-col gap-3 items-center">
-                      <button className={`${S.btn} w-full`} onClick={() => checkout("single")}>Solo esta reflexión — $0.50</button>
-                      <button className={`${S.sub} text-sm cursor-pointer bg-transparent border-none hover:text-[#C4B6A5] transition-colors`} onClick={() => checkout("daypass")}>
-                        Acceso 24h · $2.99
-                      </button>
-                      <button className={`${S.sub} text-xs cursor-pointer bg-transparent border-none hover:text-[#C4B6A5] transition-colors`} onClick={() => checkout("subscription")}>
-                        Suscripción mensual · $4.99/mes
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Return */}
-          <div className="text-center mt-8">
-            <button onClick={reiniciar} className={`${S.link} underline underline-offset-4 decoration-[#C4B6A5] text-sm`}>
-              Volver cuando lo necesite
+            <button
+              className={S.btnSm}
+              onClick={() => descargarReflexion(reflexion, citasUsadas, MARCOS[marco!]?.nombre || "")}
+            >
+              Descargar reflexión
             </button>
           </div>
 
-          {/* Footer */}
+          {/* Invitation to respond */}
+          <div className="mt-8 py-6 text-center" style={{ borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "#D8CFC4" }}>
+            <p className="text-lg italic leading-relaxed mb-5">{PREGUNTAS_CIERRE[cIdx]}</p>
+            <button className={S.btnSm} onClick={() => { setShowCierreInput(true); setCierreStep(1); }}>Quiero responder</button>
+          </div>
+
+          <div className="text-center mt-6">
+            <button onClick={reiniciar} className={`${S.link} underline underline-offset-4 decoration-[#C4B6A5] text-sm`}>Volver cuando lo necesite</button>
+          </div>
+          <Footer />
+        </div>
+      </div>
+    );
+  }
+
+  // Cierre step 1 — clean centered screen for first answer
+  if (step === "essay" && cierreStep === 1) {
+    return (
+      <div className={`${S.page} animate-fade-in pt-16`} key={`c1-${fadeKey}`}>
+        <SiteHeader />
+        {showCrisis && <CrisisModal />}
+        {showCrisisBanner && <CrisisBanner />}
+        <div className={`${S.box} text-center`}>
+          <p className={`${S.sub} text-sm mb-3`}>Sobre tu reflexión:</p>
+          <h2 className="text-xl font-normal italic leading-snug mb-6">{PREGUNTAS_CIERRE[cIdx]}</h2>
+          <label htmlFor="cierre-resp" className="sr-only">Tu respuesta</label>
+          <textarea id="cierre-resp" value={cierreTexto} onChange={handleCierreTextoChange} placeholder="Escribe lo que quieras..." autoFocus className={S.textarea} />
+          <div className="mt-5 flex flex-col items-center gap-4">
+            {cierreTexto.trim() && <button className={S.btn} onClick={() => setCierreStep(2)}>Compartir</button>}
+            <button className={`${S.link} text-sm`} onClick={() => { setCierreStep(0); setShowCierreInput(false); }}>Volver a mi reflexión</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Cierre step 2 — profundización + second question (clean screen)
+  if (step === "essay" && cierreStep === 2) {
+    return (
+      <div className={`${S.page} animate-fade-in pt-16`} key={`c2-${fadeKey}`}>
+        <SiteHeader />
+        {showCrisis && <CrisisModal />}
+        {showCrisisBanner && <CrisisBanner />}
+        <div className={`${S.box}`}>
+          <p className="text-sm italic text-[#6F6A64] mb-5 pl-4" style={{ borderLeftWidth: "2px", borderLeftStyle: "solid", borderLeftColor: "#D8CFC4" }}>{cierreTexto}</p>
+          <p className="text-[1.15rem] leading-loose mb-6">{PROFUNDIZACIONES[cIdx]}</p>
+          <h2 className="text-lg italic text-center leading-relaxed mb-5">{PREGUNTAS_SEGUNDO[cIdx]}</h2>
+          <label htmlFor="cierre-resp2" className="sr-only">Tu respuesta a la segunda pregunta</label>
+          <textarea id="cierre-resp2" value={cierreTexto2} onChange={handleCierreTexto2Change} placeholder="Escribe lo que quieras..." autoFocus className={S.textarea} />
+          <div className="mt-5 flex flex-col items-center gap-4">
+            {cierreTexto2.trim() && <button className={S.btn} onClick={() => { setCierreStep(3); generarContinuacion(); }}>Continuar</button>}
+            <button className={`${S.link} text-sm`} onClick={() => setCierreStep(1)}>Volver</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Cierre step 3 — generating continuation (clean centered, like "generating")
+  if (step === "essay" && cierreStep === 3 && continuacionLoading) {
+    return (
+      <div className={S.page}>
+        {showCrisisBanner && <CrisisBanner />}
+        <div className={`${S.box} text-center flex flex-col items-center`}>
+          <div className="relative mb-8">
+            <div className="w-16 h-16 rounded-full bg-[#C4B6A5]/20 animate-breathe-glow" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-full bg-[#C4B6A5]/30 animate-breathe" />
+            </div>
+          </div>
+          <p className={`${S.sub} italic text-base`}>Preparando algo más para ti...</p>
+          <p className={`${S.sub} text-xs mt-4`}>Esto puede tomar unos segundos</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Cierre step 3 — continuation ready (censored or unlocked) — in a clean card
+  if (step === "essay" && cierreStep === 3 && !continuacionLoading) {
+    const paragraphs = continuacion ? continuacion.split("\n\n").filter((p: string) => p.trim()) : [];
+    const visibleParagraphs = paragraphs.slice(0, 2);
+    const censoredParagraphs = paragraphs.slice(2);
+
+    // If no continuacion generated, show fallback paywall
+    if (!continuacion) {
+      return (
+        <div className={`${S.page} animate-fade-in pt-16`} key={`c3f-${fadeKey}`}>
+          <SiteHeader />
+          <div className={`${S.box} text-center`}>
+            <p className="text-xl italic leading-relaxed mb-2">Lo que estás tocando merece más espacio.</p>
+            <p className={`${S.sub} text-base mb-6`}>Puedes seguir profundizando ahora mismo.</p>
+            <div className="flex flex-col gap-3 items-center max-w-[360px] mx-auto">
+              <button className={`${S.btn} w-full`} onClick={() => checkout("single")}>Solo esta reflexión — $0.50</button>
+              <button className={`${S.sub} text-sm cursor-pointer bg-transparent border-none hover:text-[#C4B6A5] transition-colors`} onClick={() => checkout("daypass")}>Acceso 24h · $0.99</button>
+              <button className={`${S.sub} text-xs cursor-pointer bg-transparent border-none hover:text-[#C4B6A5] transition-colors`} onClick={() => checkout("subscription")}>Suscripción mensual · $4.99/mes</button>
+            </div>
+            <div className="mt-6"><button className={`${S.link} text-sm`} onClick={() => setCierreStep(0)}>Volver a mi reflexión</button></div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className={`min-h-screen bg-[#F3EFEA] text-[#3A3733] font-[var(--font-serif)] animate-fade-in`} key={`c3-${fadeKey}`}>
+        <SiteHeader />
+        {showDisclaimer && <DisclaimerModal />}
+        {showCrisis && <CrisisModal />}
+        {showCrisisBanner && <CrisisBanner />}
+
+        <div style={{ maxWidth: "800px", width: "100%", margin: "0 auto", paddingLeft: "1.5rem", paddingRight: "1.5rem", paddingTop: "5rem", paddingBottom: "3rem" }}>
+
+          {/* Continuation card */}
+          <div className="bg-white/40 border border-[#D8CFC4] rounded-lg p-6 sm:p-8">
+            <div className="leading-loose">
+              {/* Visible paragraphs */}
+              {visibleParagraphs.map((p: string, i: number) => {
+                const t = p.trim();
+                const isCita = t.startsWith("<<") || t.startsWith("\u00AB") || t.startsWith('"');
+                const isAttrib = t.startsWith("\u2014") || t.startsWith("--");
+                if (isCita) return <blockquote key={i} className="my-6 py-4 px-5 bg-[#EAE4DC]/50 rounded-r-md italic leading-loose" style={{ fontSize: "1.1rem", borderLeftWidth: "3px", borderLeftStyle: "solid", borderLeftColor: "#C4B6A5" }}>{t}</blockquote>;
+                if (isAttrib) return <p key={i} className={`${S.sub} text-sm pl-5 mb-5 font-medium`}>{t}</p>;
+                return <p key={i} className="mb-5 text-justify leading-loose" style={{ fontSize: "1.15rem" }}>{t}</p>;
+              })}
+
+              {/* Censored or unlocked */}
+              {continuacionDesbloqueada ? (
+                <>
+                  {censoredParagraphs.map((p: string, i: number) => {
+                    const t = p.trim();
+                    const isCita = t.startsWith("<<") || t.startsWith("\u00AB") || t.startsWith('"');
+                    const isAttrib = t.startsWith("\u2014") || t.startsWith("--");
+                    if (isCita) return <blockquote key={`u${i}`} className="my-6 py-4 px-5 bg-[#EAE4DC]/50 rounded-r-md italic leading-loose" style={{ fontSize: "1.1rem", borderLeftWidth: "3px", borderLeftStyle: "solid", borderLeftColor: "#C4B6A5" }}>{t}</blockquote>;
+                    if (isAttrib) return <p key={`u${i}`} className={`${S.sub} text-sm pl-5 mb-5 font-medium`}>{t}</p>;
+                    return <p key={`u${i}`} className="mb-5 text-justify leading-loose" style={{ fontSize: "1.15rem" }}>{t}</p>;
+                  })}
+                </>
+              ) : (
+                <>
+                  {/* Blurred with paywall overlay inside the card */}
+                  <div className="reflection-censored" style={{ minHeight: "200px" }}>
+                    <div className="censored-blur">
+                      {censoredParagraphs.map((p: string, i: number) => (
+                        <p key={`b${i}`} className="mb-5 text-justify leading-loose" style={{ fontSize: "1.15rem" }}>{p.trim()}</p>
+                      ))}
+                    </div>
+                    <div className="censored-overlay">
+                      <div className="bg-[#F3EFEA] border border-[#D8CFC4] rounded-lg p-6 mx-4 mb-4 text-center" style={{ width: "calc(100% - 2rem)", maxWidth: "380px" }}>
+                        <p className="text-lg italic leading-relaxed mb-1">Lo que estás tocando merece más espacio.</p>
+                        <p className={`${S.sub} text-sm mb-4`}>Desbloquea la reflexión completa.</p>
+                        <button className={`${S.btn} w-full mb-3`} onClick={() => checkout("single")}>Solo esta reflexión — $0.50</button>
+                        <button className={`${S.sub} text-sm cursor-pointer bg-transparent border-none hover:text-[#C4B6A5] transition-colors block mx-auto mb-1`} onClick={() => checkout("daypass")}>Acceso 24h · $0.99</button>
+                        <button className={`${S.sub} text-xs cursor-pointer bg-transparent border-none hover:text-[#C4B6A5] transition-colors block mx-auto`} onClick={() => checkout("subscription")}>Suscripción mensual · $4.99/mes</button>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Dialog section (only when unlocked) */}
+          {continuacionDesbloqueada && (
+            <div className="mt-8 pt-6" style={{ borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "#D8CFC4" }}>
+              {dialogTurnos.map((turno, i) => (
+                <div key={i} className={`mb-5 animate-fade-in ${turno.role === "user" ? "text-right" : "text-left"}`}>
+                  {turno.role === "user" ? (
+                    <div className="inline-block text-left bg-[#EAE4DC]/60 rounded-lg p-4 max-w-[85%]">
+                      <p className="text-[0.95rem] leading-relaxed">{turno.content}</p>
+                    </div>
+                  ) : (
+                    <div className="max-w-[95%]">
+                      {turno.content.split("\n\n").map((p, j) => {
+                        const t = p.trim();
+                        if (!t) return null;
+                        const isCita = t.startsWith("<<") || t.startsWith("\u00AB") || t.startsWith('"');
+                        const isAttrib = t.startsWith("\u2014") || t.startsWith("--");
+                        if (isCita) return <blockquote key={j} className="my-4 py-3 px-4 bg-[#EAE4DC]/40 rounded-r-md italic text-[0.95rem] leading-relaxed" style={{ borderLeftWidth: "2px", borderLeftStyle: "solid", borderLeftColor: "#C4B6A5" }}>{t}</blockquote>;
+                        if (isAttrib) return <p key={j} className={`${S.sub} text-xs pl-4 mb-3 font-medium`}>{t}</p>;
+                        return <p key={j} className="mb-3 text-[0.95rem] leading-relaxed">{t}</p>;
+                      })}
+                    </div>
+                  )}
+                </div>
+              ))}
+
+              {dialogLoading && (
+                <div className="mb-5 flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-[#C4B6A5] animate-pulse-slow" />
+                  <div className="w-2 h-2 rounded-full bg-[#C4B6A5] animate-pulse-slow" style={{ animationDelay: "0.3s" }} />
+                  <div className="w-2 h-2 rounded-full bg-[#C4B6A5] animate-pulse-slow" style={{ animationDelay: "0.6s" }} />
+                </div>
+              )}
+
+              <div ref={dialogEndRef} />
+
+              {dialogCerrado ? (
+                <div className="text-center animate-fade-in mt-6">
+                  <div className="w-10 h-px bg-[#C4B6A5] mx-auto mb-5" />
+                  <p className="text-lg italic mb-2">Gracias por este momento.</p>
+                  <p className={`${S.sub} text-sm mb-6`}>Aquí están todas las fuentes que acompañaron tu reflexión.</p>
+                  <div className="text-left">
+                    {allCitas.map((c, i) => (
+                      <div key={i} className="mb-4 pl-4" style={{ borderLeftWidth: "2px", borderLeftStyle: "solid", borderLeftColor: "#D8CFC4" }}>
+                        <p className="text-sm font-medium mb-0.5">{c.source}</p>
+                        <p className={`${S.sub} text-sm italic leading-snug`}>{c.text}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-4">
+                  <label htmlFor="dialog-input" className="sr-only">Tu respuesta</label>
+                  <textarea
+                    id="dialog-input"
+                    value={dialogInput}
+                    onChange={(e) => { setDialogInput(e.target.value); checkCrisisInText(e.target.value); }}
+                    placeholder="Escribe lo que quieras..."
+                    className={S.textarea}
+                    onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && dialogInput.trim()) { e.preventDefault(); enviarDialogo(dialogInput); } }}
+                  />
+                  <div className="flex items-center justify-between mt-3">
+                    <button
+                      className={`${S.btn} text-[0.95rem] px-6 py-2.5 ${!dialogInput.trim() || dialogLoading ? "opacity-40 cursor-default" : ""}`}
+                      disabled={!dialogInput.trim() || dialogLoading}
+                      onClick={() => enviarDialogo(dialogInput)}
+                    >
+                      {dialogLoading ? "..." : "Responder"}
+                    </button>
+                    {dialogTurnos.length >= 2 && (
+                      <button className={`${S.link} text-sm`} onClick={cerrarDialogo}>Cerrar conversación</button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Navigation */}
+          <div className="text-center mt-8 flex flex-col items-center gap-3">
+            <button className={`${S.link} text-sm`} onClick={() => setCierreStep(0)}>Volver a mi reflexión anterior</button>
+            <button onClick={reiniciar} className={`${S.link} underline underline-offset-4 decoration-[#C4B6A5] text-sm`}>Volver al inicio</button>
+          </div>
           <Footer />
         </div>
       </div>
