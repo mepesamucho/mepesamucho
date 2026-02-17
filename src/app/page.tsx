@@ -904,23 +904,23 @@ export default function MePesaMucho() {
           </p>
 
           {/* Single — featured card, solid button */}
-          <div className="bg-[#EAE4DC] border-2 border-[#7A8B6F] rounded-lg p-6 mb-4 text-center transition-shadow duration-300 hover:shadow-lg">
+          <div className="card-hover-lift bg-[#EAE4DC] border-2 border-[#7A8B6F] rounded-lg p-6 mb-4 text-center">
             <p className="text-lg font-medium mb-1">Continuar conversación actual</p>
             <p className="text-2xl font-light mb-2">$0.50 <span className={`${S.sub} text-sm`}>USD</span></p>
             <p className={`${S.sub} text-sm mb-4`}>Desbloquea esta reflexión completa y continúa tu conversación. Incluye descarga en PDF.</p>
-            <button className={`${S.btn} w-full`} onClick={() => checkout("single")} aria-label="Desbloquear esta reflexión por $0.50">Desbloquear esta reflexión</button>
+            <button className={`${S.btn} btn-primary-glow w-full`} onClick={() => checkout("single")} aria-label="Desbloquear esta reflexión por $0.50">Desbloquear esta reflexión</button>
           </div>
 
           {/* Day pass — standard card, outline button */}
-          <div className="border border-[#D8CFC4] rounded-lg p-5 mb-4 text-center transition-shadow duration-300 hover:shadow-md">
+          <div className="card-hover-lift border border-[#D8CFC4] rounded-lg p-5 mb-4 text-center">
             <p className="text-base font-medium mb-1">Acceso 24 horas</p>
-            <p className="text-xl font-light mb-1">$2.99 <span className={`${S.sub} text-sm`}>USD</span></p>
+            <p className="text-xl font-light mb-1">$0.99 <span className={`${S.sub} text-sm`}>USD</span></p>
             <p className={`${S.sub} text-sm mb-3`}>Reflexiones ilimitadas por un día completo. Incluye descarga en PDF de cada reflexión.</p>
-            <button className={S.btnSecondary + " w-full"} onClick={() => checkout("daypass")} aria-label="Activar acceso 24 horas por $2.99">Activar acceso 24h</button>
+            <button className={S.btnSecondary + " w-full"} onClick={() => checkout("daypass")} aria-label="Activar acceso 24 horas por $0.99">Activar acceso 24h</button>
           </div>
 
           {/* Subscription — discrete card, light outline button */}
-          <div className="border border-[#D8CFC4]/70 rounded-lg p-5 mb-6 text-center transition-shadow duration-300 hover:shadow-sm">
+          <div className="card-hover-lift border border-[#D8CFC4]/70 rounded-lg p-5 mb-6 text-center">
             <p className="text-base font-medium mb-1">Suscripción mensual</p>
             <p className="text-xl font-light mb-1">$4.99 <span className={`${S.sub} text-sm`}>USD / mes</span></p>
             <p className={`${S.sub} text-sm mb-3`}>Reflexiones ilimitadas, conversaciones guiadas, descarga PDF y acceso desde cualquier dispositivo.</p>
@@ -1443,8 +1443,8 @@ export default function MePesaMucho() {
             <p className="text-xl italic leading-relaxed mb-2">Lo que estás tocando merece más espacio.</p>
             <p className={`${S.sub} text-base mb-6`}>Puedes seguir profundizando ahora mismo.</p>
             <div className="flex flex-col gap-3 items-center max-w-[380px] mx-auto">
-              <button className={`${S.btn} w-full`} onClick={() => checkout("single")} aria-label="Desbloquear por $0.50">Continuar conversación — $0.50</button>
-              <button className={`${S.btnSecondary} w-full text-sm`} onClick={() => checkout("daypass")} aria-label="Acceso 24h por $2.99">Acceso 24h — $2.99</button>
+              <button className={`${S.btn} btn-primary-glow w-full`} onClick={() => checkout("single")} aria-label="Desbloquear por $0.50">Continuar conversación — $0.50</button>
+              <button className={`${S.btnSecondary} w-full text-sm`} onClick={() => checkout("daypass")} aria-label="Acceso 24h por $0.99">Acceso 24h — $0.99</button>
               <button className={`${S.sub} text-xs cursor-pointer bg-transparent border-none hover:text-[#7A8B6F] transition-colors`} onClick={() => checkout("subscription")} aria-label="Suscripción mensual $4.99">Suscripción mensual · $4.99/mes</button>
             </div>
             <div className="mt-6"><button className={`${S.link} text-sm`} onClick={() => setCierreStep(0)}>Volver a mi reflexión</button></div>
@@ -1500,8 +1500,8 @@ export default function MePesaMucho() {
                       <div className="bg-[#F3EFEA] border border-[#D8CFC4] rounded-lg p-6 mx-4 mb-4 text-center" style={{ width: "calc(100% - 2rem)", maxWidth: "400px" }}>
                         <p className="text-lg italic leading-relaxed mb-1">Desbloquear la reflexión completa</p>
                         <p className={`${S.sub} text-sm mb-4`}>Lo que estás tocando merece más espacio.</p>
-                        <button className={`${S.btn} w-full mb-3`} onClick={() => checkout("single")} aria-label="Desbloquear por $0.50">Continuar conversación — $0.50</button>
-                        <button className={`${S.btnSecondary} w-full mb-2 text-sm`} onClick={() => checkout("daypass")} aria-label="Acceso 24h por $2.99">Acceso 24h — $2.99</button>
+                        <button className={`${S.btn} btn-primary-glow w-full mb-3`} onClick={() => checkout("single")} aria-label="Desbloquear por $0.50">Continuar conversación — $0.50</button>
+                        <button className={`${S.btnSecondary} w-full mb-2 text-sm`} onClick={() => checkout("daypass")} aria-label="Acceso 24h por $0.99">Acceso 24h — $0.99</button>
                         <button className={`${S.sub} text-xs cursor-pointer bg-transparent border-none hover:text-[#7A8B6F] transition-colors block mx-auto`} onClick={() => checkout("subscription")} aria-label="Suscripción mensual $4.99">Suscripción mensual · $4.99/mes</button>
                       </div>
                     </div>
