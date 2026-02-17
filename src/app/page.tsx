@@ -444,7 +444,7 @@ export default function MePesaMucho() {
       <div className={`${S.page} animate-fade-in`} key={fadeKey}>
         {showDisclaimer && <DisclaimerModal />}
         <div className={`${S.box} text-center`}>
-          <LogoIcon size={36} />
+          <div className="flex justify-center"><LogoIcon size={36} /></div>
           <h1 className="text-4xl font-light tracking-tight mb-1 mt-3">mepesamucho</h1>
           <div className="w-10 h-px bg-[#C4B6A5] mx-auto my-6" />
           <p className="text-lg text-[#6F6A64] italic leading-relaxed mb-3">
@@ -620,33 +620,50 @@ export default function MePesaMucho() {
   // ── ESSAY (redesigned layout) ────────────────
 
   if (step === "essay") {
+    // Strip markdown formatting from text
+    const cleanMarkdown = (text: string): string => {
+      return text.replace(/\*\*(.*?)\*\*/g, "$1").replace(/\*(.*?)\*/g, "$1");
+    };
+
     const renderReflexion = () => {
       return reflexion.split("\n\n").map((p, i) => {
         const t = p.trim();
         if (!t) return null;
-        const isCita = t.startsWith("<<") || t.startsWith("\u00AB") || t.startsWith('"');
-        const isAttrib = t.startsWith("\u2014") || t.startsWith("--");
-        const isQ = t.endsWith("?") && t.length < 200;
 
-        // IMPROVED: Citations with subtle background, left border, larger italic text
+        // Handle markdown headers (# Title)
+        const headerMatch = t.match(/^#{1,3}\s+(.+)$/);
+        if (headerMatch) {
+          return (
+            <h2 key={i} className="text-center font-light italic mb-6 mt-2 text-[#6F6A64]" style={{ fontSize: fs.xl }}>
+              {cleanMarkdown(headerMatch[1])}
+            </h2>
+          );
+        }
+
+        const cleaned = cleanMarkdown(t);
+        const isCita = cleaned.startsWith("<<") || cleaned.startsWith("\u00AB") || cleaned.startsWith('"');
+        const isAttrib = cleaned.startsWith("\u2014") || cleaned.startsWith("--");
+        const isQ = cleaned.endsWith("?") && cleaned.length < 200;
+
+        // Citations with subtle background, left border, larger italic text
         if (isCita) return (
           <blockquote
             key={i}
             className="my-8 py-5 px-6 bg-[#EAE4DC]/50 border-l-3 border-[#C4B6A5] rounded-r-md italic leading-loose"
             style={{ fontSize: fs.cita }}
           >
-            {t}
+            {cleaned}
           </blockquote>
         );
-        if (isAttrib) return <p key={i} className={`${S.sub} text-sm pl-6 mb-6 font-medium`}>{t}</p>;
+        if (isAttrib) return <p key={i} className={`${S.sub} text-sm pl-6 mb-6 font-medium`}>{cleaned}</p>;
         if (isQ) return (
           <p key={i} className="my-8 italic text-[#8B6F5E] text-center leading-relaxed" style={{ fontSize: fs.lg }}>
-            {t}
+            {cleaned}
           </p>
         );
         return (
           <p key={i} className="mb-5 text-justify leading-loose" style={{ fontSize: fs.base }}>
-            {t}
+            {cleaned}
           </p>
         );
       });
