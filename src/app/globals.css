@@ -223,21 +223,25 @@ textarea:focus-visible {
 }
 
 .btn-primary-glow {
-  box-shadow: 0 2px 12px rgba(122, 139, 111, 0.25);
-  transition: all 0.3s ease;
+  box-shadow: 0 2px 12px rgba(92, 115, 80, 0.25);
+  transition: all 0.25s ease;
 }
 .btn-primary-glow:hover {
-  box-shadow: 0 4px 20px rgba(122, 139, 111, 0.4);
+  box-shadow: 0 4px 20px rgba(92, 115, 80, 0.35);
   transform: translateY(-1px);
 }
 .btn-primary-glow:active {
   transform: translateY(0);
-  box-shadow: 0 1px 6px rgba(122, 139, 111, 0.2);
+  box-shadow: 0 1px 6px rgba(92, 115, 80, 0.2);
 }
 
-/* Micro-interactions for secondary buttons */
+/* Micro-interactions for secondary buttons (200-300ms range) */
 button {
   transition: all 0.25s ease;
+}
+/* Link transitions */
+a, button {
+  transition-duration: 0.25s;
 }
 button:active:not(:disabled) {
   transform: scale(0.98);
@@ -250,10 +254,10 @@ a, .link-hover-animate {
 
 /* Card hover lift */
 .card-hover-lift {
-  transition: box-shadow 0.3s ease, transform 0.3s ease;
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
 }
 .card-hover-lift:hover {
-  box-shadow: 0 4px 16px rgba(122, 139, 111, 0.15);
+  box-shadow: 0 4px 16px rgba(92, 115, 80, 0.15);
   transform: translateY(-2px);
 }
 

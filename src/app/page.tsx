@@ -275,7 +275,7 @@ const PrivacyBadge = ({ onClick }: { onClick?: () => void }) => (
       {onClick && (
         <button
           onClick={onClick}
-          className="underline decoration-[#D8CFC4] underline-offset-2 hover:text-[#7A8B6F] transition-colors bg-transparent border-none cursor-pointer text-xs text-[#6F6A64] font-[var(--font-sans)]"
+          className="underline decoration-[#D8CFC4] underline-offset-2 hover:text-[#5C7350] transition-colors bg-transparent border-none cursor-pointer text-xs text-[#6F6A64] font-[var(--font-sans)]"
         >
           Política de privacidad
         </button>
@@ -303,10 +303,13 @@ const GEN_MESSAGES = [
 
 // ── SHARED STYLES ──────────────────────────────
 // Color theory: bg #F3EFEA (luminance ~0.87)
-// #3A3733 = primary text (ratio ~12:1 ✓ AAA)
-// #5C5751 = strong secondary (ratio ~6:1 ✓ AA)
-// #6F6A64 = secondary text (ratio ~4.5:1 ✓ AA)
-// #857F78 = tertiary text (ratio ~3.2:1 ✓ AA large)
+// #3A3733 = primary text (ratio ~10.3:1 ✓ AAA)
+// #5C5751 = strong secondary (ratio ~6.3:1 ✓ AA)
+// #6F6A64 = secondary text (ratio ~4.7:1 ✓ AA)
+// #857F78 = tertiary/decorative (ratio ~3.5:1 ✓ AA large only)
+// #8A8580 = counter text (ratio ~3.2:1 ✓ AA large)
+// #5C7350 = btn bg (ratio ~5.2:1 with white ✓ AA)
+// #7A8B6F = accent decorative (borders, dividers, focus rings)
 // NEVER use opacity on text — kills contrast
 
 const S = {
@@ -314,12 +317,12 @@ const S = {
   pageTop: "min-h-screen bg-[#F3EFEA] text-[#3A3733] font-[var(--font-serif)] flex flex-col items-center justify-start px-5 pt-14 pb-14 leading-loose",
   box: "max-w-[640px] w-full",
   boxWide: "max-w-[680px] w-full",
-  btn: "font-[var(--font-serif)] text-lg px-8 py-3.5 bg-[#7A8B6F] text-white border border-[#7A8B6F] rounded-lg cursor-pointer transition-all duration-300 hover:bg-[#6B7F5E] hover:border-[#6B7F5E] btn-primary-glow",
-  btnSecondary: "font-[var(--font-serif)] text-lg px-7 py-3 bg-[#EAE4DC] text-[#3A3733] border border-[#D8CFC4] rounded-lg cursor-pointer transition-all duration-300 hover:bg-[#7A8B6F] hover:text-white hover:border-[#7A8B6F]",
-  btnSm: "font-[var(--font-serif)] text-base px-5 py-2.5 bg-[#EAE4DC] text-[#3A3733] border border-[#D8CFC4] rounded-lg cursor-pointer transition-all duration-300 hover:bg-[#7A8B6F] hover:text-white hover:border-[#7A8B6F]",
+  btn: "font-[var(--font-serif)] text-lg px-8 py-3.5 bg-[#5C7350] text-white border border-[#5C7350] rounded-lg cursor-pointer transition-all duration-250 hover:bg-[#4E6642] hover:border-[#4E6642] btn-primary-glow",
+  btnSecondary: "font-[var(--font-serif)] text-lg px-7 py-3 bg-[#EAE4DC] text-[#3A3733] border border-[#D8CFC4] rounded-lg cursor-pointer transition-all duration-250 hover:bg-[#5C7350] hover:text-white hover:border-[#5C7350]",
+  btnSm: "font-[var(--font-serif)] text-base px-5 py-2.5 bg-[#EAE4DC] text-[#3A3733] border border-[#D8CFC4] rounded-lg cursor-pointer transition-all duration-250 hover:bg-[#5C7350] hover:text-white hover:border-[#5C7350]",
   sub: "font-[var(--font-sans)] text-[#6F6A64] font-light leading-relaxed",
   subStrong: "font-[var(--font-sans)] text-[#5C5751] font-light leading-relaxed",
-  link: "font-[var(--font-sans)] text-[#6F6A64] font-light text-xs cursor-pointer underline decoration-[#D8CFC4] underline-offset-4 hover:text-[#7A8B6F] transition-colors bg-transparent border-none",
+  link: "font-[var(--font-sans)] text-[#6F6A64] font-light text-xs cursor-pointer underline decoration-[#D8CFC4] underline-offset-4 hover:text-[#5C7350] transition-colors bg-transparent border-none",
   textarea: "w-full min-h-[120px] p-4 font-[var(--font-serif)] text-[1.2rem] leading-relaxed bg-transparent border border-[#D8CFC4] rounded-lg resize-y outline-none text-left",
   textareaLg: "w-full min-h-[240px] p-5 font-[var(--font-serif)] text-xl leading-relaxed bg-transparent border border-[#D8CFC4] rounded-lg resize-y outline-none",
   divider: "w-8 h-px bg-[#7A8B6F] mx-auto",
@@ -849,7 +852,7 @@ export default function MePesaMucho() {
     <div className="fixed bottom-6 right-6 z-30 flex flex-col items-center gap-1">
       <button
         onClick={() => setFontSize((f) => (f + 1) % FONT_SIZES.length)}
-        className="w-11 h-11 rounded-full bg-[#EAE4DC] border border-[#D8CFC4] text-[#3A3733] font-[var(--font-serif)] text-sm cursor-pointer transition-all duration-300 hover:bg-[#7A8B6F] hover:text-white hover:border-[#7A8B6F] shadow-md flex items-center justify-center"
+        className="w-11 h-11 rounded-full bg-[#EAE4DC] border border-[#D8CFC4] text-[#3A3733] font-[var(--font-serif)] text-sm cursor-pointer transition-all duration-250 hover:bg-[#5C7350] hover:text-white hover:border-[#5C7350] shadow-md flex items-center justify-center"
         aria-label="Cambiar tamaño de letra"
       >
         {FONT_SIZES[fontSize].label}
@@ -865,7 +868,7 @@ export default function MePesaMucho() {
       <p className="font-[var(--font-sans)] text-[0.65rem] text-[#857F78] leading-relaxed">mepesamucho.com · Un espacio de reflexión, no de consejería.</p>
       <p className="font-[var(--font-sans)] text-[0.65rem] text-[#857F78] leading-relaxed mt-1">Lo que escribes no se almacena ni se comparte.</p>
       {showCounter && (
-        <p className="font-[var(--font-sans)] text-[0.6rem] text-[#9F9A94] mt-3">
+        <p className="font-[var(--font-sans)] text-[0.6rem] text-[#8A8580] mt-3">
           {dayPass.active
             ? `Acceso ampliado activo`
             : `${Math.max(0, 2 - usosHoy)} ${Math.max(0, 2 - usosHoy) === 1 ? "reflexión gratuita disponible" : "reflexiones gratuitas disponibles"} hoy`
@@ -924,7 +927,7 @@ export default function MePesaMucho() {
             <p className="text-base font-medium mb-1">Suscripción mensual</p>
             <p className="text-xl font-light mb-1">$4.99 <span className={`${S.sub} text-sm`}>USD / mes</span></p>
             <p className={`${S.sub} text-sm mb-3`}>Reflexiones ilimitadas, conversaciones guiadas, descarga PDF y acceso desde cualquier dispositivo.</p>
-            <button className={`font-[var(--font-serif)] text-base px-7 py-3 bg-transparent text-[#5C5751] border border-[#D8CFC4] rounded-lg cursor-pointer transition-all duration-300 hover:bg-[#EAE4DC] hover:border-[#7A8B6F] w-full`} onClick={() => checkout("subscription")} aria-label="Suscribirme por $4.99 al mes">Suscribirme</button>
+            <button className={`font-[var(--font-serif)] text-base px-7 py-3 bg-transparent text-[#5C5751] border border-[#D8CFC4] rounded-lg cursor-pointer transition-all duration-250 hover:bg-[#EAE4DC] hover:border-[#5C7350] w-full`} onClick={() => checkout("subscription")} aria-label="Suscribirme por $4.99 al mes">Suscribirme</button>
             <p className={`${S.sub} text-xs mt-2`}>Puedes cancelar en cualquier momento.</p>
           </div>
 
@@ -1032,7 +1035,7 @@ export default function MePesaMucho() {
           {/* Discrete "¿Cómo funciona?" link below CTA */}
           <div className="mt-8">
             <button
-              className="font-[var(--font-sans)] text-xs text-[#857F78] font-light cursor-pointer bg-transparent border-none underline decoration-[#D8CFC4] underline-offset-4 hover:text-[#7A8B6F] transition-colors"
+              className="font-[var(--font-sans)] text-xs text-[#857F78] font-light cursor-pointer bg-transparent border-none underline decoration-[#D8CFC4] underline-offset-4 hover:text-[#5C7350] transition-colors"
               onClick={() => setShowHowItWorks(!showHowItWorks)}
               aria-expanded={showHowItWorks}
               aria-controls="how-it-works"
@@ -1088,7 +1091,7 @@ export default function MePesaMucho() {
         <div className={`${S.box}`}>
           <PrivacyBadge onClick={() => setShowDisclaimer(true)} />
           <div className="h-4" />
-          <label htmlFor="texto-principal" className="sr-only">Escribe lo que te pesa</label>
+          <label htmlFor="texto-principal" className="sr-only">Escribe lo que necesitas soltar</label>
           <textarea
             id="texto-principal"
             value={texto}
@@ -1096,7 +1099,7 @@ export default function MePesaMucho() {
             placeholder="Escribe aquí lo que necesitas soltar..."
             autoFocus
             className={S.textareaLg}
-            aria-label="Espacio para escribir lo que te pesa"
+            aria-label="Escribe lo que necesitas soltar"
           />
           <p className={`${S.sub} text-xs text-right mt-1`}>{texto.length > 0 ? `${texto.length} caracteres` : ""}</p>
           {texto.trim().length > 0 && (
@@ -1173,12 +1176,12 @@ export default function MePesaMucho() {
           <p className={`${S.sub} text-sm mb-2`}>Ahora elige cómo quieres escucharte.</p>
           <h2 className="text-xl font-normal italic leading-snug mb-8">¿Desde qué tradición quieres recibir tu reflexión?</h2>
           {apiError && <p className={`${S.sub} text-sm text-[#6B7F5E] mb-4`} role="alert">{apiError}</p>}
-          <div className="flex flex-col gap-3" role="radiogroup" aria-label="Selecciona un marco de reflexión">
+          <div className="flex flex-col gap-3" role="radiogroup" aria-label="Selecciona tradición">
             {(Object.entries(MARCOS) as [Marco, { nombre: string; descripcion: string }][]).map(([key, val]) => (
               <button
                 key={key}
                 onClick={() => { setMarco(key); setPreguntaStep(0); setStep("preguntas"); }}
-                className="text-left p-5 bg-transparent border-2 border-[#D8CFC4] rounded-lg transition-all duration-300 hover:bg-[#EAE4DC] hover:border-[#7A8B6F] cursor-pointer group"
+                className="text-left p-5 bg-transparent border-2 border-[#D8CFC4] rounded-lg transition-all duration-250 hover:bg-[#EAE4DC] hover:border-[#5C7350] hover:shadow-sm cursor-pointer group"
                 role="radio"
                 aria-checked="false"
                 aria-label={`${val.nombre}: ${val.descripcion}`}
@@ -1376,8 +1379,8 @@ export default function MePesaMucho() {
         {showCrisisBanner && <CrisisBanner />}
         <div className={`${S.box} text-center`}>
           <h2 className="text-2xl font-light italic leading-relaxed mb-8">{PREGUNTAS_CIERRE[cIdx]}</h2>
-          <label htmlFor="cierre-resp" className="sr-only">Tu respuesta</label>
-          <textarea id="cierre-resp" value={cierreTexto} onChange={handleCierreTextoChange} placeholder="Escribe lo que quieras..." autoFocus className={S.textarea} />
+          <label htmlFor="cierre-resp" className="sr-only">Responder reflexión</label>
+          <textarea id="cierre-resp" value={cierreTexto} onChange={handleCierreTextoChange} placeholder="Escribe lo que quieras..." autoFocus className={S.textarea} aria-label="Responder reflexión" />
           <div className="mt-5 flex flex-col items-center gap-4">
             {cierreTexto.trim() && <button className={S.btn} onClick={() => setCierreStep(2)}>Compartir</button>}
             <button className={`${S.link} text-sm`} onClick={() => { setCierreStep(0); setShowCierreInput(false); }}>Volver a mi reflexión</button>
@@ -1398,8 +1401,8 @@ export default function MePesaMucho() {
           <p className="italic text-[#6F6A64] mb-6 pl-5 leading-loose" style={{ borderLeftWidth: "2px", borderLeftStyle: "solid", borderLeftColor: "#D8CFC4", fontSize: "1.2rem" }}>{cierreTexto}</p>
           <p className="leading-loose mb-6" style={{ fontSize: "1.2rem" }}>{PROFUNDIZACIONES[cIdx]}</p>
           <h2 className="text-xl italic text-center leading-relaxed mb-6">{PREGUNTAS_SEGUNDO[cIdx]}</h2>
-          <label htmlFor="cierre-resp2" className="sr-only">Tu respuesta a la segunda pregunta</label>
-          <textarea id="cierre-resp2" value={cierreTexto2} onChange={handleCierreTexto2Change} placeholder="Escribe lo que quieras..." autoFocus className={S.textarea} />
+          <label htmlFor="cierre-resp2" className="sr-only">Responder reflexión</label>
+          <textarea id="cierre-resp2" value={cierreTexto2} onChange={handleCierreTexto2Change} placeholder="Escribe lo que quieras..." autoFocus className={S.textarea} aria-label="Responder reflexión" />
           <div className="mt-5 flex flex-col items-center gap-4">
             {cierreTexto2.trim() && <button className={S.btn} onClick={() => { setCierreStep(3); generarContinuacion(); }}>Continuar</button>}
             <button className={`${S.link} text-sm`} onClick={() => setCierreStep(1)}>Volver</button>
@@ -1445,7 +1448,7 @@ export default function MePesaMucho() {
             <div className="flex flex-col gap-3 items-center max-w-[380px] mx-auto">
               <button className={`${S.btn} btn-primary-glow w-full`} onClick={() => checkout("single")} aria-label="Desbloquear por $0.50">Continuar conversación — $0.50</button>
               <button className={`${S.btnSecondary} w-full text-sm`} onClick={() => checkout("daypass")} aria-label="Acceso 24h por $0.99">Acceso 24h — $0.99</button>
-              <button className={`${S.sub} text-xs cursor-pointer bg-transparent border-none hover:text-[#7A8B6F] transition-colors`} onClick={() => checkout("subscription")} aria-label="Suscripción mensual $4.99">Suscripción mensual · $4.99/mes</button>
+              <button className={`${S.sub} text-xs cursor-pointer bg-transparent border-none hover:text-[#5C7350] transition-colors`} onClick={() => checkout("subscription")} aria-label="Suscripción mensual $4.99">Suscripción mensual · $4.99/mes</button>
             </div>
             <div className="mt-6"><button className={`${S.link} text-sm`} onClick={() => setCierreStep(0)}>Volver a mi reflexión</button></div>
           </div>
@@ -1502,7 +1505,7 @@ export default function MePesaMucho() {
                         <p className={`${S.sub} text-sm mb-4`}>Lo que estás tocando merece más espacio.</p>
                         <button className={`${S.btn} btn-primary-glow w-full mb-3`} onClick={() => checkout("single")} aria-label="Desbloquear por $0.50">Continuar conversación — $0.50</button>
                         <button className={`${S.btnSecondary} w-full mb-2 text-sm`} onClick={() => checkout("daypass")} aria-label="Acceso 24h por $0.99">Acceso 24h — $0.99</button>
-                        <button className={`${S.sub} text-xs cursor-pointer bg-transparent border-none hover:text-[#7A8B6F] transition-colors block mx-auto`} onClick={() => checkout("subscription")} aria-label="Suscripción mensual $4.99">Suscripción mensual · $4.99/mes</button>
+                        <button className={`${S.sub} text-xs cursor-pointer bg-transparent border-none hover:text-[#5C7350] transition-colors block mx-auto`} onClick={() => checkout("subscription")} aria-label="Suscripción mensual $4.99">Suscripción mensual · $4.99/mes</button>
                       </div>
                     </div>
                   </div>
@@ -1562,13 +1565,14 @@ export default function MePesaMucho() {
                 </div>
               ) : (
                 <div className="mt-4">
-                  <label htmlFor="dialog-input" className="sr-only">Tu respuesta</label>
+                  <label htmlFor="dialog-input" className="sr-only">Responder reflexión</label>
                   <textarea
                     id="dialog-input"
                     value={dialogInput}
                     onChange={(e) => { setDialogInput(e.target.value); checkCrisisInText(e.target.value); }}
                     placeholder="Escribe lo que quieras..."
                     className={S.textarea}
+                    aria-label="Responder reflexión"
                     onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && dialogInput.trim()) { e.preventDefault(); enviarDialogo(dialogInput); } }}
                   />
                   <div className="flex items-center justify-between mt-3">
