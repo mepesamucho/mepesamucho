@@ -1200,7 +1200,7 @@ export default function MePesaMucho() {
     };
 
     const placeholderQ1 = "Por ejemplo: necesito paz, quiero entender por qué me siento así";
-    const placeholderQ2 = "Por ejemplo: Viene de hace mucho, pero hoy regresó. Pasó ayer";
+    const placeholderQ2 = "Por ejemplo: viene de hace mucho, pero hoy regresó; pasó ayer";
     const whyQ1 = "Esto nos ayuda a centrar tu reflexión en lo que más importa ahora mismo.";
     const whyQ2 = "Saber si es algo reciente o de tiempo atrás nos ayuda a encontrar las palabras correctas para ti.";
 
@@ -1212,11 +1212,10 @@ export default function MePesaMucho() {
         {showDisclaimer && <DisclaimerModal />}
         {showAbout && <AboutModal />}
         <div className={`${S.box} text-center`}>
-          <p className={`${S.sub} text-sm mb-3`}>{isQ1 ? "Antes de tu reflexión:" : "Una pregunta más:"}</p>
-          <h2 className="text-xl font-normal italic leading-snug mb-3">
+          <h2 className="text-2xl font-light italic leading-relaxed mb-4">
             {isQ1 ? "¿Qué es lo que más necesitas en este momento?" : "¿Esto que te pesa viene de hace tiempo o es reciente?"}
           </h2>
-          <p className={`${S.sub} text-sm mb-5 text-center`}>{isQ1 ? whyQ1 : whyQ2}</p>
+          <p className={`${S.sub} text-sm mb-8 text-center leading-relaxed`}>{isQ1 ? whyQ1 : whyQ2}</p>
 
           <label htmlFor={`pregunta-${isQ1 ? "1" : "2"}`} className="sr-only">
             {isQ1 ? "Qué necesitas en este momento" : "Desde cuándo te pesa esto"}
@@ -1230,18 +1229,18 @@ export default function MePesaMucho() {
             className={S.textarea}
             aria-label={isQ1 ? "Tu respuesta sobre lo que necesitas" : "Tu respuesta sobre la duración"}
           />
-          <div className="mt-5">
+          <div className="mt-6">
             <button
               disabled={!val.trim()}
               onClick={handleContinue}
-              className={`${S.btn} ${!val.trim() ? "opacity-40 cursor-default" : ""}`}
+              className={`${S.btn} ${!val.trim() ? "opacity-30 cursor-default" : ""}`}
               aria-label={isQ1 ? "Continuar a la siguiente pregunta" : "Generar mi reflexión"}
             >
               {isQ1 ? "Continuar" : "Generar mi reflexión"}
             </button>
           </div>
 
-          <div className="mt-4">
+          <div className="mt-6">
             <PrivacyBadge onClick={() => setShowDisclaimer(true)} />
           </div>
         </div>
