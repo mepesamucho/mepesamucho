@@ -15,6 +15,7 @@ type Step =
   | "preguntas"
   | "generating"
   | "essay"
+  | "access_choice"
   | "limit";
 
 // ── LOCAL STORAGE HELPERS ──────────────────────
@@ -172,6 +173,17 @@ export default function MePesaMucho() {
   const [showCrisisBanner, setShowCrisisBanner] = useState(false);
   const [crisisDetectedInText, setCrisisDetectedInText] = useState(false);
   const [showFuentes, setShowFuentes] = useState(false);
+  const [lastSessionId, setLastSessionId] = useState("");
+  const [lastPaymentType, setLastPaymentType] = useState("");
+  const [accessEmail, setAccessEmail] = useState("");
+  const [accessCode, setAccessCode] = useState("");
+  const [accessSaving, setAccessSaving] = useState(false);
+  const [accessDone, setAccessDone] = useState(false);
+  const [accessError, setAccessError] = useState("");
+  const [recoveryMode, setRecoveryMode] = useState<"email" | "code" | null>(null);
+  const [recoveryInput, setRecoveryInput] = useState("");
+  const [recoveryLoading, setRecoveryLoading] = useState(false);
+  const [recoveryError, setRecoveryError] = useState("");
   const crisisShownOnce = useRef(false);
 
   // Init
@@ -191,9 +203,15 @@ export default function MePesaMucho() {
         .then((r) => r.json())
         .then((d) => {
           if (d.success) {
+            // Activate localStorage as before
             if (type === "daypass") { activateDayPass(); setDayPass({ active: true, hoursLeft: 24 }); }
             if (type === "single") activateSinglePass();
+            if (type === "subscription") { activateDayPass(); setDayPass({ active: true, hoursLeft: 720 }); }
             window.history.replaceState({}, "", "/");
+            // Show access choice step
+            setLastSessionId(sid);
+            setLastPaymentType(type);
+            setStep("access_choice");
           }
         })
         .catch(console.error);
@@ -495,6 +513,78 @@ export default function MePesaMucho() {
             <p className={`${S.sub} text-sm mb-2`}>Sin límite. Reflexiones personalizadas. Cancela cuando quieras.</p>
             <p className="text-xl mb-3">$4.99 USD / mes</p>
             <button className={S.btn} onClick={() => checkout("subscription")}>Suscribirme</button>
+          </div>
+
+          {/* Recovery section */}
+          <div className="border border-[#D8CFC4] rounded-md p-5 mb-6 bg-[#F5ECE3]/50">
+            <p className={`${S.subStrong} text-sm mb-3`}>¿Ya tienes acceso?</p>
+            {!recoveryMode ? (
+              <div className="flex gap-2 flex-wrap justify-center">
+                <button className={S.btnSm} onClick={() => { setRecoveryMode("email"); setRecoveryInput(""); setRecoveryError(""); }}>
+                  Tengo un email registrado
+                </button>
+                <button className={S.btnSm} onClick={() => { setRecoveryMode("code"); setRecoveryInput(""); setRecoveryError(""); }}>
+                  Tengo un código
+                </button>
+              </div>
+            ) : (
+              <div>
+                <input
+                  type={recoveryMode === "email" ? "email" : "text"}
+                  value={recoveryInput}
+                  onChange={(e) => setRecoveryInput(e.target.value)}
+                  placeholder={recoveryMode === "email" ? "Tu email..." : "MPM-XXXX-XXXX"}
+                  className="w-full p-3 font-[var(--font-sans)] text-sm bg-transparent border border-[#D8CFC4] rounded outline-none mb-2"
+                  autoFocus
+                  style={recoveryMode === "code" ? { textTransform: "uppercase", letterSpacing: "0.1em" } : undefined}
+                />
+                {recoveryError && <p className="text-sm text-[#8B6F5E] mb-2">{recoveryError}</p>}
+                <div className="flex gap-2 justify-center">
+                  <button
+                    className={`${S.btnSm} ${recoveryLoading ? "opacity-50" : ""}`}
+                    disabled={!recoveryInput.trim() || recoveryLoading}
+                    onClick={async () => {
+                      setRecoveryLoading(true);
+                      setRecoveryError("");
+                      try {
+                        const body = recoveryMode === "email"
+                          ? { email: recoveryInput.trim() }
+                          : { code: recoveryInput.trim().toUpperCase() };
+                        const res = await fetch("/api/recover-access", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify(body),
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                          if (data.type === "daypass" && data.expiresAt) {
+                            localStorage.setItem("mpm_daypass", JSON.stringify({ expires: data.expiresAt }));
+                            setDayPass({ active: true, hoursLeft: data.hoursLeft || 24 });
+                          } else if (data.type === "single") {
+                            activateSinglePass();
+                          } else if (data.type === "subscription") {
+                            activateDayPass();
+                            setDayPass({ active: true, hoursLeft: 720 });
+                          }
+                          setUsosHoy(0);
+                          saveUsosHoy(0);
+                          setRecoveryMode(null);
+                          setStep("landing");
+                        } else {
+                          setRecoveryError(data.error || "No se encontró acceso.");
+                        }
+                      } catch {
+                        setRecoveryError("Error de conexión. Intenta de nuevo.");
+                      }
+                      setRecoveryLoading(false);
+                    }}
+                  >
+                    {recoveryLoading ? "Verificando..." : "Verificar"}
+                  </button>
+                  <button className={`${S.link} text-sm`} onClick={() => setRecoveryMode(null)}>Cancelar</button>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex justify-center gap-6 flex-wrap">
@@ -869,6 +959,154 @@ export default function MePesaMucho() {
             <p className="font-[var(--font-sans)] text-xs text-[#857F78] leading-relaxed mt-1">Lo que escribiste ya fue soltado. No quedó registro.</p>
             <button className="font-[var(--font-sans)] text-xs text-[#6F6A64] cursor-pointer underline decoration-[#D8CFC4] underline-offset-4 hover:text-[#C4B6A5] transition-colors bg-transparent border-none mt-3" onClick={() => setShowDisclaimer(true)}>Aviso legal</button>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── ACCESS CHOICE (post-payment) ──────────────
+
+  if (step === "access_choice") {
+    const handleSaveWithEmail = async () => {
+      if (!accessEmail.trim()) return;
+      setAccessSaving(true);
+      setAccessError("");
+      try {
+        const res = await fetch("/api/save-access", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId: lastSessionId, method: "email", email: accessEmail.trim() }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          setAccessDone(true);
+        } else {
+          setAccessError(data.error || "Error al guardar.");
+        }
+      } catch {
+        setAccessError("Error de conexión.");
+      }
+      setAccessSaving(false);
+    };
+
+    const handleSaveWithCode = async () => {
+      setAccessSaving(true);
+      setAccessError("");
+      try {
+        const res = await fetch("/api/save-access", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId: lastSessionId, method: "code" }),
+        });
+        const data = await res.json();
+        if (data.success && data.code) {
+          setAccessCode(data.code);
+          setAccessDone(true);
+        } else {
+          setAccessError(data.error || "Error al generar código.");
+        }
+      } catch {
+        setAccessError("Error de conexión.");
+      }
+      setAccessSaving(false);
+    };
+
+    const copyCode = () => {
+      navigator.clipboard.writeText(accessCode).catch(() => {});
+    };
+
+    return (
+      <div className={`${S.page} animate-fade-in`} key={fadeKey}>
+        <div className={`${S.box} text-center`}>
+          <div className={`${S.divider} mb-6`} style={{ width: 40 }} />
+
+          {!accessDone ? (
+            <>
+              <h2 className="text-xl font-light mb-2">¡Pago confirmado!</h2>
+              <p className={`${S.sub} text-base mb-8`}>
+                ¿Cómo quieres guardar tu acceso?
+              </p>
+
+              {accessError && <p className="text-sm text-[#8B6F5E] mb-4">{accessError}</p>}
+
+              {/* Option 1: Email */}
+              <div className="border border-[#D8CFC4] rounded-md p-5 mb-4 text-left">
+                <p className="text-[1.05rem] font-medium mb-1">Guardar con mi email</p>
+                <p className={`${S.sub} text-sm mb-3`}>Más cómodo. Recupera tu acceso desde cualquier dispositivo con solo ingresar tu email.</p>
+                <input
+                  type="email"
+                  value={accessEmail}
+                  onChange={(e) => setAccessEmail(e.target.value)}
+                  placeholder="tu@email.com"
+                  className="w-full p-3 font-[var(--font-sans)] text-sm bg-transparent border border-[#D8CFC4] rounded outline-none mb-2"
+                />
+                <button
+                  className={`${S.btnSm} w-full ${accessSaving ? "opacity-50" : ""}`}
+                  disabled={!accessEmail.trim() || accessSaving}
+                  onClick={handleSaveWithEmail}
+                >
+                  {accessSaving ? "Guardando..." : "Guardar con email"}
+                </button>
+              </div>
+
+              {/* Divider */}
+              <div className="flex items-center gap-4 my-5">
+                <div className="flex-1 h-px bg-[#D8CFC4]" />
+                <span className={`${S.sub} text-sm`}>o</span>
+                <div className="flex-1 h-px bg-[#D8CFC4]" />
+              </div>
+
+              {/* Option 2: Anonymous code */}
+              <div className="border border-[#D8CFC4] rounded-md p-5 mb-4 text-left">
+                <p className="text-[1.05rem] font-medium mb-1">Guardar con código anónimo</p>
+                <p className={`${S.sub} text-sm mb-3`}>Más privado. Se genera un código único que solo tú conocerás. Guárdalo en un lugar seguro.</p>
+                <button
+                  className={`${S.btnSm} w-full ${accessSaving ? "opacity-50" : ""}`}
+                  disabled={accessSaving}
+                  onClick={handleSaveWithCode}
+                >
+                  {accessSaving ? "Generando..." : "Generar código anónimo"}
+                </button>
+              </div>
+
+              {/* Skip */}
+              <button
+                className={`${S.link} text-sm mt-4`}
+                onClick={() => setStep("landing")}
+              >
+                Omitir por ahora (solo guardado en este navegador)
+              </button>
+            </>
+          ) : accessCode ? (
+            /* Code generated */
+            <>
+              <h2 className="text-xl font-light mb-2">Tu código de acceso</h2>
+              <p className={`${S.sub} text-sm mb-6`}>
+                Guarda este código en un lugar seguro. Es tu única forma de recuperar tu acceso si cambias de navegador.
+              </p>
+              <div className="bg-[#EAE4DC] border border-[#D8CFC4] rounded-md p-6 mb-4">
+                <p className="font-mono text-2xl tracking-[0.15em] text-[#3A3733] select-all">{accessCode}</p>
+              </div>
+              <button className={S.btnSm} onClick={copyCode} style={{ marginBottom: "1rem" }}>
+                Copiar código
+              </button>
+              <br />
+              <button className={S.btn} onClick={() => setStep("landing")}>
+                Continuar
+              </button>
+            </>
+          ) : (
+            /* Email saved */
+            <>
+              <h2 className="text-xl font-light mb-2">Acceso guardado</h2>
+              <p className={`${S.sub} text-base mb-6`}>
+                Tu acceso queda vinculado a tu email. Cuando necesites recuperarlo, solo ingresa el mismo email.
+              </p>
+              <button className={S.btn} onClick={() => setStep("landing")}>
+                Continuar
+              </button>
+            </>
+          )}
         </div>
       </div>
     );
