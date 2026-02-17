@@ -1,25 +1,40 @@
 export const CRISIS_TRIGGERS = [
-  // Suicidio
+  // Suicidio — variaciones directas
   "suicid", "quitarme la vida", "no quiero vivir", "quiero morir", "quiero morirme",
-  "me quiero morir", "mejor muerto", "mejor muerta", "ya no quiero estar aqui",
+  "me quiero morir", "me quiero matar", "quiero matarme", "voy a matarme",
+  "me voy a matar", "mejor muerto", "mejor muerta",
+  "ya no quiero estar aqui", "ya no quiero estar vivo", "ya no quiero estar viva",
   "ya no quiero seguir", "no vale la pena vivir", "acabar con todo",
   "terminar con todo", "ya no puedo mas", "no aguanto mas",
   "desaparecer del mundo", "ojala no existiera", "ojala estuviera muerto",
-  "ojala estuviera muerta", "no quiero despertar", "me voy a matar",
+  "ojala estuviera muerta", "no quiero despertar", "no quiero seguir viviendo",
+  "para que seguir", "para que vivir", "no tiene sentido vivir",
+  "la vida no tiene sentido", "no le veo sentido a la vida",
+  "quiero desaparecer", "quiero dejar de existir",
+  "me quiero ir", "me quiero ir de este mundo",
+  "ya no quiero nada", "todo seria mejor sin mi",
+  "no deberia haber nacido", "ojala no hubiera nacido",
+  "quiero acabar con esto", "quiero que todo termine",
   // Autolesion
   "cortarme", "me corto", "autolesion", "hacerme dano",
   "lastimarme", "herirme", "golpearme", "quemarme",
+  "me hago dano", "me lastimo", "me hiero",
   // Muerte / desesperanza profunda
   "quiero estar muerto", "quiero estar muerta", "mejor sin mi",
   "mi familia estaria mejor sin mi", "todos estarian mejor sin mi",
   "nadie me necesita", "a nadie le importo", "no le importo a nadie",
   "soy una carga", "estorbo", "no sirvo para nada",
+  "no merezco vivir", "no merezco estar aqui",
+  "no valgo nada", "soy un fracaso total",
   // Adicciones en crisis
   "sobredosis", "me drogo", "no puedo dejar de tomar",
   "no puedo dejar de beber", "recai", "recaida",
   // Abuso
   "me pegan", "me golpean", "abuso", "me violan", "violencia",
-  "me maltratan",
+  "me maltratan", "me abusan", "abuso sexual",
+  // Metodos (detectar menciones de metodos)
+  "pastillas para morir", "tirarme", "aventarme", "lanzarme",
+  "colgarme", "ahorcarme", "envenenarme",
 ];
 
 export interface CrisisLine {

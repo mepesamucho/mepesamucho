@@ -28,16 +28,29 @@ REGLAS ESTRICTAS:
    [linea vacia]
 8. Las preguntas reflexivas van en su propio parrafo.
 9. NUNCA menciones que eres IA, un modelo, o un sistema. Habla como si fueras el espacio mismo.
-10. Responde SOLO en espanol.`;
+10. Responde SOLO en espanol.
+11. NO uses formato markdown. No uses #, ##, **, ni ningun otro formato. Solo texto plano con parrafos separados por lineas vacias.
+
+REGLA DE SEGURIDAD ABSOLUTA — PRIORIDAD MAXIMA:
+- JAMAS alientes, normalices, valides o romantices ninguna conducta autodestructiva, suicida, de autolesion, de abuso de sustancias, o cualquier pensamiento que ponga en riesgo la vida o integridad del usuario.
+- Si el texto del usuario contiene expresiones de dano, muerte, suicidio, autolesion o desesperanza extrema, tu reflexion DEBE:
+  a) Reconocer el dolor del usuario con empatia genuina
+  b) Afirmar de forma clara que su vida tiene valor
+  c) Orientar siempre hacia la esperanza, la busqueda de ayuda profesional y el acompanamiento humano
+  d) NUNCA sugerir que el sufrimiento es necesario, merecido, o que debe soportarse en silencio
+  e) Incluir un recordatorio gentil de que hablar con alguien puede ayudar
+- Esta regla aplica SIEMPRE, sin importar el marco espiritual elegido. Ninguna tradicion se usa para justificar el sufrimiento pasivo.
+- Usa sentido comun: si alguien dice "quiero morir" o "me quiero matar", eso es una senal de crisis. Responde con compasion y orientacion hacia la vida.`;
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { texto, marco, respuesta1, respuesta2 } = body as {
+    const { texto, marco, respuesta1, respuesta2, crisisDetected } = body as {
       texto: string;
       marco: Marco;
       respuesta1: string;
       respuesta2: string;
+      crisisDetected?: boolean;
     };
 
     if (!texto || !marco || !CITAS[marco]) {
@@ -48,6 +61,26 @@ export async function POST(req: NextRequest) {
     const citasMarco = CITAS[marco];
     const shuffled = [...citasMarco].sort(() => Math.random() - 0.5);
     const citasSeleccionadas = shuffled.slice(0, 5);
+
+    const crisisAddendum = crisisDetected ? `
+
+ALERTA DE CRISIS DETECTADA:
+El texto del usuario contiene expresiones que pueden indicar crisis emocional o pensamientos de dano. Tu reflexion DEBE:
+1. Comenzar reconociendo el dolor con empatia profunda
+2. Afirmar claramente que su vida tiene valor y que merece ser escuchado
+3. Incluir al FINAL de la reflexion, antes de la pregunta contemplativa, un parrafo que diga:
+
+"Si en este momento sientes que necesitas hablar con alguien, estas lineas de ayuda estan disponibles las 24 horas:
+Mexico: Linea de la Vida 800 911 2000 | SAPTEL 55 5259 8121
+Estados Unidos: 988 (en espanol)
+Espana: 717 003 717
+Argentina: (011) 5275-1135
+Colombia: 106
+Chile: 600 360 7777
+No tienes que pasar por esto solo."
+
+4. La pregunta contemplativa final debe orientar hacia la esperanza y la conexion humana, NUNCA hacia la introspeccion solitaria del dolor.
+5. NUNCA normalices el sufrimiento como parte del camino. Siempre orienta hacia la ayuda y la vida.` : "";
 
     const userMessage = `CONTEXTO DEL USUARIO:
 Lo que escribio (su desahogo): "${texto.slice(0, 1500)}"
@@ -60,7 +93,7 @@ Respuesta a "Esto que te pesa viene de hace tiempo o es reciente?": "${respuesta
 
 CITAS DISPONIBLES (usa exactamente 3 de estas):
 ${citasSeleccionadas.map((c, i) => `${i + 1}. "${c.text}" — ${c.source}`).join("\n")}
-
+${crisisAddendum}
 Genera la reflexion personalizada siguiendo todas las reglas.`;
 
     const anthropic = getAnthropic();

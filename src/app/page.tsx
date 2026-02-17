@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { detectarCrisis, CRISIS_RESOURCES } from "@/data/crisis";
 import { MARCOS, type Marco } from "@/data/citas";
 
@@ -102,7 +102,6 @@ async function checkout(type: "subscription" | "daypass" | "single") {
 
 const LogoIcon = ({ size = 32 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-    {/* Two open hands, minimalist line art */}
     <path
       d="M14 34c-2-1-4-3-5-6-1-2-1-4 0-6l3-5c1-1 2-2 3-1l1 2 1-4c0-2 1-3 2-3s2 1 2 3l0 3 1-5c0-2 1-3 2-3s2 1 2 3l-1 6"
       stroke="#C4B6A5" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"
@@ -111,7 +110,6 @@ const LogoIcon = ({ size = 32 }: { size?: number }) => (
       d="M34 34c2-1 4-3 5-6 1-2 1-4 0-6l-3-5c-1-1-2-2-3-1l-1 2-1-4c0-2-1-3-2-3s-2 1-2 3l0 3-1-5c0-2-1-3-2-3s-2 1-2 3l1 6"
       stroke="#C4B6A5" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"
     />
-    {/* Connecting arc at bottom */}
     <path d="M14 34c3 3 7 4 10 4s7-1 10-4" stroke="#C4B6A5" strokeWidth="1.5" strokeLinecap="round" fill="none" />
   </svg>
 );
@@ -119,9 +117,9 @@ const LogoIcon = ({ size = 32 }: { size?: number }) => (
 // ── FONT SIZE BUTTON ──────────────────────────
 
 const FONT_SIZES = [
-  { label: "A", base: "1.05rem", lg: "1.15rem", xl: "1.25rem", cita: "1.2rem" },
-  { label: "A+", base: "1.2rem", lg: "1.3rem", xl: "1.4rem", cita: "1.35rem" },
-  { label: "A++", base: "1.35rem", lg: "1.45rem", xl: "1.55rem", cita: "1.5rem" },
+  { label: "A", base: "1.1rem", lg: "1.2rem", xl: "1.3rem", cita: "1.25rem" },
+  { label: "A+", base: "1.25rem", lg: "1.35rem", xl: "1.45rem", cita: "1.4rem" },
+  { label: "A++", base: "1.4rem", lg: "1.5rem", xl: "1.6rem", cita: "1.55rem" },
 ];
 
 // ── SHARED STYLES ──────────────────────────────
@@ -130,12 +128,13 @@ const S = {
   page: "min-h-screen bg-[#F3EFEA] text-[#3A3733] font-[var(--font-serif)] flex flex-col items-center justify-center px-5 py-8 leading-relaxed",
   pageTop: "min-h-screen bg-[#F3EFEA] text-[#3A3733] font-[var(--font-serif)] flex flex-col items-center justify-start px-5 pt-14 pb-12 leading-relaxed",
   box: "max-w-[640px] w-full",
+  boxWide: "max-w-[800px] w-full",
   btn: "font-[var(--font-serif)] text-base px-7 py-3 bg-[#EAE4DC] text-[#3A3733] border border-[#D8CFC4] rounded cursor-pointer transition-all duration-300 hover:bg-[#C4B6A5] hover:text-white hover:border-[#C4B6A5]",
   btnSm: "font-[var(--font-serif)] text-sm px-5 py-2 bg-[#EAE4DC] text-[#3A3733] border border-[#D8CFC4] rounded cursor-pointer transition-all duration-300 hover:bg-[#C4B6A5] hover:text-white hover:border-[#C4B6A5]",
   sub: "font-[var(--font-sans)] text-[#6F6A64] font-light leading-relaxed",
   link: "font-[var(--font-sans)] text-[#6F6A64] font-light text-xs cursor-pointer underline decoration-[#D8CFC4] underline-offset-4 hover:text-[#C4B6A5] transition-colors bg-transparent border-none",
-  textarea: "w-full min-h-[120px] p-4 font-[var(--font-serif)] text-[1.05rem] leading-relaxed bg-transparent border border-[#D8CFC4] rounded resize-y outline-none text-left",
-  textareaLg: "w-full min-h-[280px] p-5 font-[var(--font-serif)] text-lg leading-relaxed bg-transparent border border-[#D8CFC4] rounded resize-y outline-none",
+  textarea: "w-full min-h-[120px] p-4 font-[var(--font-serif)] text-[1.1rem] leading-relaxed bg-transparent border border-[#D8CFC4] rounded resize-y outline-none text-left",
+  textareaLg: "w-full min-h-[240px] p-5 font-[var(--font-serif)] text-lg leading-relaxed bg-transparent border border-[#D8CFC4] rounded resize-y outline-none",
   divider: "w-8 h-px bg-[#C4B6A5] mx-auto",
 };
 
@@ -162,15 +161,16 @@ export default function MePesaMucho() {
   const [dayPass, setDayPass] = useState({ active: false, hoursLeft: 0 });
   const [fadeKey, setFadeKey] = useState(0);
   const [apiError, setApiError] = useState("");
-  const [fontSize, setFontSize] = useState(0); // 0=normal, 1=grande, 2=muy grande
+  const [fontSize, setFontSize] = useState(0);
   const [showCrisisBanner, setShowCrisisBanner] = useState(false);
+  const [crisisDetectedInText, setCrisisDetectedInText] = useState(false);
+  const crisisShownOnce = useRef(false);
 
   // Init
   useEffect(() => {
     setUsosHoy(getUsosHoy());
     setDayPass(getDayPass());
 
-    // Handle Stripe return
     const params = new URLSearchParams(window.location.search);
     const sid = params.get("session_id");
     const type = params.get("type");
@@ -199,18 +199,25 @@ export default function MePesaMucho() {
   const handleTextoChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const v = e.target.value;
     setTexto(v);
-    if (v.length > 10 && detectarCrisis(v)) setShowCrisis(true);
+    // Crisis detection: show modal IMMEDIATELY when trigger detected
+    if (v.length > 5 && detectarCrisis(v)) {
+      setCrisisDetectedInText(true);
+      if (!crisisShownOnce.current) {
+        crisisShownOnce.current = true;
+        setShowCrisis(true);
+      }
+    }
   };
 
   const iniciarDisolucion = useCallback(() => {
     if (!texto.trim()) return;
-    // Check crisis - show banner but still allow proceeding
-    if (detectarCrisis(texto) && !crisisAck) {
+    // Always block if crisis detected and not acknowledged
+    if (crisisDetectedInText && !crisisAck) {
       setShowCrisis(true);
       return;
     }
-    // If crisis was detected, show non-intrusive banner during essay
-    if (detectarCrisis(texto)) {
+    // If crisis was detected and acknowledged, show persistent banner
+    if (crisisDetectedInText) {
       setShowCrisisBanner(true);
     }
     setStep("dissolving");
@@ -221,7 +228,7 @@ export default function MePesaMucho() {
       setTimeout(() => setMsgOpacity(0), 2200);
       setTimeout(() => setStep("framework"), 3200);
     }, 3500);
-  }, [texto, crisisAck]);
+  }, [texto, crisisAck, crisisDetectedInText]);
 
   const generarReflexion = useCallback(async () => {
     setStep("generating");
@@ -230,7 +237,13 @@ export default function MePesaMucho() {
       const res = await fetch("/api/reflect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ texto: texto.slice(0, 2000), marco, respuesta1: resp1, respuesta2: resp2 }),
+        body: JSON.stringify({
+          texto: texto.slice(0, 2000),
+          marco,
+          respuesta1: resp1,
+          respuesta2: resp2,
+          crisisDetected: crisisDetectedInText,
+        }),
       });
       if (!res.ok) throw new Error("Server error");
       const data = await res.json();
@@ -246,7 +259,7 @@ export default function MePesaMucho() {
       setStep("framework");
     }
     setTexto("");
-  }, [texto, marco, resp1, resp2, usosHoy]);
+  }, [texto, marco, resp1, resp2, usosHoy, crisisDetectedInText]);
 
   const reiniciar = () => {
     setStep("landing");
@@ -255,6 +268,7 @@ export default function MePesaMucho() {
     setPreguntaStep(0); setResp1(""); setResp2("");
     setCierreStep(0); setCierreTexto(""); setCierreTexto2(""); setShowCierreInput(false);
     setMsgOpacity(0); setApiError(""); setShowCrisisBanner(false);
+    setCrisisDetectedInText(false); crisisShownOnce.current = false;
     setDayPass(getDayPass()); setUsosHoy(getUsosHoy());
   };
 
@@ -347,7 +361,7 @@ export default function MePesaMucho() {
     </Overlay>
   );
 
-  // ── CRISIS BANNER (non-intrusive) ────────────
+  // ── CRISIS BANNER (persistent, non-intrusive) ─
 
   const CrisisBanner = () => (
     <div className="fixed top-0 left-0 right-0 z-40 animate-slide-down">
@@ -403,7 +417,6 @@ export default function MePesaMucho() {
           <h1 className="text-xl font-light mb-4">Has usado tus dos reflexiones de hoy.</h1>
           <p className={`${S.sub} text-base mb-8`}>Vuelve manana, o elige una opcion para continuar.</p>
 
-          {/* Single */}
           <div className="border border-[#D8CFC4] rounded-md p-5 mb-3 flex items-center justify-between flex-wrap gap-3">
             <div className="text-left">
               <p className="text-[1.05rem] font-medium">Solo una reflexion mas</p>
@@ -412,7 +425,6 @@ export default function MePesaMucho() {
             <button className={S.btnSm} onClick={() => checkout("single")}>Desbloquear</button>
           </div>
 
-          {/* Day pass */}
           <div className="bg-[#EAE4DC] border border-[#D8CFC4] rounded-md p-6 mb-3 text-center">
             <p className="text-lg font-medium mb-1">Acceso ampliado — 24 horas</p>
             <p className={`${S.sub} text-sm mb-2`}>Reflexiones ilimitadas por 24 horas.</p>
@@ -420,7 +432,6 @@ export default function MePesaMucho() {
             <button className={S.btn} onClick={() => checkout("daypass")}>Activar acceso 24h</button>
           </div>
 
-          {/* Subscription */}
           <div className="border border-[#D8CFC4] rounded-md p-6 mb-6 text-center">
             <p className="text-lg font-medium mb-1">Suscripcion mensual</p>
             <p className={`${S.sub} text-sm mb-2`}>Sin limite. Reflexiones personalizadas. Cancela cuando quieras.</p>
@@ -475,13 +486,13 @@ export default function MePesaMucho() {
     );
   }
 
-  // ── WRITING ──────────────────────────────────
+  // ── WRITING (centered vertically) ─────────────
 
   if (step === "writing") {
     return (
-      <div className={`${S.pageTop} animate-fade-in`} key={fadeKey}>
+      <div className={`${S.page} animate-fade-in`} key={fadeKey}>
         {showCrisis && <CrisisModal />}
-        <div className={`${S.box} text-left`}>
+        <div className={`${S.box}`}>
           <p className={`${S.sub} text-sm text-center mb-6 opacity-60`}>Nadie mas leera esto. No se guarda.</p>
           <textarea
             value={texto}
@@ -505,6 +516,8 @@ export default function MePesaMucho() {
   if (step === "dissolving") {
     return (
       <div className={S.page}>
+        {showCrisisBanner && <CrisisBanner />}
+        {showCrisis && <CrisisModal />}
         <div className={`${S.box} text-left`}>
           <div className="animate-dissolve text-lg leading-relaxed p-5 whitespace-pre-wrap break-words max-h-[60vh] overflow-hidden">
             {texto}
@@ -519,6 +532,8 @@ export default function MePesaMucho() {
   if (step === "message") {
     return (
       <div className={S.page}>
+        {showCrisisBanner && <CrisisBanner />}
+        {showCrisis && <CrisisModal />}
         <div className={`${S.box} text-center`}>
           <p
             className="text-xl text-[#6F6A64] italic font-light transition-all duration-[900ms]"
@@ -536,6 +551,8 @@ export default function MePesaMucho() {
   if (step === "framework") {
     return (
       <div className={`${S.page} animate-fade-in`} key={fadeKey}>
+        {showCrisisBanner && <CrisisBanner />}
+        {showCrisis && <CrisisModal />}
         <div className={`${S.box} text-center`}>
           <div className={`${S.divider} mb-6 opacity-50`} />
           <p className={`${S.sub} text-sm mb-2 opacity-60`}>Ahora elige como quieres escucharte.</p>
@@ -566,6 +583,8 @@ export default function MePesaMucho() {
     const setVal = isQ1 ? setResp1 : setResp2;
     return (
       <div className={`${S.page} animate-fade-in`} key={`q${fadeKey}`}>
+        {showCrisisBanner && <CrisisBanner />}
+        {showCrisis && <CrisisModal />}
         <div className={`${S.box} text-center`}>
           <p className={`${S.sub} text-sm mb-3 opacity-50`}>{isQ1 ? "Antes de tu reflexion:" : "Una mas:"}</p>
           <h2 className="text-xl font-normal italic leading-snug mb-6">
@@ -598,8 +617,8 @@ export default function MePesaMucho() {
   if (step === "generating") {
     return (
       <div className={S.page}>
+        {showCrisisBanner && <CrisisBanner />}
         <div className={`${S.box} text-center flex flex-col items-center`}>
-          {/* Breathing circle */}
           <div className="relative mb-8">
             <div className="w-16 h-16 rounded-full bg-[#C4B6A5]/20 animate-breathe-glow" />
             <div className="absolute inset-0 flex items-center justify-center">
@@ -617,10 +636,9 @@ export default function MePesaMucho() {
     );
   }
 
-  // ── ESSAY (redesigned layout) ────────────────
+  // ── ESSAY (redesigned, centered at 800px) ────
 
   if (step === "essay") {
-    // Strip markdown formatting from text
     const cleanMarkdown = (text: string): string => {
       return text.replace(/\*\*(.*?)\*\*/g, "$1").replace(/\*(.*?)\*/g, "$1");
     };
@@ -630,7 +648,6 @@ export default function MePesaMucho() {
         const t = p.trim();
         if (!t) return null;
 
-        // Handle markdown headers (# Title)
         const headerMatch = t.match(/^#{1,3}\s+(.+)$/);
         if (headerMatch) {
           return (
@@ -645,7 +662,6 @@ export default function MePesaMucho() {
         const isAttrib = cleaned.startsWith("\u2014") || cleaned.startsWith("--");
         const isQ = cleaned.endsWith("?") && cleaned.length < 200;
 
-        // Citations with subtle background, left border, larger italic text
         if (isCita) return (
           <blockquote
             key={i}
@@ -674,31 +690,29 @@ export default function MePesaMucho() {
         {showDisclaimer && <DisclaimerModal />}
         {showCrisis && <CrisisModal />}
         {showCrisisBanner && <CrisisBanner />}
-
-        {/* Font size toggle */}
         <FontSizeToggle />
 
-        {/* ── Logo header section (top area before text) ── */}
+        {/* ── Logo header section ── */}
         <div className="flex flex-col items-center pt-10 pb-4 sm:pt-14 sm:pb-6" style={{ minHeight: "28vh" }}>
           <div className="flex flex-col items-center justify-end flex-1 pb-4">
             <LogoIcon size={30} />
             <p className="text-lg sm:text-xl font-light tracking-tight mt-2 text-[#3A3733]/80">mepesamucho</p>
             <div className="w-10 h-px bg-[#C4B6A5] mt-4 mb-3" />
-            <p className={`font-[var(--font-sans)] text-xs uppercase tracking-[0.2em] text-[#6F6A64]/70 font-light`}>
+            <p className="font-[var(--font-sans)] text-xs uppercase tracking-[0.2em] text-[#6F6A64]/70 font-light">
               {MARCOS[marco!]?.nombre}
             </p>
           </div>
         </div>
 
-        {/* ── "Lee despacio" with better readability ── */}
+        {/* ── "Lee despacio" ── */}
         <div className="text-center mb-8 px-5">
           <p className="font-[var(--font-sans)] text-sm sm:text-base italic text-[#8B6F5E] font-light tracking-wide">
             Lee despacio. Esto fue escrito para ti.
           </p>
         </div>
 
-        {/* ── Reflection body ── */}
-        <div className="max-w-[640px] w-full mx-auto px-5 sm:px-8 pb-12">
+        {/* ── Reflection body (centered 800px) ── */}
+        <div className="max-w-[800px] w-full mx-auto px-6 sm:px-10 pb-12">
           <div className="leading-loose">{renderReflexion()}</div>
 
           {/* Sources */}
