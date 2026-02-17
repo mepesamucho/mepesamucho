@@ -1,5 +1,12 @@
-import { kv } from "@vercel/kv";
+import { Redis } from "@upstash/redis";
 import crypto from "crypto";
+
+// ── REDIS CLIENT ──────────────────────────────
+
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL!,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+});
 
 // ── TYPES ──────────────────────────────────────
 
@@ -37,7 +44,7 @@ export function hashEmail(email: string): string {
 
 // ── TTL CALCULATION ────────────────────────────
 
-function getTtlSeconds(type: AccessType): number | undefined {
+function getTtlSeconds(type: AccessType): number {
   switch (type) {
     case "daypass":
       return 86400; // 24 hours
@@ -79,8 +86,7 @@ export async function saveEmailAccess(
     stripeSessionId,
     stripeCustomerId,
   };
-  const ttl = getTtlSeconds(type);
-  await kv.set(`email:${hash}`, JSON.stringify(record), ttl ? { ex: ttl } : undefined);
+  await redis.set(`email:${hash}`, JSON.stringify(record), { ex: getTtlSeconds(type) });
 }
 
 export async function saveCodeAccess(
@@ -96,26 +102,25 @@ export async function saveCodeAccess(
     stripeSessionId,
     stripeCustomerId,
   };
-  const ttl = getTtlSeconds(type);
-  await kv.set(`code:${code}`, JSON.stringify(record), ttl ? { ex: ttl } : undefined);
+  await redis.set(`code:${code}`, JSON.stringify(record), { ex: getTtlSeconds(type) });
 }
 
 // ── VERIFY / RECOVER ACCESS ────────────────────
 
 export async function verifyEmailAccess(email: string): Promise<AccessRecord | null> {
   const hash = hashEmail(email);
-  const raw = await kv.get<string>(`email:${hash}`);
+  const raw = await redis.get<string>(`email:${hash}`);
   if (!raw) return null;
-  const record: AccessRecord = typeof raw === "string" ? JSON.parse(raw) : raw;
+  const record: AccessRecord = typeof raw === "string" ? JSON.parse(raw) : (raw as unknown as AccessRecord);
   if (record.expiresAt && record.expiresAt < Date.now()) return null;
   return record;
 }
 
 export async function verifyCodeAccess(code: string): Promise<AccessRecord | null> {
   const normalized = code.toUpperCase().trim();
-  const raw = await kv.get<string>(`code:${normalized}`);
+  const raw = await redis.get<string>(`code:${normalized}`);
   if (!raw) return null;
-  const record: AccessRecord = typeof raw === "string" ? JSON.parse(raw) : raw;
+  const record: AccessRecord = typeof raw === "string" ? JSON.parse(raw) : (raw as unknown as AccessRecord);
   if (record.expiresAt && record.expiresAt < Date.now()) return null;
   return record;
 }
@@ -128,7 +133,7 @@ export async function savePaymentSession(
   type: AccessType,
   customerId?: string
 ): Promise<void> {
-  await kv.set(
+  await redis.set(
     `session:${stripeSessionId}`,
     JSON.stringify({ type, customerId, createdAt: Date.now() }),
     { ex: 3600 } // 1 hour TTL
@@ -138,15 +143,15 @@ export async function savePaymentSession(
 export async function getPaymentSession(
   stripeSessionId: string
 ): Promise<{ type: AccessType; customerId?: string } | null> {
-  const raw = await kv.get<string>(`session:${stripeSessionId}`);
+  const raw = await redis.get<string>(`session:${stripeSessionId}`);
   if (!raw) return null;
-  return typeof raw === "string" ? JSON.parse(raw) : raw;
+  return typeof raw === "string" ? JSON.parse(raw) : (raw as unknown as { type: AccessType; customerId?: string });
 }
 
 // ── SUBSCRIPTION STATUS ────────────────────────
 
 export async function markSubscriptionCancelled(customerId: string): Promise<void> {
-  await kv.set(
+  await redis.set(
     `sub:${customerId}`,
     JSON.stringify({ status: "cancelled", cancelledAt: Date.now() }),
     { ex: 86400 * 7 } // keep for 7 days
@@ -154,8 +159,8 @@ export async function markSubscriptionCancelled(customerId: string): Promise<voi
 }
 
 export async function isSubscriptionCancelled(customerId: string): Promise<boolean> {
-  const raw = await kv.get<string>(`sub:${customerId}`);
+  const raw = await redis.get<string>(`sub:${customerId}`);
   if (!raw) return false;
-  const data = typeof raw === "string" ? JSON.parse(raw) : raw;
+  const data = typeof raw === "string" ? JSON.parse(raw) : (raw as unknown as { status: string });
   return data.status === "cancelled";
 }
