@@ -85,8 +85,9 @@ function useSinglePass() {
 
 // ── CHECKOUT HELPER ────────────────────────────
 
-async function checkout(type: "subscription" | "daypass" | "single") {
+async function checkout(type: "subscription" | "daypass" | "single", beforeRedirect?: () => void) {
   try {
+    if (beforeRedirect) beforeRedirect();
     const res = await fetch("/api/checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -221,6 +222,11 @@ export default function MePesaMucho() {
   const [showScrollHint, setShowScrollHint] = useState(true);
   const [readyContinue, setReadyContinue] = useState(false);
   const [showHowItWorks, setShowHowItWorks] = useState(false);
+  const [continuacion, setContinuacion] = useState("");
+  const [continuacionCitas, setContinuacionCitas] = useState<{ source: string; text: string }[]>([]);
+  const [continuacionLoading, setContinuacionLoading] = useState(false);
+  const [continuacionDesbloqueada, setContinuacionDesbloqueada] = useState(false);
+  const [showContinuacionFuentes, setShowContinuacionFuentes] = useState(false);
   const crisisShownOnce = useRef(false);
   const scrollCardRef = useRef<HTMLDivElement>(null);
 
@@ -245,6 +251,29 @@ export default function MePesaMucho() {
             if (type === "single") activateSinglePass();
             if (type === "subscription") { activateDayPass(); setDayPass({ active: true, hoursLeft: 720 }); }
             window.history.replaceState({}, "", "/");
+
+            // Check if there's a saved continuación to restore (post-payment from essay)
+            try {
+              const saved = sessionStorage.getItem("mpm_continuacion");
+              if (saved) {
+                const data = JSON.parse(saved);
+                if (data.continuacion) {
+                  setContinuacion(data.continuacion);
+                  setContinuacionCitas(data.continuacionCitas || []);
+                  setContinuacionDesbloqueada(true);
+                  setReflexion(data.reflexion || "");
+                  setCitasUsadas(data.citasUsadas || []);
+                  setMarco(data.marco || null);
+                  setCierreStep(2);
+                  setStep("essay");
+                  sessionStorage.removeItem("mpm_continuacion");
+                  setLastSessionId(sid);
+                  setLastPaymentType(type);
+                  return; // Skip access_choice, go directly to essay
+                }
+              }
+            } catch {}
+
             setLastSessionId(sid);
             setLastPaymentType(type);
             setStep("access_choice");
@@ -372,8 +401,46 @@ export default function MePesaMucho() {
       setApiError("Hubo un error generando tu reflexión. Intenta de nuevo.");
       setStep("framework");
     }
+    try { sessionStorage.setItem("mpm_texto", texto.slice(0, 2000)); } catch {}
     setTexto("");
   }, [texto, marco, resp1, resp2, usosHoy, crisisDetectedInText]);
+
+  // Generate continuation reflection
+  const generarContinuacion = useCallback(async () => {
+    setContinuacionLoading(true);
+    setContinuacion("");
+    setContinuacionCitas([]);
+    try {
+      const res = await fetch("/api/reflect-continue", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          textoOriginal: texto || sessionStorage.getItem("mpm_texto") || "",
+          marco,
+          reflexionOriginal: reflexion.slice(0, 1500),
+          respuestaCierre1: cierreTexto,
+          respuestaCierre2: cierreTexto2,
+          crisisDetected: crisisDetectedInText,
+          citasOriginales: citasUsadas.map((c) => c.source),
+        }),
+      });
+      if (!res.ok) throw new Error("Server error");
+      const data = await res.json();
+      setContinuacion(data.continuacion);
+      setContinuacionCitas(data.citasUsadas || []);
+      // Save to sessionStorage for post-payment recovery
+      try {
+        sessionStorage.setItem("mpm_continuacion", JSON.stringify({
+          continuacion: data.continuacion,
+          continuacionCitas: data.citasUsadas || [],
+          reflexion, citasUsadas, marco, cierreStep: 2,
+        }));
+      } catch {}
+    } catch {
+      setContinuacion("");
+    }
+    setContinuacionLoading(false);
+  }, [texto, marco, reflexion, cierreTexto, cierreTexto2, crisisDetectedInText, citasUsadas]);
 
   const reiniciar = () => {
     setStep("landing");
@@ -384,7 +451,10 @@ export default function MePesaMucho() {
     setMsgOpacity(0); setApiError(""); setShowCrisisBanner(false);
     setCrisisDetectedInText(false); crisisShownOnce.current = false;
     setShowFuentes(false); setShowAbout(false); setShowHowItWorks(false);
+    setContinuacion(""); setContinuacionCitas([]); setContinuacionLoading(false);
+    setContinuacionDesbloqueada(false); setShowContinuacionFuentes(false);
     setDayPass(getDayPass()); setUsosHoy(getUsosHoy());
+    try { sessionStorage.removeItem("mpm_continuacion"); } catch {}
   };
 
   const fs = FONT_SIZES[fontSize];
@@ -1156,24 +1226,134 @@ export default function MePesaMucho() {
                 <label htmlFor="cierre-resp2" className="sr-only">Tu respuesta a la segunda pregunta</label>
                 <textarea id="cierre-resp2" value={cierreTexto2} onChange={handleCierreTexto2Change} placeholder="Escribe lo que quieras..." autoFocus className={`${S.textarea} mb-3`} />
                 {cierreTexto2.trim() && (
-                  <div className="text-center"><button className={S.btnSm} onClick={() => setCierreStep(2)}>Continuar</button></div>
+                  <div className="text-center">
+                    <button className={S.btnSm} onClick={() => { setCierreStep(2); generarContinuacion(); }}>Continuar</button>
+                  </div>
                 )}
               </div>
             )}
 
             {cierreStep === 2 && (
               <div className="animate-fade-in">
-                <p className="text-[1.05rem] italic leading-loose mb-2">Lo que estás tocando merece más espacio.</p>
-                <p className={`${S.sub} text-sm mb-5`}>Puedes seguir profundizando ahora mismo.</p>
-                <div className="flex flex-col gap-3 items-center">
-                  <button className={`${S.btn} w-full`} onClick={() => checkout("single")}>Solo esta reflexión — $0.50</button>
-                  <button className={`${S.sub} text-sm cursor-pointer bg-transparent border-none hover:text-[#C4B6A5] transition-colors`} onClick={() => checkout("daypass")}>
-                    Acceso 24h · $2.99
-                  </button>
-                  <button className={`${S.sub} text-xs cursor-pointer bg-transparent border-none hover:text-[#C4B6A5] transition-colors`} onClick={() => checkout("subscription")}>
-                    Suscripción mensual · $4.99/mes
-                  </button>
-                </div>
+                {/* Loading state */}
+                {continuacionLoading && (
+                  <div className="py-8 flex flex-col items-center">
+                    <div className="relative mb-6">
+                      <div className="w-12 h-12 rounded-full bg-[#C4B6A5]/20 animate-breathe-glow" />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-6 h-6 rounded-full bg-[#C4B6A5]/30 animate-breathe" />
+                      </div>
+                    </div>
+                    <p className={`${S.sub} italic text-sm`}>Preparando algo más para ti...</p>
+                  </div>
+                )}
+
+                {/* Continuation ready — censored preview or unlocked */}
+                {!continuacionLoading && continuacion && (() => {
+                  const paragraphs = continuacion.split("\n\n").filter((p: string) => p.trim());
+                  const visibleCount = 2;
+                  const visibleParagraphs = paragraphs.slice(0, visibleCount);
+                  const censoredParagraphs = paragraphs.slice(visibleCount);
+
+                  return (
+                    <div className="text-left">
+                      {/* Visible paragraphs */}
+                      {visibleParagraphs.map((p: string, i: number) => {
+                        const t = p.trim();
+                        const isCita = t.startsWith("<<") || t.startsWith("\u00AB") || t.startsWith('"');
+                        const isAttrib = t.startsWith("\u2014") || t.startsWith("--");
+                        if (isCita) return (
+                          <blockquote key={i} className="my-6 py-4 px-5 bg-[#EAE4DC]/50 rounded-r-md italic leading-loose text-base" style={{ borderLeftWidth: "3px", borderLeftStyle: "solid", borderLeftColor: "#C4B6A5" }}>
+                            {t}
+                          </blockquote>
+                        );
+                        if (isAttrib) return <p key={i} className={`${S.sub} text-sm pl-5 mb-5 font-medium`}>{t}</p>;
+                        return <p key={i} className="mb-4 text-[1.05rem] leading-loose">{t}</p>;
+                      })}
+
+                      {/* Censored section or unlocked */}
+                      {continuacionDesbloqueada ? (
+                        <>
+                          {censoredParagraphs.map((p: string, i: number) => {
+                            const t = p.trim();
+                            const isCita = t.startsWith("<<") || t.startsWith("\u00AB") || t.startsWith('"');
+                            const isAttrib = t.startsWith("\u2014") || t.startsWith("--");
+                            if (isCita) return (
+                              <blockquote key={`u${i}`} className="my-6 py-4 px-5 bg-[#EAE4DC]/50 rounded-r-md italic leading-loose text-base" style={{ borderLeftWidth: "3px", borderLeftStyle: "solid", borderLeftColor: "#C4B6A5" }}>
+                                {t}
+                              </blockquote>
+                            );
+                            if (isAttrib) return <p key={`u${i}`} className={`${S.sub} text-sm pl-5 mb-5 font-medium`}>{t}</p>;
+                            return <p key={`u${i}`} className="mb-4 text-[1.05rem] leading-loose">{t}</p>;
+                          })}
+                          {/* Citations button */}
+                          <div className="text-center mt-6 mb-2">
+                            <button
+                              className={`${S.link} text-sm`}
+                              onClick={() => setShowContinuacionFuentes(!showContinuacionFuentes)}
+                            >
+                              {showContinuacionFuentes ? "Ocultar" : "Ver"} citas utilizadas ({continuacionCitas.length + citasUsadas.length})
+                            </button>
+                          </div>
+                          {showContinuacionFuentes && (
+                            <div className="mt-4 animate-fade-in">
+                              {[...citasUsadas, ...continuacionCitas].map((c, i) => (
+                                <div key={i} className="mb-4 pl-4" style={{ borderLeftWidth: "2px", borderLeftStyle: "solid", borderLeftColor: "#D8CFC4" }}>
+                                  <p className="text-sm font-medium mb-0.5">{c.source}</p>
+                                  <p className={`${S.sub} text-sm italic leading-snug`}>{c.text}</p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          {/* Blurred/censored paragraphs with overlay */}
+                          <div className="reflection-censored" style={{ minHeight: "180px" }}>
+                            <div className="censored-blur">
+                              {censoredParagraphs.map((p: string, i: number) => (
+                                <p key={`b${i}`} className="mb-4 text-[1.05rem] leading-loose">{p.trim()}</p>
+                              ))}
+                            </div>
+                            <div className="censored-overlay" />
+                          </div>
+
+                          {/* Paywall */}
+                          <div className="text-center mt-4">
+                            <p className="text-lg italic leading-relaxed mb-1">Lo que estás tocando merece más espacio.</p>
+                            <p className={`${S.sub} text-sm mb-5`}>Desbloquea la reflexión completa.</p>
+                            <div className="flex flex-col gap-3 items-center max-w-[360px] mx-auto">
+                              <button className={`${S.btn} w-full`} onClick={() => checkout("single")}>Solo esta reflexión — $0.50</button>
+                              <button className={`${S.sub} text-sm cursor-pointer bg-transparent border-none hover:text-[#C4B6A5] transition-colors`} onClick={() => checkout("daypass")}>
+                                Acceso 24h · $2.99
+                              </button>
+                              <button className={`${S.sub} text-xs cursor-pointer bg-transparent border-none hover:text-[#C4B6A5] transition-colors`} onClick={() => checkout("subscription")}>
+                                Suscripción mensual · $4.99/mes
+                              </button>
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  );
+                })()}
+
+                {/* Error state — fallback to simple paywall */}
+                {!continuacionLoading && !continuacion && (
+                  <div className="text-center">
+                    <p className="text-[1.05rem] italic leading-loose mb-2">Lo que estás tocando merece más espacio.</p>
+                    <p className={`${S.sub} text-sm mb-5`}>Puedes seguir profundizando ahora mismo.</p>
+                    <div className="flex flex-col gap-3 items-center">
+                      <button className={`${S.btn} w-full`} onClick={() => checkout("single")}>Solo esta reflexión — $0.50</button>
+                      <button className={`${S.sub} text-sm cursor-pointer bg-transparent border-none hover:text-[#C4B6A5] transition-colors`} onClick={() => checkout("daypass")}>
+                        Acceso 24h · $2.99
+                      </button>
+                      <button className={`${S.sub} text-xs cursor-pointer bg-transparent border-none hover:text-[#C4B6A5] transition-colors`} onClick={() => checkout("subscription")}>
+                        Suscripción mensual · $4.99/mes
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
