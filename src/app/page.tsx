@@ -846,16 +846,24 @@ export default function MePesaMucho() {
 
   // ── FOOTER COMPONENT ─────────────────────────
 
-  const Footer = ({ showDemo = false }: { showDemo?: boolean }) => (
-    <footer className="mt-10 text-center" role="contentinfo">
+  const Footer = ({ showDemo = false, showCounter = false }: { showDemo?: boolean; showCounter?: boolean }) => (
+    <footer className="mt-14 text-center" role="contentinfo">
       <div className={`${S.divider} mb-5`} />
-      <p className="font-[var(--font-sans)] text-xs text-[#857F78] leading-relaxed">mepesamucho.com · Un espacio de reflexión, no de consejería.</p>
-      <p className="font-[var(--font-sans)] text-xs text-[#857F78] leading-relaxed mt-1">Lo que escribes no se almacena ni se comparte.</p>
+      <p className="font-[var(--font-sans)] text-[0.65rem] text-[#857F78] leading-relaxed">mepesamucho.com · Un espacio de reflexión, no de consejería.</p>
+      <p className="font-[var(--font-sans)] text-[0.65rem] text-[#857F78] leading-relaxed mt-1">Lo que escribes no se almacena ni se comparte.</p>
+      {showCounter && (
+        <p className="font-[var(--font-sans)] text-[0.6rem] text-[#9F9A94] mt-3">
+          {dayPass.active
+            ? `Acceso ampliado activo`
+            : `${Math.max(0, 2 - usosHoy)} ${Math.max(0, 2 - usosHoy) === 1 ? "reflexión gratuita disponible" : "reflexiones gratuitas disponibles"} hoy`
+          }
+        </p>
+      )}
       <div className="flex justify-center gap-4 mt-3 flex-wrap">
-        <button className={`${S.link} text-[0.7rem]`} onClick={() => setShowAbout(true)}>Acerca de</button>
-        <button className={`${S.link} text-[0.7rem]`} onClick={() => setShowDisclaimer(true)}>Aviso legal y privacidad</button>
+        <button className={`${S.link} text-[0.65rem]`} onClick={() => setShowAbout(true)}>Acerca de</button>
+        <button className={`${S.link} text-[0.65rem]`} onClick={() => setShowDisclaimer(true)}>Aviso legal y privacidad</button>
         {showDemo && (
-          <button className={`${S.link} text-[0.7rem]`} onClick={() => { setUsosHoy(0); saveUsosHoy(0); }}>(Demo: reiniciar)</button>
+          <button className={`${S.link} text-[0.65rem]`} onClick={() => { setUsosHoy(0); saveUsosHoy(0); }}>(Demo: reiniciar)</button>
         )}
       </div>
     </footer>
@@ -998,10 +1006,9 @@ export default function MePesaMucho() {
         {showDisclaimer && <DisclaimerModal />}
         {showAbout && <AboutModal />}
         <div className={`${S.box} text-center`}>
-          <div className="flex justify-center"><LogoIcon size={40} /></div>
-          <h1 className="text-4xl font-light tracking-tight mb-1 mt-3">mepesamucho</h1>
-          <div className="w-10 h-px bg-[#7A8B6F] mx-auto my-5" />
-          <p className="text-xl text-[#5C5751] italic leading-relaxed mb-10">
+          <div className="flex justify-center mb-12"><LogoIcon size={44} /></div>
+
+          <p className="text-2xl sm:text-3xl text-[#5C5751] italic leading-relaxed font-light mb-14" style={{ letterSpacing: "-0.01em" }}>
             A veces las cosas pesan menos cuando las sueltas.
           </p>
 
@@ -1010,9 +1017,9 @@ export default function MePesaMucho() {
           </button>
 
           {/* Discrete "¿Cómo funciona?" link below CTA */}
-          <div className="mt-6">
+          <div className="mt-8">
             <button
-              className="font-[var(--font-sans)] text-sm text-[#6F6A64] font-light cursor-pointer bg-transparent border-none underline decoration-[#D8CFC4] underline-offset-4 hover:text-[#7A8B6F] transition-colors"
+              className="font-[var(--font-sans)] text-xs text-[#857F78] font-light cursor-pointer bg-transparent border-none underline decoration-[#D8CFC4] underline-offset-4 hover:text-[#7A8B6F] transition-colors"
               onClick={() => setShowHowItWorks(!showHowItWorks)}
               aria-expanded={showHowItWorks}
               aria-controls="how-it-works"
@@ -1025,31 +1032,31 @@ export default function MePesaMucho() {
           <div
             id="how-it-works"
             style={{
-              maxHeight: showHowItWorks ? "300px" : "0",
+              maxHeight: showHowItWorks ? "280px" : "0",
               opacity: showHowItWorks ? 1 : 0,
               overflow: "hidden",
-              transition: "max-height 0.4s ease, opacity 0.3s ease",
+              transition: "max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease",
             }}
           >
-            <div className="mt-20 pt-10" style={{ borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "#D8CFC4" }}>
-              <div className="text-left max-w-[400px] mx-auto space-y-4">
-                <div className="flex items-start gap-3">
-                  <span className="font-[var(--font-sans)] text-xs text-[#7A8B6F] font-medium mt-0.5 flex-shrink-0">1</span>
-                  <p className={`${S.sub} text-sm`}>Escribe lo que sientes — nadie más lo verá.</p>
+            <div className="mt-8 pt-6" style={{ borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "#E8E2DB" }}>
+              <div className="text-left max-w-[380px] mx-auto space-y-5">
+                <div className="flex items-start gap-4">
+                  <span className="font-[var(--font-sans)] text-[0.65rem] text-[#857F78] font-light mt-0.5 flex-shrink-0 tabular-nums">1</span>
+                  <p className={`${S.sub} text-sm leading-relaxed`}>Escribes lo que necesitas soltar</p>
                 </div>
-                <div className="flex items-start gap-3">
-                  <span className="font-[var(--font-sans)] text-xs text-[#7A8B6F] font-medium mt-0.5 flex-shrink-0">2</span>
-                  <p className={`${S.sub} text-sm`}>Elige una tradición: filosofía, espiritualidad o textos bíblicos.</p>
+                <div className="flex items-start gap-4">
+                  <span className="font-[var(--font-sans)] text-[0.65rem] text-[#857F78] font-light mt-0.5 flex-shrink-0 tabular-nums">2</span>
+                  <p className={`${S.sub} text-sm leading-relaxed`}>Eliges desde qué tradición quieres recibir la reflexión</p>
                 </div>
-                <div className="flex items-start gap-3">
-                  <span className="font-[var(--font-sans)] text-xs text-[#7A8B6F] font-medium mt-0.5 flex-shrink-0">3</span>
-                  <p className={`${S.sub} text-sm`}>Recibe una reflexión escrita solo para ti, con citas verificadas.</p>
+                <div className="flex items-start gap-4">
+                  <span className="font-[var(--font-sans)] text-[0.65rem] text-[#857F78] font-light mt-0.5 flex-shrink-0 tabular-nums">3</span>
+                  <p className={`${S.sub} text-sm leading-relaxed`}>Recibes una reflexión escrita especialmente para ti</p>
                 </div>
               </div>
             </div>
           </div>
 
-          <Footer />
+          <Footer showCounter />
         </div>
       </div>
     );
