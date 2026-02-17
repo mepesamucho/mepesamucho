@@ -227,6 +227,13 @@ export default function MePesaMucho() {
   const [continuacionLoading, setContinuacionLoading] = useState(false);
   const [continuacionDesbloqueada, setContinuacionDesbloqueada] = useState(false);
   const [showContinuacionFuentes, setShowContinuacionFuentes] = useState(false);
+  // Dialog state
+  const [dialogTurnos, setDialogTurnos] = useState<{ role: "user" | "assistant"; content: string; cita?: { source: string; text: string } }[]>([]);
+  const [dialogInput, setDialogInput] = useState("");
+  const [dialogLoading, setDialogLoading] = useState(false);
+  const [dialogCerrado, setDialogCerrado] = useState(false);
+  const [allCitas, setAllCitas] = useState<{ source: string; text: string }[]>([]);
+  const dialogEndRef = useRef<HTMLDivElement>(null);
   const crisisShownOnce = useRef(false);
   const scrollCardRef = useRef<HTMLDivElement>(null);
 
@@ -442,6 +449,58 @@ export default function MePesaMucho() {
     setContinuacionLoading(false);
   }, [texto, marco, reflexion, cierreTexto, cierreTexto2, crisisDetectedInText, citasUsadas]);
 
+  // Dialog: send message
+  const DIALOG_ACTIVE_LIMIT = 6; // After this many user turns, switch to open mode
+  const enviarDialogo = useCallback(async (mensaje: string) => {
+    if (!mensaje.trim() || dialogLoading) return;
+    const nuevoTurno: { role: "user" | "assistant"; content: string; cita?: { source: string; text: string } } = { role: "user", content: mensaje };
+    const turnosActualizados = [...dialogTurnos, nuevoTurno];
+    setDialogTurnos(turnosActualizados);
+    setDialogInput("");
+    setDialogLoading(true);
+
+    const turnoNum = turnosActualizados.filter((t) => t.role === "user").length;
+    const modoAbierto = turnoNum >= DIALOG_ACTIVE_LIMIT;
+
+    // Collect all citas already used
+    const citasYaUsadas = [
+      ...citasUsadas.map((c) => c.source),
+      ...continuacionCitas.map((c) => c.source),
+      ...turnosActualizados.filter((t) => t.cita).map((t) => t.cita!.source),
+    ];
+
+    try {
+      const res = await fetch("/api/reflect-dialog", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          marco,
+          respuestaUsuario: mensaje.slice(0, 500),
+          historial: turnosActualizados.map((t) => ({ role: t.role, content: t.content })),
+          turnoActual: turnoNum,
+          modoAbierto,
+          citasYaUsadas,
+          crisisDetected: crisisDetectedInText,
+        }),
+      });
+      if (!res.ok) throw new Error("Server error");
+      const data = await res.json();
+      setDialogTurnos((prev) => [...prev, { role: "assistant", content: data.respuesta, cita: data.cita }]);
+      // Scroll to bottom
+      setTimeout(() => dialogEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+    } catch {
+      setDialogTurnos((prev) => [...prev, { role: "assistant", content: "Hubo un error. ¿Quieres intentar de nuevo?" }]);
+    }
+    setDialogLoading(false);
+  }, [dialogTurnos, dialogLoading, marco, citasUsadas, continuacionCitas, crisisDetectedInText]);
+
+  // Close dialog and collect all citas
+  const cerrarDialogo = useCallback(() => {
+    const dialogCitasArr = dialogTurnos.filter((t) => t.cita).map((t) => t.cita!);
+    setAllCitas([...citasUsadas, ...continuacionCitas, ...dialogCitasArr]);
+    setDialogCerrado(true);
+  }, [dialogTurnos, citasUsadas, continuacionCitas]);
+
   const reiniciar = () => {
     setStep("landing");
     setTexto(""); setMarco(null); setReflexion(""); setCitasUsadas([]);
@@ -453,6 +512,8 @@ export default function MePesaMucho() {
     setShowFuentes(false); setShowAbout(false); setShowHowItWorks(false);
     setContinuacion(""); setContinuacionCitas([]); setContinuacionLoading(false);
     setContinuacionDesbloqueada(false); setShowContinuacionFuentes(false);
+    setDialogTurnos([]); setDialogInput(""); setDialogLoading(false);
+    setDialogCerrado(false); setAllCitas([]);
     setDayPass(getDayPass()); setUsosHoy(getUsosHoy());
     try { sessionStorage.removeItem("mpm_continuacion"); } catch {}
   };
@@ -1286,25 +1347,94 @@ export default function MePesaMucho() {
                             if (isAttrib) return <p key={`u${i}`} className={`${S.sub} text-sm pl-5 mb-5 font-medium`}>{t}</p>;
                             return <p key={`u${i}`} className="mb-4 text-[1.05rem] leading-loose">{t}</p>;
                           })}
-                          {/* Citations button */}
-                          <div className="text-center mt-6 mb-2">
-                            <button
-                              className={`${S.link} text-sm`}
-                              onClick={() => setShowContinuacionFuentes(!showContinuacionFuentes)}
-                            >
-                              {showContinuacionFuentes ? "Ocultar" : "Ver"} citas utilizadas ({continuacionCitas.length + citasUsadas.length})
-                            </button>
-                          </div>
-                          {showContinuacionFuentes && (
-                            <div className="mt-4 animate-fade-in">
-                              {[...citasUsadas, ...continuacionCitas].map((c, i) => (
-                                <div key={i} className="mb-4 pl-4" style={{ borderLeftWidth: "2px", borderLeftStyle: "solid", borderLeftColor: "#D8CFC4" }}>
-                                  <p className="text-sm font-medium mb-0.5">{c.source}</p>
-                                  <p className={`${S.sub} text-sm italic leading-snug`}>{c.text}</p>
+                          {/* Dialog section */}
+                          <div className="mt-8 pt-6" style={{ borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "#D8CFC4" }}>
+
+                            {/* Dialog turns */}
+                            {dialogTurnos.map((turno, i) => (
+                              <div key={i} className={`mb-5 animate-fade-in ${turno.role === "user" ? "text-right" : "text-left"}`}>
+                                {turno.role === "user" ? (
+                                  <div className="inline-block text-left bg-[#EAE4DC]/60 rounded-lg p-4 max-w-[85%]">
+                                    <p className="text-sm leading-relaxed">{turno.content}</p>
+                                  </div>
+                                ) : (
+                                  <div className="max-w-[95%]">
+                                    {turno.content.split("\n\n").map((p, j) => {
+                                      const t = p.trim();
+                                      if (!t) return null;
+                                      const isCita = t.startsWith("<<") || t.startsWith("\u00AB") || t.startsWith('"');
+                                      const isAttrib = t.startsWith("\u2014") || t.startsWith("--");
+                                      if (isCita) return (
+                                        <blockquote key={j} className="my-4 py-3 px-4 bg-[#EAE4DC]/40 rounded-r-md italic text-sm leading-relaxed" style={{ borderLeftWidth: "2px", borderLeftStyle: "solid", borderLeftColor: "#C4B6A5" }}>
+                                          {t}
+                                        </blockquote>
+                                      );
+                                      if (isAttrib) return <p key={j} className={`${S.sub} text-xs pl-4 mb-3 font-medium`}>{t}</p>;
+                                      return <p key={j} className="mb-3 text-sm leading-relaxed">{t}</p>;
+                                    })}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+
+                            {/* Loading indicator */}
+                            {dialogLoading && (
+                              <div className="mb-5 flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full bg-[#C4B6A5] animate-pulse-slow" />
+                                <div className="w-2 h-2 rounded-full bg-[#C4B6A5] animate-pulse-slow" style={{ animationDelay: "0.3s" }} />
+                                <div className="w-2 h-2 rounded-full bg-[#C4B6A5] animate-pulse-slow" style={{ animationDelay: "0.6s" }} />
+                              </div>
+                            )}
+
+                            <div ref={dialogEndRef} />
+
+                            {/* Dialog closed — show all citas */}
+                            {dialogCerrado ? (
+                              <div className="text-center animate-fade-in mt-6">
+                                <div className="w-10 h-px bg-[#C4B6A5] mx-auto mb-5" />
+                                <p className="text-lg italic mb-2">Gracias por este momento.</p>
+                                <p className={`${S.sub} text-sm mb-6`}>Aquí están todas las fuentes que acompañaron tu reflexión.</p>
+                                <div className="text-left">
+                                  {allCitas.map((c, i) => (
+                                    <div key={i} className="mb-4 pl-4" style={{ borderLeftWidth: "2px", borderLeftStyle: "solid", borderLeftColor: "#D8CFC4" }}>
+                                      <p className="text-sm font-medium mb-0.5">{c.source}</p>
+                                      <p className={`${S.sub} text-sm italic leading-snug`}>{c.text}</p>
+                                    </div>
+                                  ))}
                                 </div>
-                              ))}
-                            </div>
-                          )}
+                              </div>
+                            ) : (
+                              /* Dialog input */
+                              <div className="mt-4">
+                                <label htmlFor="dialog-input" className="sr-only">Tu respuesta</label>
+                                <textarea
+                                  id="dialog-input"
+                                  value={dialogInput}
+                                  onChange={(e) => { setDialogInput(e.target.value); checkCrisisInText(e.target.value); }}
+                                  placeholder="Escribe lo que quieras..."
+                                  className={`${S.textarea} text-sm`}
+                                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && dialogInput.trim()) { e.preventDefault(); enviarDialogo(dialogInput); } }}
+                                />
+                                <div className="flex items-center justify-between mt-3">
+                                  <button
+                                    className={`${S.btn} text-sm px-6 py-2.5 ${!dialogInput.trim() || dialogLoading ? "opacity-40 cursor-default" : ""}`}
+                                    disabled={!dialogInput.trim() || dialogLoading}
+                                    onClick={() => enviarDialogo(dialogInput)}
+                                  >
+                                    {dialogLoading ? "..." : "Responder"}
+                                  </button>
+                                  {dialogTurnos.length >= 2 && (
+                                    <button
+                                      className={`${S.link} text-sm`}
+                                      onClick={cerrarDialogo}
+                                    >
+                                      Cerrar conversación
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         </>
                       ) : (
                         <>
