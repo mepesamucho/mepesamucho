@@ -220,6 +220,7 @@ export default function MePesaMucho() {
   const [genMsgIndex, setGenMsgIndex] = useState(0);
   const [showScrollHint, setShowScrollHint] = useState(true);
   const [readyContinue, setReadyContinue] = useState(false);
+  const [showHowItWorks, setShowHowItWorks] = useState(false);
   const crisisShownOnce = useRef(false);
   const scrollCardRef = useRef<HTMLDivElement>(null);
 
@@ -382,7 +383,7 @@ export default function MePesaMucho() {
     setCierreStep(0); setCierreTexto(""); setCierreTexto2(""); setShowCierreInput(false);
     setMsgOpacity(0); setApiError(""); setShowCrisisBanner(false);
     setCrisisDetectedInText(false); crisisShownOnce.current = false;
-    setShowFuentes(false); setShowAbout(false);
+    setShowFuentes(false); setShowAbout(false); setShowHowItWorks(false);
     setDayPass(getDayPass()); setUsosHoy(getUsosHoy());
   };
 
@@ -609,13 +610,45 @@ export default function MePesaMucho() {
         {showDisclaimer && <DisclaimerModal />}
         {showAbout && <AboutModal />}
         <div className={`${S.box} text-center`}>
-          <h1 className="text-xl font-light mb-3">Has usado tus dos reflexiones gratuitas de hoy.</h1>
-          <p className={`${S.sub} text-base mb-6`}>Vuelve mañana, o elige una opción para seguir reflexionando.</p>
+          {/* Emotional header */}
+          <p className="text-xl font-light italic leading-relaxed mb-2">
+            Lo que estás tocando merece más espacio.
+          </p>
+          <p className={`${S.sub} text-base mb-8`}>
+            Puedes seguir profundizando ahora mismo.
+          </p>
 
-          {/* Recovery section — PROMINENT, above pricing */}
-          <div className="border-2 border-[#C4B6A5] rounded-lg p-5 mb-6 bg-[#F5ECE3]/60">
-            <p className="text-base font-medium mb-1">¿Ya pagaste antes?</p>
-            <p className={`${S.sub} text-sm mb-3`}>Recupera tu acceso con el email o código que registraste.</p>
+          {/* Single — featured, most accessible */}
+          <div className="bg-[#EAE4DC] border-2 border-[#C4B6A5] rounded-lg p-6 mb-4 text-center">
+            <p className="text-lg font-medium mb-1">Solo esta reflexión</p>
+            <p className="text-2xl font-light mb-2">$0.50 <span className={`${S.sub} text-sm`}>USD</span></p>
+            <p className={`${S.sub} text-sm mb-4`}>Acceso inmediato a una reflexión completa.</p>
+            <button className={`${S.btn} w-full`} onClick={() => checkout("single")}>Desbloquear esta reflexión</button>
+          </div>
+
+          {/* Day pass — standard */}
+          <div className="border border-[#D8CFC4] rounded-lg p-5 mb-4 text-center">
+            <p className="text-base font-medium mb-1">Acceso 24 horas</p>
+            <p className="text-xl font-light mb-1">$2.99 <span className={`${S.sub} text-sm`}>USD</span></p>
+            <p className={`${S.sub} text-sm mb-3`}>Reflexiones ilimitadas por un día completo.</p>
+            <button className={S.btnSecondary + " w-full"} onClick={() => checkout("daypass")}>Activar acceso 24h</button>
+          </div>
+
+          {/* Subscription — discrete */}
+          <div className="border border-[#D8CFC4] rounded-lg p-5 mb-6 text-center">
+            <p className="text-base font-medium mb-1">Suscripción mensual</p>
+            <p className="text-xl font-light mb-1">$4.99 <span className={`${S.sub} text-sm`}>USD / mes</span></p>
+            <p className={`${S.sub} text-sm mb-3`}>Reflexiones ilimitadas, conversaciones guiadas, acceso desde cualquier dispositivo.</p>
+            <button className={S.btnSecondary + " w-full"} onClick={() => checkout("subscription")}>Suscribirme</button>
+            <p className={`${S.sub} text-xs mt-2`}>Puedes cancelar en cualquier momento.</p>
+          </div>
+
+          <p className={`${S.sub} text-xs mb-6`}>Todos los precios en USD. Cobro seguro a través de Stripe.</p>
+
+          {/* Recovery section — below pricing, discrete */}
+          <div className="border border-[#D8CFC4] rounded-lg p-5 mb-4">
+            <p className="text-sm font-medium mb-1">¿Ya pagaste antes?</p>
+            <p className={`${S.sub} text-xs mb-3`}>Recupera tu acceso con el email o código que registraste.</p>
             {!recoveryMode ? (
               <div className="flex gap-2 flex-wrap justify-center">
                 <button className={S.btnSm} onClick={() => { setRecoveryMode("email"); setRecoveryInput(""); setRecoveryError(""); }}>
@@ -687,55 +720,6 @@ export default function MePesaMucho() {
             )}
           </div>
 
-          {/* Divider */}
-          <div className="flex items-center gap-4 mb-6">
-            <div className="flex-1 h-px bg-[#D8CFC4]" />
-            <span className={`${S.sub} text-sm`}>o elige un plan</span>
-            <div className="flex-1 h-px bg-[#D8CFC4]" />
-          </div>
-
-          {/* Subscription — featured */}
-          <div className="bg-[#EAE4DC] border-2 border-[#C4B6A5] rounded-lg p-6 mb-3 text-center relative">
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#C4B6A5] text-white text-xs font-[var(--font-sans)] px-3 py-0.5 rounded-full">
-              Recomendado
-            </div>
-            <p className="text-lg font-medium mb-2 mt-1">Suscripción mensual</p>
-            <p className="text-2xl font-light mb-2">$4.99 <span className={`${S.sub} text-sm`}>USD / mes</span></p>
-            <div className={`${S.sub} text-sm text-left mb-4 space-y-1`}>
-              <p>&#10003; Reflexiones ilimitadas, 24/7</p>
-              <p>&#10003; Conversaciones guiadas de profundización</p>
-              <p>&#10003; Acceso desde cualquier dispositivo</p>
-              <p>&#10003; Cancela cuando quieras, sin compromiso</p>
-            </div>
-            <button className={`${S.btn} w-full text-lg`} onClick={() => checkout("subscription")}>Suscribirme por $4.99/mes</button>
-          </div>
-
-          {/* Day pass */}
-          <div className="border border-[#D8CFC4] rounded-lg p-5 mb-3 flex items-center justify-between flex-wrap gap-3">
-            <div className="text-left">
-              <p className="text-base font-medium">Acceso 24 horas</p>
-              <p className={`${S.sub} text-sm`}>Reflexiones ilimitadas por un día completo</p>
-            </div>
-            <div className="text-right flex items-center gap-3">
-              <span className="text-lg font-light">$0.99</span>
-              <button className={S.btnSm} onClick={() => checkout("daypass")}>Activar</button>
-            </div>
-          </div>
-
-          {/* Single */}
-          <div className="border border-[#D8CFC4] rounded-lg p-5 mb-6 flex items-center justify-between flex-wrap gap-3">
-            <div className="text-left">
-              <p className="text-base font-medium">Una reflexión más</p>
-              <p className={`${S.sub} text-sm`}>Acceso inmediato a una sola reflexión</p>
-            </div>
-            <div className="text-right flex items-center gap-3">
-              <span className="text-lg font-light">$0.50</span>
-              <button className={S.btnSm} onClick={() => checkout("single")}>Desbloquear</button>
-            </div>
-          </div>
-
-          <p className={`${S.sub} text-xs mb-4`}>Todos los precios en USD. El cobro se procesa de forma segura a través de Stripe.</p>
-
           <Footer showDemo />
         </div>
       </div>
@@ -753,28 +737,9 @@ export default function MePesaMucho() {
           <div className="flex justify-center"><LogoIcon size={40} /></div>
           <h1 className="text-4xl font-light tracking-tight mb-1 mt-3">mepesamucho</h1>
           <div className="w-10 h-px bg-[#C4B6A5] mx-auto my-5" />
-          <p className="text-lg text-[#5C5751] italic leading-relaxed mb-3">
-            A veces las cosas pesan menos cuando las sueltas.
+          <p className="text-lg text-[#5C5751] italic leading-relaxed mb-8">
+            Escribe lo que te pesa. Recibe una reflexión solo para ti.
           </p>
-          <p className={`${S.subStrong} text-sm leading-relaxed mb-6`}>
-            Un espacio seguro para escribir lo que te pesa y recibir una reflexión personalizada basada en sabiduría ancestral.
-          </p>
-
-          {/* Benefit bullets */}
-          <div className="text-left max-w-[440px] mx-auto mb-8 space-y-3">
-            <div className="flex items-start gap-3">
-              <span className="text-[#C4B6A5] mt-0.5 flex-shrink-0" aria-hidden="true">&#9675;</span>
-              <p className={`${S.sub} text-sm`}>Escribe y libera lo que te preocupa, sin que nadie lo lea</p>
-            </div>
-            <div className="flex items-start gap-3">
-              <span className="text-[#C4B6A5] mt-0.5 flex-shrink-0" aria-hidden="true">&#9675;</span>
-              <p className={`${S.sub} text-sm`}>Recibe reflexiones desde tradiciones como la filosofía, espiritualidad o textos bíblicos</p>
-            </div>
-            <div className="flex items-start gap-3">
-              <span className="text-[#C4B6A5] mt-0.5 flex-shrink-0" aria-hidden="true">&#9675;</span>
-              <p className={`${S.sub} text-sm`}>Profundiza en tus aprendizajes con conversaciones guiadas</p>
-            </div>
-          </div>
 
           <button className={`${S.btn} text-lg px-10 py-4`} onClick={() => setStep("writing")} aria-label="Comenzar a escribir">
             Quiero soltar lo que cargo
@@ -787,6 +752,43 @@ export default function MePesaMucho() {
               {2 - usosHoy} {2 - usosHoy === 1 ? "reflexión gratuita disponible" : "reflexiones gratuitas disponibles"} hoy
             </p>
           )}
+
+          {/* Accordion: ¿Cómo funciona? */}
+          <div className="mt-10">
+            <button
+              className="font-[var(--font-sans)] text-sm text-[#6F6A64] font-light cursor-pointer bg-transparent border-none underline decoration-[#D8CFC4] underline-offset-4 hover:text-[#C4B6A5] transition-colors"
+              onClick={() => setShowHowItWorks(!showHowItWorks)}
+              aria-expanded={showHowItWorks}
+              aria-controls="how-it-works"
+            >
+              ¿Cómo funciona?
+            </button>
+            <div
+              id="how-it-works"
+              className="accordion-content"
+              style={{
+                maxHeight: showHowItWorks ? "300px" : "0",
+                opacity: showHowItWorks ? 1 : 0,
+                overflow: "hidden",
+                transition: "max-height 0.4s ease, opacity 0.3s ease",
+              }}
+            >
+              <div className="mt-5 text-left max-w-[400px] mx-auto space-y-4">
+                <div className="flex items-start gap-3">
+                  <span className="font-[var(--font-sans)] text-xs text-[#C4B6A5] font-medium mt-0.5 flex-shrink-0">1</span>
+                  <p className={`${S.sub} text-sm`}>Escribe lo que sientes — nadie más lo verá.</p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="font-[var(--font-sans)] text-xs text-[#C4B6A5] font-medium mt-0.5 flex-shrink-0">2</span>
+                  <p className={`${S.sub} text-sm`}>Elige una tradición: filosofía, espiritualidad o textos bíblicos.</p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="font-[var(--font-sans)] text-xs text-[#C4B6A5] font-medium mt-0.5 flex-shrink-0">3</span>
+                  <p className={`${S.sub} text-sm`}>Recibe una reflexión escrita solo para ti, con citas verificadas.</p>
+                </div>
+              </div>
+            </div>
+          </div>
 
           <Footer />
         </div>
@@ -1161,19 +1163,16 @@ export default function MePesaMucho() {
 
             {cierreStep === 2 && (
               <div className="animate-fade-in">
-                <p className="text-[1.05rem] leading-loose mb-5">Lo que estás tocando merece más espacio.</p>
-                <div className="bg-[#EAE4DC] border border-[#D8CFC4] rounded-lg p-5">
-                  <p className="text-[1.05rem] mb-1">Este nivel de conversación es parte de la experiencia completa.</p>
-                  <p className={`${S.sub} text-sm mb-4`}>Cada respuesta tuya abre una reflexión más profunda, más tuya.</p>
-                  <div className="flex flex-col gap-2 items-center">
-                    <button className={`${S.btn} w-full`} onClick={() => checkout("subscription")}>Suscribirme — $4.99/mes</button>
-                    <button className={`${S.sub} text-sm cursor-pointer bg-transparent border-none hover:text-[#C4B6A5] transition-colors`} onClick={() => checkout("daypass")}>
-                      Acceso 24h por $0.99
-                    </button>
-                    <button className={`${S.sub} text-xs cursor-pointer bg-transparent border-none hover:text-[#C4B6A5] transition-colors`} onClick={() => checkout("single")}>
-                      Solo esta reflexión · $0.50
-                    </button>
-                  </div>
+                <p className="text-[1.05rem] italic leading-loose mb-2">Lo que estás tocando merece más espacio.</p>
+                <p className={`${S.sub} text-sm mb-5`}>Puedes seguir profundizando ahora mismo.</p>
+                <div className="flex flex-col gap-3 items-center">
+                  <button className={`${S.btn} w-full`} onClick={() => checkout("single")}>Solo esta reflexión — $0.50</button>
+                  <button className={`${S.sub} text-sm cursor-pointer bg-transparent border-none hover:text-[#C4B6A5] transition-colors`} onClick={() => checkout("daypass")}>
+                    Acceso 24h · $2.99
+                  </button>
+                  <button className={`${S.sub} text-xs cursor-pointer bg-transparent border-none hover:text-[#C4B6A5] transition-colors`} onClick={() => checkout("subscription")}>
+                    Suscripción mensual · $4.99/mes
+                  </button>
                 </div>
               </div>
             )}
