@@ -712,7 +712,7 @@ export default function MePesaMucho() {
         </div>
 
         {/* ── Reflection body (centered 800px) ── */}
-        <div className="max-w-[800px] w-full mx-auto px-6 sm:px-10 pb-12">
+        <div style={{ maxWidth: "800px", width: "100%", margin: "0 auto", paddingLeft: "1.5rem", paddingRight: "1.5rem", paddingBottom: "3rem" }}>
           <div className="leading-loose">{renderReflexion()}</div>
 
           {/* Sources */}
