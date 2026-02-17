@@ -98,6 +98,32 @@ async function checkout(type: "subscription" | "daypass" | "single") {
   }
 }
 
+// ── LOGO SVG (manos abiertas) ─────────────────
+
+const LogoIcon = ({ size = 32 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+    {/* Two open hands, minimalist line art */}
+    <path
+      d="M14 34c-2-1-4-3-5-6-1-2-1-4 0-6l3-5c1-1 2-2 3-1l1 2 1-4c0-2 1-3 2-3s2 1 2 3l0 3 1-5c0-2 1-3 2-3s2 1 2 3l-1 6"
+      stroke="#C4B6A5" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"
+    />
+    <path
+      d="M34 34c2-1 4-3 5-6 1-2 1-4 0-6l-3-5c-1-1-2-2-3-1l-1 2-1-4c0-2-1-3-2-3s-2 1-2 3l0 3-1-5c0-2-1-3-2-3s-2 1-2 3l1 6"
+      stroke="#C4B6A5" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"
+    />
+    {/* Connecting arc at bottom */}
+    <path d="M14 34c3 3 7 4 10 4s7-1 10-4" stroke="#C4B6A5" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+  </svg>
+);
+
+// ── FONT SIZE BUTTON ──────────────────────────
+
+const FONT_SIZES = [
+  { label: "A", base: "1.05rem", lg: "1.15rem", xl: "1.25rem", cita: "1.2rem" },
+  { label: "A+", base: "1.2rem", lg: "1.3rem", xl: "1.4rem", cita: "1.35rem" },
+  { label: "A++", base: "1.35rem", lg: "1.45rem", xl: "1.55rem", cita: "1.5rem" },
+];
+
 // ── SHARED STYLES ──────────────────────────────
 
 const S = {
@@ -136,6 +162,8 @@ export default function MePesaMucho() {
   const [dayPass, setDayPass] = useState({ active: false, hoursLeft: 0 });
   const [fadeKey, setFadeKey] = useState(0);
   const [apiError, setApiError] = useState("");
+  const [fontSize, setFontSize] = useState(0); // 0=normal, 1=grande, 2=muy grande
+  const [showCrisisBanner, setShowCrisisBanner] = useState(false);
 
   // Init
   useEffect(() => {
@@ -176,7 +204,15 @@ export default function MePesaMucho() {
 
   const iniciarDisolucion = useCallback(() => {
     if (!texto.trim()) return;
-    if (detectarCrisis(texto) && !crisisAck) { setShowCrisis(true); return; }
+    // Check crisis - show banner but still allow proceeding
+    if (detectarCrisis(texto) && !crisisAck) {
+      setShowCrisis(true);
+      return;
+    }
+    // If crisis was detected, show non-intrusive banner during essay
+    if (detectarCrisis(texto)) {
+      setShowCrisisBanner(true);
+    }
     setStep("dissolving");
     setTimeout(() => {
       setStep("message");
@@ -218,9 +254,11 @@ export default function MePesaMucho() {
     setShowCrisis(false); setCrisisAck(false); setShowDisclaimer(false);
     setPreguntaStep(0); setResp1(""); setResp2("");
     setCierreStep(0); setCierreTexto(""); setCierreTexto2(""); setShowCierreInput(false);
-    setMsgOpacity(0); setApiError("");
+    setMsgOpacity(0); setApiError(""); setShowCrisisBanner(false);
     setDayPass(getDayPass()); setUsosHoy(getUsosHoy());
   };
+
+  const fs = FONT_SIZES[fontSize];
 
   // ── CIERRE DATA ──────────────────────────────
 
@@ -309,6 +347,48 @@ export default function MePesaMucho() {
     </Overlay>
   );
 
+  // ── CRISIS BANNER (non-intrusive) ────────────
+
+  const CrisisBanner = () => (
+    <div className="fixed top-0 left-0 right-0 z-40 animate-slide-down">
+      <div className="bg-[#8B6F5E] text-white px-4 py-3 flex items-center justify-between gap-3 shadow-lg">
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <span className="text-lg flex-shrink-0">&#9829;</span>
+          <p className="font-[var(--font-sans)] text-sm font-light leading-snug">
+            Si necesitas hablar con alguien, hay personas preparadas para escucharte.{" "}
+            <button
+              onClick={() => setShowCrisis(true)}
+              className="underline font-medium bg-transparent border-none text-white cursor-pointer"
+            >
+              Ver lineas de ayuda
+            </button>
+          </p>
+        </div>
+        <button
+          onClick={() => setShowCrisisBanner(false)}
+          className="text-white/70 hover:text-white bg-transparent border-none cursor-pointer text-lg leading-none flex-shrink-0 px-1"
+          aria-label="Cerrar"
+        >
+          &times;
+        </button>
+      </div>
+    </div>
+  );
+
+  // ── FONT SIZE TOGGLE ─────────────────────────
+
+  const FontSizeToggle = () => (
+    <div className="fixed bottom-6 right-6 z-30 flex flex-col items-center gap-1">
+      <button
+        onClick={() => setFontSize((f) => (f + 1) % FONT_SIZES.length)}
+        className="w-11 h-11 rounded-full bg-[#EAE4DC] border border-[#D8CFC4] text-[#3A3733] font-[var(--font-serif)] text-sm cursor-pointer transition-all duration-300 hover:bg-[#C4B6A5] hover:text-white hover:border-[#C4B6A5] shadow-md flex items-center justify-center"
+        aria-label="Cambiar tamano de letra"
+      >
+        {FONT_SIZES[fontSize].label}
+      </button>
+    </div>
+  );
+
   // ═══════════════════════════════════════════════
   // RENDER
   // ═══════════════════════════════════════════════
@@ -364,7 +444,8 @@ export default function MePesaMucho() {
       <div className={`${S.page} animate-fade-in`} key={fadeKey}>
         {showDisclaimer && <DisclaimerModal />}
         <div className={`${S.box} text-center`}>
-          <h1 className="text-4xl font-light tracking-tight mb-1">mepesamucho</h1>
+          <LogoIcon size={36} />
+          <h1 className="text-4xl font-light tracking-tight mb-1 mt-3">mepesamucho</h1>
           <div className="w-10 h-px bg-[#C4B6A5] mx-auto my-6" />
           <p className="text-lg text-[#6F6A64] italic leading-relaxed mb-3">
             A veces las cosas pesan menos cuando las sueltas.
@@ -512,20 +593,31 @@ export default function MePesaMucho() {
     );
   }
 
-  // ── GENERATING ───────────────────────────────
+  // ── GENERATING (breathing light animation) ──
 
   if (step === "generating") {
     return (
       <div className={S.page}>
-        <div className={`${S.box} text-center`}>
-          <div className="w-0.5 h-10 bg-[#C4B6A5] mx-auto mb-6 animate-pulse-slow" />
-          <p className={`${S.sub} italic`}>Preparando tu reflexion...</p>
+        <div className={`${S.box} text-center flex flex-col items-center`}>
+          {/* Breathing circle */}
+          <div className="relative mb-8">
+            <div className="w-16 h-16 rounded-full bg-[#C4B6A5]/20 animate-breathe-glow" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-full bg-[#C4B6A5]/30 animate-breathe" />
+            </div>
+          </div>
+          <p className={`${S.sub} italic text-base animate-text-breath`}>
+            Preparando tu reflexion...
+          </p>
+          <p className={`${S.sub} text-xs mt-4 opacity-30`}>
+            Esto puede tomar unos segundos
+          </p>
         </div>
       </div>
     );
   }
 
-  // ── ESSAY ────────────────────────────────────
+  // ── ESSAY (redesigned layout) ────────────────
 
   if (step === "essay") {
     const renderReflexion = () => {
@@ -536,33 +628,67 @@ export default function MePesaMucho() {
         const isAttrib = t.startsWith("\u2014") || t.startsWith("--");
         const isQ = t.endsWith("?") && t.length < 200;
 
-        if (isCita) return <blockquote key={i} className="my-6 px-5 border-l-2 border-[#C4B6A5] italic text-lg leading-loose">{t}</blockquote>;
-        if (isAttrib) return <p key={i} className={`${S.sub} text-sm pl-5 mb-6`}>{t}</p>;
-        if (isQ) return <p key={i} className="my-6 text-lg italic text-[#8B6F5E] text-center leading-relaxed">{t}</p>;
-        return <p key={i} className="mb-4 text-justify text-[1.05rem] leading-loose">{t}</p>;
+        // IMPROVED: Citations with subtle background, left border, larger italic text
+        if (isCita) return (
+          <blockquote
+            key={i}
+            className="my-8 py-5 px-6 bg-[#EAE4DC]/50 border-l-3 border-[#C4B6A5] rounded-r-md italic leading-loose"
+            style={{ fontSize: fs.cita }}
+          >
+            {t}
+          </blockquote>
+        );
+        if (isAttrib) return <p key={i} className={`${S.sub} text-sm pl-6 mb-6 font-medium`}>{t}</p>;
+        if (isQ) return (
+          <p key={i} className="my-8 italic text-[#8B6F5E] text-center leading-relaxed" style={{ fontSize: fs.lg }}>
+            {t}
+          </p>
+        );
+        return (
+          <p key={i} className="mb-5 text-justify leading-loose" style={{ fontSize: fs.base }}>
+            {t}
+          </p>
+        );
       });
     };
 
     return (
-      <div className={`${S.pageTop} animate-fade-in`} key={fadeKey}>
+      <div className={`min-h-screen bg-[#F3EFEA] text-[#3A3733] font-[var(--font-serif)] animate-fade-in`} key={fadeKey}>
         {showDisclaimer && <DisclaimerModal />}
-        <div className={`${S.box} text-left`}>
-          {/* Header */}
-          <div className="text-center mb-8">
-            <p className={`${S.sub} text-xs uppercase tracking-[0.15em] mb-1`}>{MARCOS[marco!]?.nombre}</p>
-            <div className="w-8 h-px bg-[#C4B6A5] mx-auto mt-3" />
+        {showCrisis && <CrisisModal />}
+        {showCrisisBanner && <CrisisBanner />}
+
+        {/* Font size toggle */}
+        <FontSizeToggle />
+
+        {/* ── Logo header section (top area before text) ── */}
+        <div className="flex flex-col items-center pt-10 pb-4 sm:pt-14 sm:pb-6" style={{ minHeight: "28vh" }}>
+          <div className="flex flex-col items-center justify-end flex-1 pb-4">
+            <LogoIcon size={30} />
+            <p className="text-lg sm:text-xl font-light tracking-tight mt-2 text-[#3A3733]/80">mepesamucho</p>
+            <div className="w-10 h-px bg-[#C4B6A5] mt-4 mb-3" />
+            <p className={`font-[var(--font-sans)] text-xs uppercase tracking-[0.2em] text-[#6F6A64]/70 font-light`}>
+              {MARCOS[marco!]?.nombre}
+            </p>
           </div>
+        </div>
 
-          <p className={`${S.sub} text-sm italic text-center mb-8 opacity-40`}>Lee despacio. Esto fue escrito para ti.</p>
+        {/* ── "Lee despacio" with better readability ── */}
+        <div className="text-center mb-8 px-5">
+          <p className="font-[var(--font-sans)] text-sm sm:text-base italic text-[#8B6F5E] font-light tracking-wide">
+            Lee despacio. Esto fue escrito para ti.
+          </p>
+        </div>
 
-          {/* Reflection body */}
+        {/* ── Reflection body ── */}
+        <div className="max-w-[640px] w-full mx-auto px-5 sm:px-8 pb-12">
           <div className="leading-loose">{renderReflexion()}</div>
 
           {/* Sources */}
-          <div className="mt-10 pt-5 border-t border-[#D8CFC4]">
+          <div className="mt-12 pt-6 border-t border-[#D8CFC4]">
             <p className={`${S.sub} text-[0.7rem] uppercase tracking-widest mb-4`}>Fuentes citadas</p>
             {citasUsadas.map((c, i) => (
-              <div key={i} className="mb-3 pl-3 border-l-2 border-[#D8CFC4]">
+              <div key={i} className="mb-4 pl-4 border-l-2 border-[#D8CFC4]">
                 <p className="text-sm font-medium mb-0.5">{c.source}</p>
                 <p className={`${S.sub} text-sm italic leading-snug`}>{c.text}</p>
               </div>
@@ -570,7 +696,7 @@ export default function MePesaMucho() {
           </div>
 
           {/* Closing question flow */}
-          <div className="mt-10 py-6 px-5 text-center border-t border-b border-[#D8CFC4]">
+          <div className="mt-10 py-8 px-5 sm:px-6 text-center border-t border-b border-[#D8CFC4]">
 
             {cierreStep === 0 && (
               <>
@@ -624,14 +750,14 @@ export default function MePesaMucho() {
               Volver cuando lo necesite
             </button>
           </div>
-        </div>
 
-        {/* Footer */}
-        <div className="mt-12 text-center w-full max-w-[640px]">
-          <div className={`${S.divider} mb-5`} />
-          <p className={`${S.sub} text-[0.7rem] opacity-50`}>mepesamucho.com · Un espacio de reflexion, no de consejeria.</p>
-          <p className={`${S.sub} text-[0.7rem] opacity-40 mt-1`}>Lo que escribiste ya fue soltado. No queda registro.</p>
-          <button className={`${S.link} text-[0.65rem] opacity-30 mt-2`} onClick={() => setShowDisclaimer(true)}>Aviso legal</button>
+          {/* Footer */}
+          <div className="mt-12 text-center">
+            <div className={`${S.divider} mb-5`} />
+            <p className={`${S.sub} text-[0.7rem] opacity-50`}>mepesamucho.com · Un espacio de reflexion, no de consejeria.</p>
+            <p className={`${S.sub} text-[0.7rem] opacity-40 mt-1`}>Lo que escribiste ya fue soltado. No queda registro.</p>
+            <button className={`${S.link} text-[0.65rem] opacity-30 mt-2`} onClick={() => setShowDisclaimer(true)}>Aviso legal</button>
+          </div>
         </div>
       </div>
     );
