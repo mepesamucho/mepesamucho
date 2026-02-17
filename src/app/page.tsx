@@ -470,11 +470,11 @@ export default function MePesaMucho() {
 
           {dayPass.active ? (
             <p className={`${S.sub} text-xs mt-6 opacity-50`}>Acceso ampliado activo — {dayPass.hoursLeft}h restantes</p>
-          ) : usosHoy > 0 ? (
+          ) : (
             <p className={`${S.sub} text-xs mt-6 opacity-50`}>
-              {usosHoy === 1 ? "1 reflexion disponible hoy" : `${2 - usosHoy} reflexiones disponibles hoy`}
+              {2 - usosHoy} {2 - usosHoy === 1 ? "reflexion disponible" : "reflexiones disponibles"} hoy
             </p>
-          ) : null}
+          )}
 
           <div className="mt-8">
             <button className={`${S.link} text-[0.7rem] opacity-40`} onClick={() => setShowDisclaimer(true)}>
@@ -665,8 +665,8 @@ export default function MePesaMucho() {
         if (isCita) return (
           <blockquote
             key={i}
-            className="my-8 py-5 px-6 bg-[#EAE4DC]/50 border-l-3 border-[#C4B6A5] rounded-r-md italic leading-loose"
-            style={{ fontSize: fs.cita }}
+            className="my-8 py-5 px-6 bg-[#EAE4DC]/50 border-[#C4B6A5] rounded-r-md italic leading-loose"
+            style={{ fontSize: fs.cita, borderLeftWidth: "3px", borderLeftStyle: "solid" }}
           >
             {cleaned}
           </blockquote>
@@ -693,7 +693,7 @@ export default function MePesaMucho() {
         <FontSizeToggle />
 
         {/* ── Logo header section ── */}
-        <div className="flex flex-col items-center pt-10 pb-4 sm:pt-14 sm:pb-6" style={{ minHeight: "28vh" }}>
+        <div className="flex flex-col items-center pt-10 pb-4 sm:pt-14 sm:pb-6" style={{ minHeight: "20vh" }}>
           <div className="flex flex-col items-center justify-end flex-1 pb-4">
             <LogoIcon size={30} />
             <p className="text-lg sm:text-xl font-light tracking-tight mt-2 text-[#3A3733]/80">mepesamucho</p>
