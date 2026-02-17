@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { jsPDF } from "jspdf";
 import { detectarCrisis, CRISIS_RESOURCES } from "@/data/crisis";
 import { MARCOS, type Marco } from "@/data/citas";
 
@@ -83,63 +84,136 @@ function useSinglePass() {
   } catch {}
 }
 
-// ── DOWNLOAD REFLECTION HELPER ─────────────────
+// ── DOWNLOAD REFLECTION AS PDF ─────────────────
 
-function descargarReflexion(reflexion: string, citas: { source: string; text: string }[], marcoNombre: string) {
+function descargarReflexionPDF(reflexion: string, citas: { source: string; text: string }[], marcoNombre: string) {
   const fecha = new Date().toLocaleDateString("es-MX", { year: "numeric", month: "long", day: "numeric" });
-  const paragraphs = reflexion.split("\n\n").map((p) => {
-    const t = p.trim();
-    if (!t) return "";
-    if (t.startsWith("<<") || t.startsWith("\u00AB") || t.startsWith('"')) return `<blockquote>${t}</blockquote>`;
-    if (t.startsWith("\u2014") || t.startsWith("--")) return `<p class="attrib">${t}</p>`;
-    if (t.endsWith("?") && t.length < 200) return `<p class="question">${t}</p>`;
-    return `<p>${t}</p>`;
-  }).join("\n");
+  const doc = new jsPDF({ unit: "mm", format: "a4" });
+  const pageW = doc.internal.pageSize.getWidth();
+  const marginL = 25;
+  const marginR = 25;
+  const maxW = pageW - marginL - marginR;
+  let y = 30;
 
-  const citasHtml = citas.map((c) =>
-    `<div class="cita"><strong>${c.source}</strong><br><em>${c.text}</em></div>`
-  ).join("\n");
+  const addPageIfNeeded = (neededSpace: number) => {
+    if (y + neededSpace > 270) {
+      doc.addPage();
+      y = 25;
+    }
+  };
 
-  const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Mi reflexión — mepesamucho</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:Georgia,'Times New Roman',serif;background:#F3EFEA;color:#3A3733;max-width:700px;margin:0 auto;padding:3rem 2rem;line-height:1.8}
-h1{font-size:1.8rem;font-weight:300;text-align:center;margin-bottom:0.3rem}
-.subtitle{font-family:system-ui,sans-serif;text-align:center;color:#6F6A64;font-size:0.85rem;margin-bottom:0.5rem}
-.divider{width:40px;height:1px;background:#C4B6A5;margin:1.5rem auto}
-.marco{font-family:system-ui,sans-serif;text-align:center;text-transform:uppercase;letter-spacing:0.2em;color:#6F6A64;font-size:0.75rem;margin-bottom:2rem}
-p{margin-bottom:1.2rem;font-size:1.1rem;text-align:justify}
-blockquote{margin:2rem 0;padding:1.2rem 1.5rem;background:rgba(234,228,220,0.5);border-left:3px solid #C4B6A5;font-style:italic;font-size:1.1rem;border-radius:0 6px 6px 0}
-.attrib{font-family:system-ui,sans-serif;color:#6F6A64;font-size:0.9rem;padding-left:1.5rem;margin-bottom:1.5rem}
-.question{text-align:center;font-style:italic;color:#8B6F5E;font-size:1.15rem;margin:2rem 0}
-.fuentes-title{font-size:1.2rem;font-weight:400;margin-top:3rem;margin-bottom:1rem;padding-top:1.5rem;border-top:1px solid #D8CFC4}
-.cita{margin-bottom:1rem;padding-left:1rem;border-left:2px solid #D8CFC4;font-size:0.9rem;font-family:system-ui,sans-serif;color:#5C5751}
-.cita em{color:#6F6A64}
-.footer{margin-top:3rem;padding-top:1rem;border-top:1px solid #D8CFC4;text-align:center;font-family:system-ui,sans-serif;font-size:0.75rem;color:#857F78}
-</style></head><body>
-<h1>mepesamucho</h1>
-<p class="subtitle">${fecha}</p>
-<div class="divider"></div>
-<p class="marco">${marcoNombre}</p>
-${paragraphs}
-<h2 class="fuentes-title">Fuentes citadas</h2>
-${citasHtml}
-<div class="footer">
-<p>mepesamucho.com · Un espacio de reflexión, no de consejería.</p>
-<p>Lo que escribes no se almacena ni se comparte.</p>
-</div>
-</body></html>`;
+  // Header
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(22);
+  doc.setTextColor(58, 55, 51);
+  doc.text("mepesamucho", pageW / 2, y, { align: "center" });
+  y += 8;
 
-  const blob = new Blob([html], { type: "text/html" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `reflexion-mepesamucho-${new Date().toISOString().slice(0, 10)}.html`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  doc.setFontSize(9);
+  doc.setTextColor(111, 106, 100);
+  doc.text(fecha, pageW / 2, y, { align: "center" });
+  y += 6;
+
+  // Divider
+  doc.setDrawColor(196, 182, 165);
+  doc.line(pageW / 2 - 15, y, pageW / 2 + 15, y);
+  y += 8;
+
+  doc.setFontSize(8);
+  doc.setTextColor(111, 106, 100);
+  doc.text(marcoNombre.toUpperCase(), pageW / 2, y, { align: "center" });
+  y += 12;
+
+  // Reflection body
+  const paragraphs = reflexion.split("\n\n").filter((p) => p.trim());
+  paragraphs.forEach((p) => {
+    const t = p.trim().replace(/\*\*(.*?)\*\*/g, "$1").replace(/\*(.*?)\*/g, "$1");
+    if (!t) return;
+    const isCita = t.startsWith("<<") || t.startsWith("\u00AB") || t.startsWith('"');
+    const isAttrib = t.startsWith("\u2014") || t.startsWith("--");
+    const isQ = t.endsWith("?") && t.length < 200;
+
+    if (isCita) {
+      addPageIfNeeded(20);
+      doc.setDrawColor(196, 182, 165);
+      doc.setFillColor(234, 228, 220);
+      const lines = doc.splitTextToSize(t, maxW - 10);
+      const blockH = lines.length * 5 + 6;
+      doc.rect(marginL, y - 2, maxW, blockH, "F");
+      doc.line(marginL, y - 2, marginL, y - 2 + blockH);
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(10);
+      doc.setTextColor(58, 55, 51);
+      doc.text(lines, marginL + 5, y + 3);
+      y += blockH + 6;
+    } else if (isAttrib) {
+      addPageIfNeeded(8);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(111, 106, 100);
+      doc.text(t, marginL + 5, y);
+      y += 8;
+    } else if (isQ) {
+      addPageIfNeeded(12);
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(10.5);
+      doc.setTextColor(139, 111, 94);
+      const lines = doc.splitTextToSize(t, maxW);
+      doc.text(lines, pageW / 2, y, { align: "center" });
+      y += lines.length * 5 + 8;
+    } else {
+      addPageIfNeeded(12);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.setTextColor(58, 55, 51);
+      const lines = doc.splitTextToSize(t, maxW);
+      doc.text(lines, marginL, y, { align: "justify", maxWidth: maxW });
+      y += lines.length * 4.5 + 6;
+    }
+  });
+
+  // Fuentes citadas section
+  addPageIfNeeded(20);
+  y += 6;
+  doc.setDrawColor(216, 207, 196);
+  doc.line(marginL, y, pageW - marginR, y);
+  y += 10;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(13);
+  doc.setTextColor(58, 55, 51);
+  doc.text("Fuentes citadas", marginL, y);
+  y += 10;
+
+  citas.forEach((c) => {
+    addPageIfNeeded(18);
+    doc.setDrawColor(216, 207, 196);
+    doc.line(marginL, y - 1, marginL, y + 10);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.setTextColor(92, 87, 81);
+    doc.text(c.source, marginL + 4, y + 2);
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(8);
+    doc.setTextColor(111, 106, 100);
+    const citaLines = doc.splitTextToSize(c.text, maxW - 8);
+    doc.text(citaLines, marginL + 4, y + 7);
+    y += citaLines.length * 4 + 12;
+  });
+
+  // Footer
+  addPageIfNeeded(15);
+  y += 8;
+  doc.setDrawColor(216, 207, 196);
+  doc.line(marginL, y, pageW - marginR, y);
+  y += 8;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7);
+  doc.setTextColor(133, 127, 120);
+  doc.text("mepesamucho.com \u00B7 Un espacio de reflexi\u00F3n, no de consejer\u00EDa.", pageW / 2, y, { align: "center" });
+  y += 4;
+  doc.text("Lo que escribes no se almacena ni se comparte.", pageW / 2, y, { align: "center" });
+
+  doc.save(`reflexion-mepesamucho-${new Date().toISOString().slice(0, 10)}.pdf`);
 }
 
 // ── CHECKOUT HELPER ────────────────────────────
@@ -772,11 +846,20 @@ export default function MePesaMucho() {
 
   // ── FOOTER COMPONENT ─────────────────────────
 
-  const Footer = ({ showDemo = false }: { showDemo?: boolean }) => (
+  const Footer = ({ showDemo = false, showCounter = false }: { showDemo?: boolean; showCounter?: boolean }) => (
     <footer className="mt-10 text-center" role="contentinfo">
       <div className={`${S.divider} mb-5`} />
       <p className="font-[var(--font-sans)] text-xs text-[#857F78] leading-relaxed">mepesamucho.com · Un espacio de reflexión, no de consejería.</p>
       <p className="font-[var(--font-sans)] text-xs text-[#857F78] leading-relaxed mt-1">Lo que escribes no se almacena ni se comparte.</p>
+      {showCounter && (
+        <p className="font-[var(--font-sans)] text-[0.7rem] text-[#857F78] mt-3">
+          {dayPass.active
+            ? `Acceso ampliado activo — ${dayPass.hoursLeft}h restantes`
+            : `${Math.max(0, 1 - usosHoy)} reflexión gratuita disponible hoy`
+          }
+        </p>
+      )}
+      <p className="font-[var(--font-sans)] text-[0.65rem] text-[#857F78] mt-3 italic">Más de 10,000 reflexiones compartidas</p>
       <div className="flex justify-center gap-4 mt-3 flex-wrap">
         <button className={`${S.link} text-[0.7rem]`} onClick={() => setShowAbout(true)}>Acerca de</button>
         <button className={`${S.link} text-[0.7rem]`} onClick={() => setShowDisclaimer(true)}>Aviso legal y privacidad</button>
@@ -793,7 +876,7 @@ export default function MePesaMucho() {
 
   // ── LIMIT (paywall) ────────────────────────────
 
-  if (usosHoy >= 2 && !dayPass.active && !getSinglePass() && step === "landing") {
+  if (usosHoy >= 1 && !dayPass.active && !getSinglePass() && step === "landing") {
     return (
       <div className={`${S.page} animate-fade-in pt-16`} key={fadeKey}>
         <SiteHeader />
@@ -808,28 +891,28 @@ export default function MePesaMucho() {
             Puedes seguir profundizando ahora mismo.
           </p>
 
-          {/* Single — featured, most accessible */}
-          <div className="bg-[#EAE4DC] border-2 border-[#C4B6A5] rounded-lg p-6 mb-4 text-center">
-            <p className="text-lg font-medium mb-1">Solo esta reflexión</p>
+          {/* Single — featured card, solid button */}
+          <div className="bg-[#EAE4DC] border-2 border-[#C4B6A5] rounded-lg p-6 mb-4 text-center transition-shadow duration-300 hover:shadow-lg">
+            <p className="text-lg font-medium mb-1">Continuar conversación actual</p>
             <p className="text-2xl font-light mb-2">$0.50 <span className={`${S.sub} text-sm`}>USD</span></p>
-            <p className={`${S.sub} text-sm mb-4`}>Acceso inmediato a una reflexión completa.</p>
-            <button className={`${S.btn} w-full`} onClick={() => checkout("single")}>Desbloquear esta reflexión</button>
+            <p className={`${S.sub} text-sm mb-4`}>Desbloquea esta reflexión completa y continúa tu conversación. Incluye descarga en PDF.</p>
+            <button className={`${S.btn} w-full`} onClick={() => checkout("single")} aria-label="Desbloquear esta reflexión por $0.50">Desbloquear esta reflexión</button>
           </div>
 
-          {/* Day pass — standard */}
-          <div className="border border-[#D8CFC4] rounded-lg p-5 mb-4 text-center">
+          {/* Day pass — standard card, outline button */}
+          <div className="border border-[#D8CFC4] rounded-lg p-5 mb-4 text-center transition-shadow duration-300 hover:shadow-md">
             <p className="text-base font-medium mb-1">Acceso 24 horas</p>
-            <p className="text-xl font-light mb-1">$0.99 <span className={`${S.sub} text-sm`}>USD</span></p>
-            <p className={`${S.sub} text-sm mb-3`}>Reflexiones ilimitadas por un día completo.</p>
-            <button className={S.btnSecondary + " w-full"} onClick={() => checkout("daypass")}>Activar acceso 24h</button>
+            <p className="text-xl font-light mb-1">$2.99 <span className={`${S.sub} text-sm`}>USD</span></p>
+            <p className={`${S.sub} text-sm mb-3`}>Reflexiones ilimitadas por un día completo. Incluye descarga en PDF de cada reflexión.</p>
+            <button className={S.btnSecondary + " w-full"} onClick={() => checkout("daypass")} aria-label="Activar acceso 24 horas por $2.99">Activar acceso 24h</button>
           </div>
 
-          {/* Subscription — discrete */}
-          <div className="border border-[#D8CFC4] rounded-lg p-5 mb-6 text-center">
+          {/* Subscription — discrete card, light outline button */}
+          <div className="border border-[#D8CFC4]/70 rounded-lg p-5 mb-6 text-center transition-shadow duration-300 hover:shadow-sm">
             <p className="text-base font-medium mb-1">Suscripción mensual</p>
             <p className="text-xl font-light mb-1">$4.99 <span className={`${S.sub} text-sm`}>USD / mes</span></p>
-            <p className={`${S.sub} text-sm mb-3`}>Reflexiones ilimitadas, conversaciones guiadas, acceso desde cualquier dispositivo.</p>
-            <button className={S.btnSecondary + " w-full"} onClick={() => checkout("subscription")}>Suscribirme</button>
+            <p className={`${S.sub} text-sm mb-3`}>Reflexiones ilimitadas, conversaciones guiadas, descarga PDF y acceso desde cualquier dispositivo.</p>
+            <button className={`font-[var(--font-serif)] text-base px-7 py-3 bg-transparent text-[#5C5751] border border-[#D8CFC4] rounded-lg cursor-pointer transition-all duration-300 hover:bg-[#EAE4DC] hover:border-[#C4B6A5] w-full`} onClick={() => checkout("subscription")} aria-label="Suscribirme por $4.99 al mes">Suscribirme</button>
             <p className={`${S.sub} text-xs mt-2`}>Puedes cancelar en cualquier momento.</p>
           </div>
 
@@ -927,24 +1010,16 @@ export default function MePesaMucho() {
           <div className="flex justify-center"><LogoIcon size={40} /></div>
           <h1 className="text-4xl font-light tracking-tight mb-1 mt-3">mepesamucho</h1>
           <div className="w-10 h-px bg-[#C4B6A5] mx-auto my-5" />
-          <p className="text-lg text-[#5C5751] italic leading-relaxed mb-8">
-            Escribe lo que te pesa. Recibe una reflexión solo para ti.
+          <p className="text-xl text-[#5C5751] italic leading-relaxed mb-10">
+            A veces las cosas pesan menos cuando las sueltas.
           </p>
 
           <button className={`${S.btn} text-lg px-10 py-4`} onClick={() => setStep("writing")} aria-label="Comenzar a escribir">
             Quiero soltar lo que cargo
           </button>
 
-          {dayPass.active ? (
-            <p className={`${S.sub} text-xs mt-6`}>Acceso ampliado activo — {dayPass.hoursLeft}h restantes</p>
-          ) : (
-            <p className={`${S.sub} text-xs mt-6`}>
-              {2 - usosHoy} {2 - usosHoy === 1 ? "reflexión gratuita disponible" : "reflexiones gratuitas disponibles"} hoy
-            </p>
-          )}
-
-          {/* Accordion: ¿Cómo funciona? — separated section */}
-          <div className="mt-20 pt-10" style={{ borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "#D8CFC4" }}>
+          {/* Discrete "¿Cómo funciona?" link below CTA */}
+          <div className="mt-6">
             <button
               className="font-[var(--font-sans)] text-sm text-[#6F6A64] font-light cursor-pointer bg-transparent border-none underline decoration-[#D8CFC4] underline-offset-4 hover:text-[#C4B6A5] transition-colors"
               onClick={() => setShowHowItWorks(!showHowItWorks)}
@@ -953,17 +1028,20 @@ export default function MePesaMucho() {
             >
               ¿Cómo funciona?
             </button>
-            <div
-              id="how-it-works"
-              className="accordion-content"
-              style={{
-                maxHeight: showHowItWorks ? "300px" : "0",
-                opacity: showHowItWorks ? 1 : 0,
-                overflow: "hidden",
-                transition: "max-height 0.4s ease, opacity 0.3s ease",
-              }}
-            >
-              <div className="mt-5 text-left max-w-[400px] mx-auto space-y-4">
+          </div>
+
+          {/* Accordion content — expands below */}
+          <div
+            id="how-it-works"
+            style={{
+              maxHeight: showHowItWorks ? "300px" : "0",
+              opacity: showHowItWorks ? 1 : 0,
+              overflow: "hidden",
+              transition: "max-height 0.4s ease, opacity 0.3s ease",
+            }}
+          >
+            <div className="mt-20 pt-10" style={{ borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "#D8CFC4" }}>
+              <div className="text-left max-w-[400px] mx-auto space-y-4">
                 <div className="flex items-start gap-3">
                   <span className="font-[var(--font-sans)] text-xs text-[#C4B6A5] font-medium mt-0.5 flex-shrink-0">1</span>
                   <p className={`${S.sub} text-sm`}>Escribe lo que sientes — nadie más lo verá.</p>
@@ -980,7 +1058,7 @@ export default function MePesaMucho() {
             </div>
           </div>
 
-          <Footer />
+          <Footer showCounter />
         </div>
       </div>
     );
@@ -1123,16 +1201,10 @@ export default function MePesaMucho() {
       }
     };
 
-    // Contextual guides
-    const guideQ1 = {
-      why: "Esto nos ayuda a centrar tu reflexión en lo que más importa ahora mismo.",
-      example: "Por ejemplo: \"Necesito paz\" o \"Quiero entender por qué me siento así\"",
-    };
-    const guideQ2 = {
-      why: "Saber si es algo reciente o de tiempo atrás nos ayuda a encontrar las palabras correctas para ti.",
-      example: "Por ejemplo: \"Viene de hace mucho, pero hoy regresó\" o \"Pasó ayer\"",
-    };
-    const guide = isQ1 ? guideQ1 : guideQ2;
+    const placeholderQ1 = "Por ejemplo: necesito paz, quiero entender por qué me siento así";
+    const placeholderQ2 = "Por ejemplo: Viene de hace mucho, pero hoy regresó. Pasó ayer";
+    const whyQ1 = "Esto nos ayuda a centrar tu reflexión en lo que más importa ahora mismo.";
+    const whyQ2 = "Saber si es algo reciente o de tiempo atrás nos ayuda a encontrar las palabras correctas para ti.";
 
     return (
       <div className={`${S.page} animate-fade-in pt-16`} key={`q${fadeKey}`}>
@@ -1143,15 +1215,10 @@ export default function MePesaMucho() {
         {showAbout && <AboutModal />}
         <div className={`${S.box} text-center`}>
           <p className={`${S.sub} text-sm mb-3`}>{isQ1 ? "Antes de tu reflexión:" : "Una pregunta más:"}</p>
-          <h2 className="text-xl font-normal italic leading-snug mb-4">
+          <h2 className="text-xl font-normal italic leading-snug mb-3">
             {isQ1 ? "¿Qué es lo que más necesitas en este momento?" : "¿Esto que te pesa viene de hace tiempo o es reciente?"}
           </h2>
-
-          {/* Contextual guide */}
-          <div className="bg-[#F5ECE3]/60 rounded-lg p-4 mb-5 text-left">
-            <p className={`${S.sub} text-sm`}>{guide.why}</p>
-            <p className={`${S.sub} text-xs italic mt-1`}>{guide.example}</p>
-          </div>
+          <p className={`${S.sub} text-sm mb-5 text-center`}>{isQ1 ? whyQ1 : whyQ2}</p>
 
           <label htmlFor={`pregunta-${isQ1 ? "1" : "2"}`} className="sr-only">
             {isQ1 ? "Qué necesitas en este momento" : "Desde cuándo te pesa esto"}
@@ -1160,7 +1227,7 @@ export default function MePesaMucho() {
             id={`pregunta-${isQ1 ? "1" : "2"}`}
             value={val}
             onChange={handleChange}
-            placeholder="Escribe con tus palabras..."
+            placeholder={isQ1 ? placeholderQ1 : placeholderQ2}
             autoFocus
             className={S.textarea}
             aria-label={isQ1 ? "Tu respuesta sobre lo que necesitas" : "Tu respuesta sobre la duración"}
@@ -1268,22 +1335,23 @@ export default function MePesaMucho() {
             </div>
           </div>
 
-          <div className="flex justify-center gap-4 mt-6 flex-wrap">
-            <button className={S.btnSm} onClick={() => setShowFuentes(true)}>
-              Ver fuentes citadas ({citasUsadas.length})
-            </button>
-            <button
-              className={S.btnSm}
-              onClick={() => descargarReflexion(reflexion, citasUsadas, MARCOS[marco!]?.nombre || "")}
-            >
-              Descargar reflexión
+          {/* Primary CTA: Invitation to respond — big and prominent */}
+          <div className="mt-8 py-6 text-center" style={{ borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "#D8CFC4" }}>
+            <p className="text-lg italic leading-relaxed mb-5">{PREGUNTAS_CIERRE[cIdx]}</p>
+            <button className={`${S.btn} text-lg px-10 py-4`} onClick={() => { setShowCierreInput(true); setCierreStep(1); }} aria-label="Responder a la reflexión">
+              Quiero responder
             </button>
           </div>
 
-          {/* Invitation to respond */}
-          <div className="mt-8 py-6 text-center" style={{ borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "#D8CFC4" }}>
-            <p className="text-lg italic leading-relaxed mb-5">{PREGUNTAS_CIERRE[cIdx]}</p>
-            <button className={S.btnSm} onClick={() => { setShowCierreInput(true); setCierreStep(1); }}>Quiero responder</button>
+          {/* Secondary: Download PDF — corner-like, lower hierarchy */}
+          <div className="text-center mt-4">
+            <button
+              className={`${S.link} text-sm`}
+              onClick={() => descargarReflexionPDF(reflexion, citasUsadas, MARCOS[marco!]?.nombre || "")}
+              aria-label="Descargar reflexión en formato PDF"
+            >
+              Descargar reflexión (PDF)
+            </button>
           </div>
 
           <div className="text-center mt-6">
@@ -1324,7 +1392,7 @@ export default function MePesaMucho() {
         {showCrisis && <CrisisModal />}
         {showCrisisBanner && <CrisisBanner />}
         <div className={`${S.box}`}>
-          <p className="text-sm italic text-[#6F6A64] mb-5 pl-4" style={{ borderLeftWidth: "2px", borderLeftStyle: "solid", borderLeftColor: "#D8CFC4" }}>{cierreTexto}</p>
+          <p className="text-base italic text-[#6F6A64] mb-5 pl-4 leading-relaxed" style={{ borderLeftWidth: "2px", borderLeftStyle: "solid", borderLeftColor: "#D8CFC4", fontSize: "1rem" }}>{cierreTexto}</p>
           <p className="text-[1.15rem] leading-loose mb-6">{PROFUNDIZACIONES[cIdx]}</p>
           <h2 className="text-lg italic text-center leading-relaxed mb-5">{PREGUNTAS_SEGUNDO[cIdx]}</h2>
           <label htmlFor="cierre-resp2" className="sr-only">Tu respuesta a la segunda pregunta</label>
@@ -1371,10 +1439,10 @@ export default function MePesaMucho() {
           <div className={`${S.box} text-center`}>
             <p className="text-xl italic leading-relaxed mb-2">Lo que estás tocando merece más espacio.</p>
             <p className={`${S.sub} text-base mb-6`}>Puedes seguir profundizando ahora mismo.</p>
-            <div className="flex flex-col gap-3 items-center max-w-[360px] mx-auto">
-              <button className={`${S.btn} w-full`} onClick={() => checkout("single")}>Solo esta reflexión — $0.50</button>
-              <button className={`${S.sub} text-sm cursor-pointer bg-transparent border-none hover:text-[#C4B6A5] transition-colors`} onClick={() => checkout("daypass")}>Acceso 24h · $0.99</button>
-              <button className={`${S.sub} text-xs cursor-pointer bg-transparent border-none hover:text-[#C4B6A5] transition-colors`} onClick={() => checkout("subscription")}>Suscripción mensual · $4.99/mes</button>
+            <div className="flex flex-col gap-3 items-center max-w-[380px] mx-auto">
+              <button className={`${S.btn} w-full`} onClick={() => checkout("single")} aria-label="Desbloquear por $0.50">Continuar conversación — $0.50</button>
+              <button className={`${S.btnSecondary} w-full text-sm`} onClick={() => checkout("daypass")} aria-label="Acceso 24h por $2.99">Acceso 24h — $2.99</button>
+              <button className={`${S.sub} text-xs cursor-pointer bg-transparent border-none hover:text-[#C4B6A5] transition-colors`} onClick={() => checkout("subscription")} aria-label="Suscripción mensual $4.99">Suscripción mensual · $4.99/mes</button>
             </div>
             <div className="mt-6"><button className={`${S.link} text-sm`} onClick={() => setCierreStep(0)}>Volver a mi reflexión</button></div>
           </div>
@@ -1426,12 +1494,12 @@ export default function MePesaMucho() {
                       ))}
                     </div>
                     <div className="censored-overlay">
-                      <div className="bg-[#F3EFEA] border border-[#D8CFC4] rounded-lg p-6 mx-4 mb-4 text-center" style={{ width: "calc(100% - 2rem)", maxWidth: "380px" }}>
-                        <p className="text-lg italic leading-relaxed mb-1">Lo que estás tocando merece más espacio.</p>
-                        <p className={`${S.sub} text-sm mb-4`}>Desbloquea la reflexión completa.</p>
-                        <button className={`${S.btn} w-full mb-3`} onClick={() => checkout("single")}>Solo esta reflexión — $0.50</button>
-                        <button className={`${S.sub} text-sm cursor-pointer bg-transparent border-none hover:text-[#C4B6A5] transition-colors block mx-auto mb-1`} onClick={() => checkout("daypass")}>Acceso 24h · $0.99</button>
-                        <button className={`${S.sub} text-xs cursor-pointer bg-transparent border-none hover:text-[#C4B6A5] transition-colors block mx-auto`} onClick={() => checkout("subscription")}>Suscripción mensual · $4.99/mes</button>
+                      <div className="bg-[#F3EFEA] border border-[#D8CFC4] rounded-lg p-6 mx-4 mb-4 text-center" style={{ width: "calc(100% - 2rem)", maxWidth: "400px" }}>
+                        <p className="text-lg italic leading-relaxed mb-1">Desbloquear la reflexión completa</p>
+                        <p className={`${S.sub} text-sm mb-4`}>Lo que estás tocando merece más espacio.</p>
+                        <button className={`${S.btn} w-full mb-3`} onClick={() => checkout("single")} aria-label="Desbloquear por $0.50">Continuar conversación — $0.50</button>
+                        <button className={`${S.btnSecondary} w-full mb-2 text-sm`} onClick={() => checkout("daypass")} aria-label="Acceso 24h por $2.99">Acceso 24h — $2.99</button>
+                        <button className={`${S.sub} text-xs cursor-pointer bg-transparent border-none hover:text-[#C4B6A5] transition-colors block mx-auto`} onClick={() => checkout("subscription")} aria-label="Suscripción mensual $4.99">Suscripción mensual · $4.99/mes</button>
                       </div>
                     </div>
                   </div>
