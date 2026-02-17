@@ -102,7 +102,7 @@ async function checkout(type: "subscription" | "daypass" | "single") {
 // ── LOGO SVG (manos abiertas) ─────────────────
 
 const LogoIcon = ({ size = 32 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <svg width={size} height={size} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
     <path
       d="M14 34c-2-1-4-3-5-6-1-2-1-4 0-6l3-5c1-1 2-2 3-1l1 2 1-4c0-2 1-3 2-3s2 1 2 3l0 3 1-5c0-2 1-3 2-3s2 1 2 3l-1 6"
       stroke="#C4B6A5" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"
@@ -115,12 +115,43 @@ const LogoIcon = ({ size = 32 }: { size?: number }) => (
   </svg>
 );
 
+// ── PRIVACY BADGE ─────────────────────────────
+
+const PrivacyBadge = ({ onClick }: { onClick?: () => void }) => (
+  <div className="flex items-center gap-2 justify-center">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6F6A64" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+      <path d="M7 11V7a5 5 0 0110 0v4" />
+    </svg>
+    <span className="font-[var(--font-sans)] text-xs text-[#6F6A64]">
+      Tu información es privada y segura.{" "}
+      {onClick && (
+        <button
+          onClick={onClick}
+          className="underline decoration-[#D8CFC4] underline-offset-2 hover:text-[#C4B6A5] transition-colors bg-transparent border-none cursor-pointer text-xs text-[#6F6A64] font-[var(--font-sans)]"
+        >
+          Política de privacidad
+        </button>
+      )}
+    </span>
+  </div>
+);
+
 // ── FONT SIZE BUTTON ──────────────────────────
 
 const FONT_SIZES = [
   { label: "A", base: "1.1rem", lg: "1.2rem", xl: "1.3rem", cita: "1.25rem" },
   { label: "A+", base: "1.25rem", lg: "1.35rem", xl: "1.45rem", cita: "1.4rem" },
   { label: "A++", base: "1.4rem", lg: "1.5rem", xl: "1.6rem", cita: "1.55rem" },
+];
+
+// ── GENERATING MESSAGES ───────────────────────
+
+const GEN_MESSAGES = [
+  "Preparando tu reflexión...",
+  "Buscando las palabras correctas...",
+  "Escuchando lo que escribiste...",
+  "Casi listo...",
 ];
 
 // ── SHARED STYLES ──────────────────────────────
@@ -136,13 +167,14 @@ const S = {
   pageTop: "min-h-screen bg-[#F3EFEA] text-[#3A3733] font-[var(--font-serif)] flex flex-col items-center justify-start px-5 pt-14 pb-12 leading-relaxed",
   box: "max-w-[640px] w-full",
   boxWide: "max-w-[800px] w-full",
-  btn: "font-[var(--font-serif)] text-base px-7 py-3 bg-[#EAE4DC] text-[#3A3733] border border-[#D8CFC4] rounded cursor-pointer transition-all duration-300 hover:bg-[#C4B6A5] hover:text-white hover:border-[#C4B6A5]",
-  btnSm: "font-[var(--font-serif)] text-sm px-5 py-2 bg-[#EAE4DC] text-[#3A3733] border border-[#D8CFC4] rounded cursor-pointer transition-all duration-300 hover:bg-[#C4B6A5] hover:text-white hover:border-[#C4B6A5]",
+  btn: "font-[var(--font-serif)] text-base px-8 py-3.5 bg-[#C4B6A5] text-white border border-[#C4B6A5] rounded-lg cursor-pointer transition-all duration-300 hover:bg-[#B0A292] hover:border-[#B0A292] btn-primary-glow",
+  btnSecondary: "font-[var(--font-serif)] text-base px-7 py-3 bg-[#EAE4DC] text-[#3A3733] border border-[#D8CFC4] rounded-lg cursor-pointer transition-all duration-300 hover:bg-[#C4B6A5] hover:text-white hover:border-[#C4B6A5]",
+  btnSm: "font-[var(--font-serif)] text-sm px-5 py-2.5 bg-[#EAE4DC] text-[#3A3733] border border-[#D8CFC4] rounded-lg cursor-pointer transition-all duration-300 hover:bg-[#C4B6A5] hover:text-white hover:border-[#C4B6A5]",
   sub: "font-[var(--font-sans)] text-[#6F6A64] font-light leading-relaxed",
   subStrong: "font-[var(--font-sans)] text-[#5C5751] font-light leading-relaxed",
   link: "font-[var(--font-sans)] text-[#6F6A64] font-light text-xs cursor-pointer underline decoration-[#D8CFC4] underline-offset-4 hover:text-[#C4B6A5] transition-colors bg-transparent border-none",
-  textarea: "w-full min-h-[120px] p-4 font-[var(--font-serif)] text-[1.1rem] leading-relaxed bg-transparent border border-[#D8CFC4] rounded resize-y outline-none text-left",
-  textareaLg: "w-full min-h-[240px] p-5 font-[var(--font-serif)] text-lg leading-relaxed bg-transparent border border-[#D8CFC4] rounded resize-y outline-none",
+  textarea: "w-full min-h-[120px] p-4 font-[var(--font-serif)] text-[1.1rem] leading-relaxed bg-transparent border border-[#D8CFC4] rounded-lg resize-y outline-none text-left",
+  textareaLg: "w-full min-h-[240px] p-5 font-[var(--font-serif)] text-lg leading-relaxed bg-transparent border border-[#D8CFC4] rounded-lg resize-y outline-none",
   divider: "w-8 h-px bg-[#C4B6A5] mx-auto",
 };
 
@@ -157,6 +189,7 @@ export default function MePesaMucho() {
   const [showCrisis, setShowCrisis] = useState(false);
   const [crisisAck, setCrisisAck] = useState(false);
   const [showDisclaimer, setShowDisclaimer] = useState(false);
+  const [showAbout, setShowAbout] = useState(false);
   const [preguntaStep, setPreguntaStep] = useState(0);
   const [resp1, setResp1] = useState("");
   const [resp2, setResp2] = useState("");
@@ -184,7 +217,11 @@ export default function MePesaMucho() {
   const [recoveryInput, setRecoveryInput] = useState("");
   const [recoveryLoading, setRecoveryLoading] = useState(false);
   const [recoveryError, setRecoveryError] = useState("");
+  const [genMsgIndex, setGenMsgIndex] = useState(0);
+  const [showScrollHint, setShowScrollHint] = useState(true);
+  const [readyContinue, setReadyContinue] = useState(false);
   const crisisShownOnce = useRef(false);
+  const scrollCardRef = useRef<HTMLDivElement>(null);
 
   // Init
   useEffect(() => {
@@ -203,12 +240,10 @@ export default function MePesaMucho() {
         .then((r) => r.json())
         .then((d) => {
           if (d.success) {
-            // Activate localStorage as before
             if (type === "daypass") { activateDayPass(); setDayPass({ active: true, hoursLeft: 24 }); }
             if (type === "single") activateSinglePass();
             if (type === "subscription") { activateDayPass(); setDayPass({ active: true, hoursLeft: 720 }); }
             window.history.replaceState({}, "", "/");
-            // Show access choice step
             setLastSessionId(sid);
             setLastPaymentType(type);
             setStep("access_choice");
@@ -219,6 +254,27 @@ export default function MePesaMucho() {
   }, []);
 
   useEffect(() => { setFadeKey((k) => k + 1); }, [step, preguntaStep, cierreStep]);
+
+  // Generating step: rotate messages
+  useEffect(() => {
+    if (step !== "generating") return;
+    setGenMsgIndex(0);
+    const interval = setInterval(() => {
+      setGenMsgIndex((prev) => (prev + 1) % GEN_MESSAGES.length);
+    }, 2800);
+    return () => clearInterval(interval);
+  }, [step]);
+
+  // Scroll hint: hide when user scrolls the card
+  useEffect(() => {
+    const card = scrollCardRef.current;
+    if (!card) return;
+    const onScroll = () => {
+      if (card.scrollTop > 30) setShowScrollHint(false);
+    };
+    card.addEventListener("scroll", onScroll);
+    return () => card.removeEventListener("scroll", onScroll);
+  }, [step]);
 
   // ── CRISIS CHECK (universal — used on ALL textareas) ─
 
@@ -275,13 +331,15 @@ export default function MePesaMucho() {
       setShowCrisisBanner(true);
     }
     setStep("dissolving");
+    setReadyContinue(false);
+    // Slower dissolution: 5s dissolve animation, then show message
     setTimeout(() => {
       setStep("message");
       setMsgOpacity(0);
-      setTimeout(() => setMsgOpacity(1), 100);
-      setTimeout(() => setMsgOpacity(0), 2200);
-      setTimeout(() => setStep("framework"), 3200);
-    }, 3500);
+      setTimeout(() => setMsgOpacity(1), 200);
+      // User controls when to continue — show button after 2.5s
+      setTimeout(() => setReadyContinue(true), 2500);
+    }, 5000);
   }, [texto, crisisAck, crisisDetectedInText]);
 
   const generarReflexion = useCallback(async () => {
@@ -304,6 +362,7 @@ export default function MePesaMucho() {
       setReflexion(data.reflexion);
       setCitasUsadas(data.citasUsadas || []);
       setStep("essay");
+      setShowScrollHint(true);
       const n = usosHoy + 1;
       setUsosHoy(n);
       saveUsosHoy(n);
@@ -323,7 +382,7 @@ export default function MePesaMucho() {
     setCierreStep(0); setCierreTexto(""); setCierreTexto2(""); setShowCierreInput(false);
     setMsgOpacity(0); setApiError(""); setShowCrisisBanner(false);
     setCrisisDetectedInText(false); crisisShownOnce.current = false;
-    setShowFuentes(false);
+    setShowFuentes(false); setShowAbout(false);
     setDayPass(getDayPass()); setUsosHoy(getUsosHoy());
   };
 
@@ -354,11 +413,28 @@ export default function MePesaMucho() {
   ];
   const cIdx = Math.abs((reflexion || "").length + (marco || "").length) % PREGUNTAS_CIERRE.length;
 
+  // ── HEADER COMPONENT ─────────────────────────
+
+  const SiteHeader = () => (
+    <div className="fixed top-0 left-0 right-0 z-30 bg-[#F3EFEA]/90 backdrop-blur-sm" style={{ borderBottom: "1px solid rgba(216,207,196,0.5)" }}>
+      <div className="max-w-[800px] mx-auto px-5 py-3 flex items-center justify-between">
+        <button onClick={reiniciar} className="flex items-center gap-2 bg-transparent border-none cursor-pointer" aria-label="Ir al inicio">
+          <LogoIcon size={24} />
+          <span className="text-lg font-light tracking-tight text-[#3A3733]">mepesamucho</span>
+        </button>
+        <div className="flex items-center gap-4">
+          <button className={`${S.link} text-[0.7rem]`} onClick={() => setShowAbout(true)}>Acerca de</button>
+          <button className={`${S.link} text-[0.7rem]`} onClick={() => setShowDisclaimer(true)}>Aviso legal</button>
+        </div>
+      </div>
+    </div>
+  );
+
   // ── MODALS ───────────────────────────────────
 
   const Overlay = ({ children }: { children: React.ReactNode }) => (
-    <div className="fixed inset-0 bg-[#3A3733]/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-[#F3EFEA] max-w-[560px] w-full rounded-md p-8 max-h-[90vh] overflow-y-auto border border-[#D8CFC4]">
+    <div className="fixed inset-0 bg-[#3A3733]/40 flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true">
+      <div className="bg-[#F3EFEA] max-w-[560px] w-full rounded-lg p-8 max-h-[90vh] overflow-y-auto border border-[#D8CFC4]">
         {children}
       </div>
     </div>
@@ -367,12 +443,12 @@ export default function MePesaMucho() {
   const DisclaimerModal = () => (
     <Overlay>
       <div className={`${S.divider} mb-6`} style={{ width: 40 }} />
-      <h2 className="text-xl font-medium text-center mb-6">Aviso importante</h2>
+      <h2 className="text-xl font-medium text-center mb-6">Aviso legal y política de privacidad</h2>
       {[
         ["Esto no es terapia ni consejería profesional", "mepesamucho.com es un espacio de reflexión personal. No sustituye la atención psicológica, psiquiátrica o médica."],
         ["No es consejo médico ni legal", "Las reflexiones son de carácter espiritual y contemplativo. No deben interpretarse como diagnóstico o recomendación profesional."],
         ["Exención de responsabilidad por interpretación", "mepesamucho.com no se hace responsable por las interpretaciones, decisiones o acciones que el usuario tome a partir del contenido."],
-        ["Tu privacidad es prioridad", "No almacenamos tu texto. Se procesa en el momento y se elimina. No se construyen perfiles de usuario."],
+        ["Tu privacidad es prioridad", "No almacenamos tu texto. Se procesa en el momento y se elimina. No se construyen perfiles de usuario. Si eliges guardar tu acceso con email, este se almacena como un hash irreversible — nunca en texto claro."],
         ["Fuentes verificadas", "Las citas provienen de fuentes verificadas y documentadas. No se inventan ni modifican citas."],
         ["En caso de crisis", "Si estás en una emergencia emocional o situación de riesgo, busca ayuda profesional inmediata."],
         ["Uso bajo tu propia responsabilidad", "Al utilizar mepesamucho.com aceptas que el servicio se ofrece tal cual, sin garantías."],
@@ -383,7 +459,31 @@ export default function MePesaMucho() {
         </div>
       ))}
       <div className="mt-6 pt-6 border-t border-[#D8CFC4] text-center">
-        <button className={S.btn} onClick={() => setShowDisclaimer(false)}>Entendido</button>
+        <button className={S.btnSecondary} onClick={() => setShowDisclaimer(false)}>Entendido</button>
+      </div>
+    </Overlay>
+  );
+
+  const AboutModal = () => (
+    <Overlay>
+      <div className={`${S.divider} mb-6`} style={{ width: 40 }} />
+      <h2 className="text-xl font-medium text-center mb-6">Acerca de mepesamucho</h2>
+      <div className="space-y-4">
+        <p className={`${S.subStrong} text-sm leading-relaxed`}>
+          <strong className="text-[#3A3733]">mepesamucho.com</strong> es un espacio digital de reflexión personal. Nació de la creencia de que a veces solo necesitamos soltar lo que cargamos y recibir una palabra que nos ayude a verlo desde otro lugar.
+        </p>
+        <p className={`${S.sub} text-sm leading-relaxed`}>
+          No somos terapeutas ni consejeros. Somos un puente entre lo que sientes y la sabiduría de tradiciones que han acompañado al ser humano durante siglos: filosofía clásica, espiritualidad universal, textos bíblicos.
+        </p>
+        <p className={`${S.sub} text-sm leading-relaxed`}>
+          Cada reflexión que recibes es única, generada a partir de lo que escribes y del marco que eliges. Las citas son reales y verificadas. Tu texto no se almacena ni se comparte.
+        </p>
+        <p className={`${S.sub} text-sm leading-relaxed`}>
+          Desarrollado por <strong className="text-[#5C5751]">Lemon Films</strong> como un proyecto de bienestar emocional.
+        </p>
+      </div>
+      <div className="mt-6 pt-6 border-t border-[#D8CFC4] text-center">
+        <button className={S.btnSecondary} onClick={() => setShowAbout(false)}>Cerrar</button>
       </div>
     </Overlay>
   );
@@ -409,7 +509,7 @@ export default function MePesaMucho() {
       </div>
       <div className="mt-6 pt-6 border-t border-[#D8CFC4] text-center">
         <p className={`${S.sub} text-sm italic mb-4`}>Si deseas continuar con tu reflexión, puedes hacerlo.</p>
-        <button className={S.btn} onClick={() => { setShowCrisis(false); setCrisisAck(true); }}>
+        <button className={S.btnSecondary} onClick={() => { setShowCrisis(false); setCrisisAck(true); }}>
           Continuar con mi reflexión
         </button>
       </div>
@@ -432,7 +532,7 @@ export default function MePesaMucho() {
         </div>
       ))}
       <div className="mt-6 pt-6 border-t border-[#D8CFC4] text-center">
-        <button className={S.btn} onClick={() => setShowFuentes(false)}>Cerrar</button>
+        <button className={S.btnSecondary} onClick={() => setShowFuentes(false)}>Cerrar</button>
       </div>
     </Overlay>
   );
@@ -443,7 +543,7 @@ export default function MePesaMucho() {
     <div className="fixed top-0 left-0 right-0 z-40 animate-slide-down">
       <div className="bg-[#8B6F5E] text-white px-4 py-3 flex items-center justify-between gap-3 shadow-lg">
         <div className="flex items-center gap-3 flex-1 min-w-0">
-          <span className="text-lg flex-shrink-0">&#9829;</span>
+          <span className="text-lg flex-shrink-0" aria-hidden="true">&#9829;</span>
           <p className="font-[var(--font-sans)] text-sm font-light leading-snug">
             Si necesitas hablar con alguien, hay personas preparadas para escucharte.{" "}
             <button
@@ -457,7 +557,7 @@ export default function MePesaMucho() {
         <button
           onClick={() => setShowCrisisBanner(false)}
           className="text-white/70 hover:text-white bg-transparent border-none cursor-pointer text-lg leading-none flex-shrink-0 px-1"
-          aria-label="Cerrar"
+          aria-label="Cerrar banner de crisis"
         >
           &times;
         </button>
@@ -479,66 +579,66 @@ export default function MePesaMucho() {
     </div>
   );
 
+  // ── FOOTER COMPONENT ─────────────────────────
+
+  const Footer = ({ showDemo = false }: { showDemo?: boolean }) => (
+    <footer className="mt-10 text-center" role="contentinfo">
+      <div className={`${S.divider} mb-5`} />
+      <p className="font-[var(--font-sans)] text-xs text-[#857F78] leading-relaxed">mepesamucho.com · Un espacio de reflexión, no de consejería.</p>
+      <p className="font-[var(--font-sans)] text-xs text-[#857F78] leading-relaxed mt-1">Lo que escribes no se almacena ni se comparte.</p>
+      <div className="flex justify-center gap-4 mt-3 flex-wrap">
+        <button className={`${S.link} text-[0.7rem]`} onClick={() => setShowAbout(true)}>Acerca de</button>
+        <button className={`${S.link} text-[0.7rem]`} onClick={() => setShowDisclaimer(true)}>Aviso legal y privacidad</button>
+        {showDemo && (
+          <button className={`${S.link} text-[0.7rem]`} onClick={() => { setUsosHoy(0); saveUsosHoy(0); }}>(Demo: reiniciar)</button>
+        )}
+      </div>
+    </footer>
+  );
+
   // ═══════════════════════════════════════════════
   // RENDER
   // ═══════════════════════════════════════════════
 
-  // ── LIMIT ────────────────────────────────────
+  // ── LIMIT (paywall) ────────────────────────────
 
   if (usosHoy >= 2 && !dayPass.active && !getSinglePass() && step === "landing") {
     return (
-      <div className={`${S.page} animate-fade-in`} key={fadeKey}>
+      <div className={`${S.page} animate-fade-in pt-16`} key={fadeKey}>
+        <SiteHeader />
         {showDisclaimer && <DisclaimerModal />}
+        {showAbout && <AboutModal />}
         <div className={`${S.box} text-center`}>
-          <h1 className="text-xl font-light mb-4">Has usado tus dos reflexiones de hoy.</h1>
-          <p className={`${S.sub} text-base mb-8`}>Vuelve mañana, o elige una opción para continuar.</p>
+          <h1 className="text-xl font-light mb-3">Has usado tus dos reflexiones gratuitas de hoy.</h1>
+          <p className={`${S.sub} text-base mb-6`}>Vuelve mañana, o elige una opción para seguir reflexionando.</p>
 
-          <div className="border border-[#D8CFC4] rounded-md p-5 mb-3 flex items-center justify-between flex-wrap gap-3">
-            <div className="text-left">
-              <p className="text-[1.05rem] font-medium">Solo una reflexión más</p>
-              <p className={`${S.sub} text-sm`}>$0.50 USD · Acceso inmediato</p>
-            </div>
-            <button className={S.btnSm} onClick={() => checkout("single")}>Desbloquear</button>
-          </div>
-
-          <div className="bg-[#EAE4DC] border border-[#D8CFC4] rounded-md p-6 mb-3 text-center">
-            <p className="text-lg font-medium mb-1">Acceso ampliado — 24 horas</p>
-            <p className={`${S.sub} text-sm mb-2`}>Reflexiones ilimitadas por 24 horas.</p>
-            <p className="text-xl mb-3">$0.99 USD</p>
-            <button className={S.btn} onClick={() => checkout("daypass")}>Activar acceso 24h</button>
-          </div>
-
-          <div className="border border-[#D8CFC4] rounded-md p-6 mb-6 text-center">
-            <p className="text-lg font-medium mb-1">Suscripción mensual</p>
-            <p className={`${S.sub} text-sm mb-2`}>Sin límite. Reflexiones personalizadas. Cancela cuando quieras.</p>
-            <p className="text-xl mb-3">$4.99 USD / mes</p>
-            <button className={S.btn} onClick={() => checkout("subscription")}>Suscribirme</button>
-          </div>
-
-          {/* Recovery section */}
-          <div className="border border-[#D8CFC4] rounded-md p-5 mb-6 bg-[#F5ECE3]/50">
-            <p className={`${S.subStrong} text-sm mb-3`}>¿Ya tienes acceso?</p>
+          {/* Recovery section — PROMINENT, above pricing */}
+          <div className="border-2 border-[#C4B6A5] rounded-lg p-5 mb-6 bg-[#F5ECE3]/60">
+            <p className="text-base font-medium mb-1">¿Ya pagaste antes?</p>
+            <p className={`${S.sub} text-sm mb-3`}>Recupera tu acceso con el email o código que registraste.</p>
             {!recoveryMode ? (
               <div className="flex gap-2 flex-wrap justify-center">
                 <button className={S.btnSm} onClick={() => { setRecoveryMode("email"); setRecoveryInput(""); setRecoveryError(""); }}>
-                  Tengo un email registrado
+                  Recuperar con email
                 </button>
                 <button className={S.btnSm} onClick={() => { setRecoveryMode("code"); setRecoveryInput(""); setRecoveryError(""); }}>
-                  Tengo un código
+                  Recuperar con código
                 </button>
               </div>
             ) : (
               <div>
+                <label className="sr-only" htmlFor="recovery-input">{recoveryMode === "email" ? "Email de recuperación" : "Código de acceso"}</label>
                 <input
+                  id="recovery-input"
                   type={recoveryMode === "email" ? "email" : "text"}
                   value={recoveryInput}
                   onChange={(e) => setRecoveryInput(e.target.value)}
                   placeholder={recoveryMode === "email" ? "Tu email..." : "MPM-XXXX-XXXX"}
-                  className="w-full p-3 font-[var(--font-sans)] text-sm bg-transparent border border-[#D8CFC4] rounded outline-none mb-2"
+                  className="w-full p-3 font-[var(--font-sans)] text-sm bg-white/60 border border-[#D8CFC4] rounded-lg outline-none mb-2"
                   autoFocus
                   style={recoveryMode === "code" ? { textTransform: "uppercase", letterSpacing: "0.1em" } : undefined}
                 />
-                {recoveryError && <p className="text-sm text-[#8B6F5E] mb-2">{recoveryError}</p>}
+                {recoveryError && <p className="text-sm text-[#8B6F5E] mb-2" role="alert">{recoveryError}</p>}
                 <div className="flex gap-2 justify-center">
                   <button
                     className={`${S.btnSm} ${recoveryLoading ? "opacity-50" : ""}`}
@@ -571,7 +671,7 @@ export default function MePesaMucho() {
                           setRecoveryMode(null);
                           setStep("landing");
                         } else {
-                          setRecoveryError(data.error || "No se encontró acceso.");
+                          setRecoveryError(data.error || "No se encontró acceso activo con estos datos.");
                         }
                       } catch {
                         setRecoveryError("Error de conexión. Intenta de nuevo.");
@@ -579,7 +679,7 @@ export default function MePesaMucho() {
                       setRecoveryLoading(false);
                     }}
                   >
-                    {recoveryLoading ? "Verificando..." : "Verificar"}
+                    {recoveryLoading ? "Verificando..." : "Verificar acceso"}
                   </button>
                   <button className={`${S.link} text-sm`} onClick={() => setRecoveryMode(null)}>Cancelar</button>
                 </div>
@@ -587,10 +687,56 @@ export default function MePesaMucho() {
             )}
           </div>
 
-          <div className="flex justify-center gap-6 flex-wrap">
-            <button className={S.link} onClick={() => setShowDisclaimer(true)}>Aviso legal</button>
-            <button className={S.link} onClick={() => { setUsosHoy(0); saveUsosHoy(0); }}>(Demo: reiniciar)</button>
+          {/* Divider */}
+          <div className="flex items-center gap-4 mb-6">
+            <div className="flex-1 h-px bg-[#D8CFC4]" />
+            <span className={`${S.sub} text-sm`}>o elige un plan</span>
+            <div className="flex-1 h-px bg-[#D8CFC4]" />
           </div>
+
+          {/* Subscription — featured */}
+          <div className="bg-[#EAE4DC] border-2 border-[#C4B6A5] rounded-lg p-6 mb-3 text-center relative">
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#C4B6A5] text-white text-xs font-[var(--font-sans)] px-3 py-0.5 rounded-full">
+              Recomendado
+            </div>
+            <p className="text-lg font-medium mb-2 mt-1">Suscripción mensual</p>
+            <p className="text-2xl font-light mb-2">$4.99 <span className={`${S.sub} text-sm`}>USD / mes</span></p>
+            <div className={`${S.sub} text-sm text-left mb-4 space-y-1`}>
+              <p>&#10003; Reflexiones ilimitadas, 24/7</p>
+              <p>&#10003; Conversaciones guiadas de profundización</p>
+              <p>&#10003; Acceso desde cualquier dispositivo</p>
+              <p>&#10003; Cancela cuando quieras, sin compromiso</p>
+            </div>
+            <button className={`${S.btn} w-full text-lg`} onClick={() => checkout("subscription")}>Suscribirme por $4.99/mes</button>
+          </div>
+
+          {/* Day pass */}
+          <div className="border border-[#D8CFC4] rounded-lg p-5 mb-3 flex items-center justify-between flex-wrap gap-3">
+            <div className="text-left">
+              <p className="text-base font-medium">Acceso 24 horas</p>
+              <p className={`${S.sub} text-sm`}>Reflexiones ilimitadas por un día completo</p>
+            </div>
+            <div className="text-right flex items-center gap-3">
+              <span className="text-lg font-light">$0.99</span>
+              <button className={S.btnSm} onClick={() => checkout("daypass")}>Activar</button>
+            </div>
+          </div>
+
+          {/* Single */}
+          <div className="border border-[#D8CFC4] rounded-lg p-5 mb-6 flex items-center justify-between flex-wrap gap-3">
+            <div className="text-left">
+              <p className="text-base font-medium">Una reflexión más</p>
+              <p className={`${S.sub} text-sm`}>Acceso inmediato a una sola reflexión</p>
+            </div>
+            <div className="text-right flex items-center gap-3">
+              <span className="text-lg font-light">$0.50</span>
+              <button className={S.btnSm} onClick={() => checkout("single")}>Desbloquear</button>
+            </div>
+          </div>
+
+          <p className={`${S.sub} text-xs mb-4`}>Todos los precios en USD. El cobro se procesa de forma segura a través de Stripe.</p>
+
+          <Footer showDemo />
         </div>
       </div>
     );
@@ -602,33 +748,47 @@ export default function MePesaMucho() {
     return (
       <div className={`${S.page} animate-fade-in`} key={fadeKey}>
         {showDisclaimer && <DisclaimerModal />}
+        {showAbout && <AboutModal />}
         <div className={`${S.box} text-center`}>
-          <div className="flex justify-center"><LogoIcon size={36} /></div>
+          <div className="flex justify-center"><LogoIcon size={40} /></div>
           <h1 className="text-4xl font-light tracking-tight mb-1 mt-3">mepesamucho</h1>
-          <div className="w-10 h-px bg-[#C4B6A5] mx-auto my-6" />
-          <p className="text-lg text-[#6F6A64] italic leading-relaxed mb-3">
+          <div className="w-10 h-px bg-[#C4B6A5] mx-auto my-5" />
+          <p className="text-lg text-[#5C5751] italic leading-relaxed mb-3">
             A veces las cosas pesan menos cuando las sueltas.
           </p>
-          <p className={`${S.sub} text-sm mb-10`}>
-            Escribe lo que cargas. Nadie más lo leerá.
+          <p className={`${S.subStrong} text-sm leading-relaxed mb-6`}>
+            Un espacio seguro para escribir lo que te pesa y recibir una reflexión personalizada basada en sabiduría ancestral.
           </p>
-          <button className={`${S.btn} text-lg px-8 py-3`} onClick={() => setStep("writing")}>
-            Empezar
+
+          {/* Benefit bullets */}
+          <div className="text-left max-w-[440px] mx-auto mb-8 space-y-3">
+            <div className="flex items-start gap-3">
+              <span className="text-[#C4B6A5] mt-0.5 flex-shrink-0" aria-hidden="true">&#9675;</span>
+              <p className={`${S.sub} text-sm`}>Escribe y libera lo que te preocupa, sin que nadie lo lea</p>
+            </div>
+            <div className="flex items-start gap-3">
+              <span className="text-[#C4B6A5] mt-0.5 flex-shrink-0" aria-hidden="true">&#9675;</span>
+              <p className={`${S.sub} text-sm`}>Recibe reflexiones desde tradiciones como la filosofía, espiritualidad o textos bíblicos</p>
+            </div>
+            <div className="flex items-start gap-3">
+              <span className="text-[#C4B6A5] mt-0.5 flex-shrink-0" aria-hidden="true">&#9675;</span>
+              <p className={`${S.sub} text-sm`}>Profundiza en tus aprendizajes con conversaciones guiadas</p>
+            </div>
+          </div>
+
+          <button className={`${S.btn} text-lg px-10 py-4`} onClick={() => setStep("writing")} aria-label="Comenzar a escribir">
+            Quiero soltar lo que cargo
           </button>
 
           {dayPass.active ? (
             <p className={`${S.sub} text-xs mt-6`}>Acceso ampliado activo — {dayPass.hoursLeft}h restantes</p>
           ) : (
             <p className={`${S.sub} text-xs mt-6`}>
-              {2 - usosHoy} {2 - usosHoy === 1 ? "reflexión disponible" : "reflexiones disponibles"} hoy
+              {2 - usosHoy} {2 - usosHoy === 1 ? "reflexión gratuita disponible" : "reflexiones gratuitas disponibles"} hoy
             </p>
           )}
 
-          <div className="mt-8">
-            <button className={`${S.link} text-xs`} onClick={() => setShowDisclaimer(true)}>
-              Aviso legal
-            </button>
-          </div>
+          <Footer />
         </div>
       </div>
     );
@@ -638,21 +798,32 @@ export default function MePesaMucho() {
 
   if (step === "writing") {
     return (
-      <div className={`${S.page} animate-fade-in`} key={fadeKey}>
+      <div className={`${S.page} animate-fade-in pt-16`} key={fadeKey}>
+        <SiteHeader />
         {showCrisis && <CrisisModal />}
         {showCrisisBanner && <CrisisBanner />}
+        {showDisclaimer && <DisclaimerModal />}
+        {showAbout && <AboutModal />}
         <div className={`${S.box}`}>
-          <p className={`${S.sub} text-sm text-center mb-6`}>Nadie más leerá esto. No se guarda.</p>
+          <PrivacyBadge onClick={() => setShowDisclaimer(true)} />
+          <div className="h-4" />
+          <label htmlFor="texto-principal" className="sr-only">Escribe lo que te pesa</label>
           <textarea
+            id="texto-principal"
             value={texto}
             onChange={handleTextoChange}
-            placeholder="Escribe lo que te pesa..."
+            placeholder="Escribe aquí lo que necesitas soltar..."
             autoFocus
             className={S.textareaLg}
+            aria-label="Espacio para escribir lo que te pesa"
           />
+          <p className={`${S.sub} text-xs text-right mt-1`}>{texto.length > 0 ? `${texto.length} caracteres` : ""}</p>
           {texto.trim().length > 0 && (
-            <div className="text-center mt-6 transition-opacity duration-500" style={{ opacity: texto.trim().length > 5 ? 1 : 0.5 }}>
-              <button className={S.btn} onClick={iniciarDisolucion}>Soltar</button>
+            <div className="text-center mt-5 transition-opacity duration-500" style={{ opacity: texto.trim().length > 5 ? 1 : 0.5 }}>
+              <button className={`${S.btn} text-lg px-10`} onClick={iniciarDisolucion} aria-label="Soltar lo que escribiste">
+                Soltar y dejar ir
+              </button>
+              <p className={`${S.sub} text-xs mt-3`}>Tu texto se procesa en el momento y luego se elimina.</p>
             </div>
           )}
         </div>
@@ -668,7 +839,7 @@ export default function MePesaMucho() {
         {showCrisisBanner && <CrisisBanner />}
         {showCrisis && <CrisisModal />}
         <div className={`${S.box} text-left`}>
-          <div className="animate-dissolve text-lg leading-relaxed p-5 whitespace-pre-wrap break-words max-h-[60vh] overflow-hidden">
+          <div className="animate-dissolve text-lg leading-relaxed p-5 whitespace-pre-wrap break-words max-h-[60vh] overflow-hidden" aria-live="polite">
             {texto}
           </div>
         </div>
@@ -676,7 +847,7 @@ export default function MePesaMucho() {
     );
   }
 
-  // ── MESSAGE ──────────────────────────────────
+  // ── MESSAGE (with manual continue button) ──────
 
   if (step === "message") {
     return (
@@ -685,11 +856,23 @@ export default function MePesaMucho() {
         {showCrisis && <CrisisModal />}
         <div className={`${S.box} text-center`}>
           <p
-            className="text-xl text-[#6F6A64] italic font-light transition-all duration-[900ms]"
-            style={{ opacity: msgOpacity, transform: msgOpacity === 0 ? "translateY(8px)" : "translateY(0)" }}
+            className="text-2xl text-[#5C5751] italic font-light transition-all duration-[1200ms] mb-8"
+            style={{ opacity: msgOpacity, transform: msgOpacity === 0 ? "translateY(12px)" : "translateY(0)" }}
+            aria-live="polite"
           >
             Ya no lo cargas solo.
           </p>
+          {readyContinue && (
+            <div className="animate-fade-in">
+              <button
+                className={S.btnSecondary}
+                onClick={() => setStep("framework")}
+                aria-label="Continuar al siguiente paso"
+              >
+                Continuar
+              </button>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -699,22 +882,27 @@ export default function MePesaMucho() {
 
   if (step === "framework") {
     return (
-      <div className={`${S.page} animate-fade-in`} key={fadeKey}>
+      <div className={`${S.page} animate-fade-in pt-16`} key={fadeKey}>
+        <SiteHeader />
         {showCrisisBanner && <CrisisBanner />}
         {showCrisis && <CrisisModal />}
+        {showDisclaimer && <DisclaimerModal />}
+        {showAbout && <AboutModal />}
         <div className={`${S.box} text-center`}>
-          <div className={`${S.divider} mb-6`} style={{ opacity: 0.5 }} />
           <p className={`${S.sub} text-sm mb-2`}>Ahora elige cómo quieres escucharte.</p>
-          <p className="text-lg text-[#6F6A64] italic mb-8">¿Desde qué tradición?</p>
-          {apiError && <p className={`${S.sub} text-sm text-[#8B6F5E] mb-4`}>{apiError}</p>}
-          <div className="flex flex-col gap-3">
+          <h2 className="text-xl font-normal italic leading-snug mb-8">¿Desde qué tradición quieres recibir tu reflexión?</h2>
+          {apiError && <p className={`${S.sub} text-sm text-[#8B6F5E] mb-4`} role="alert">{apiError}</p>}
+          <div className="flex flex-col gap-3" role="radiogroup" aria-label="Selecciona un marco de reflexión">
             {(Object.entries(MARCOS) as [Marco, { nombre: string; descripcion: string }][]).map(([key, val]) => (
               <button
                 key={key}
                 onClick={() => { setMarco(key); setPreguntaStep(0); setStep("preguntas"); }}
-                className="text-left p-4 bg-transparent border border-[#D8CFC4] rounded transition-all duration-300 hover:bg-[#EAE4DC] hover:border-[#C4B6A5] cursor-pointer"
+                className="text-left p-5 bg-transparent border-2 border-[#D8CFC4] rounded-lg transition-all duration-300 hover:bg-[#EAE4DC] hover:border-[#C4B6A5] cursor-pointer group"
+                role="radio"
+                aria-checked="false"
+                aria-label={`${val.nombre}: ${val.descripcion}`}
               >
-                <span className="block text-lg font-medium">{val.nombre}</span>
+                <span className="block text-lg font-medium group-hover:text-[#3A3733]">{val.nombre}</span>
                 <span className={`block ${S.sub} text-sm mt-1`}>{val.descripcion}</span>
               </button>
             ))}
@@ -724,14 +912,13 @@ export default function MePesaMucho() {
     );
   }
 
-  // ── PREGUNTAS (with crisis detection) ─────────
+  // ── PREGUNTAS (with contextual guide) ─────────
 
   if (step === "preguntas") {
     const isQ1 = preguntaStep === 0;
     const val = isQ1 ? resp1 : resp2;
     const handleChange = isQ1 ? handleResp1Change : handleResp2Change;
 
-    // Block advancing if crisis detected and not acknowledged
     const handleContinue = () => {
       if (crisisDetectedInText && !crisisAck) {
         setShowCrisis(true);
@@ -744,38 +931,74 @@ export default function MePesaMucho() {
       }
     };
 
+    // Contextual guides
+    const guideQ1 = {
+      why: "Esto nos ayuda a centrar tu reflexión en lo que más importa ahora mismo.",
+      example: "Por ejemplo: \"Necesito paz\" o \"Quiero entender por qué me siento así\"",
+    };
+    const guideQ2 = {
+      why: "Saber si es algo reciente o de tiempo atrás nos ayuda a encontrar las palabras correctas para ti.",
+      example: "Por ejemplo: \"Viene de hace mucho, pero hoy regresó\" o \"Pasó ayer\"",
+    };
+    const guide = isQ1 ? guideQ1 : guideQ2;
+
     return (
-      <div className={`${S.page} animate-fade-in`} key={`q${fadeKey}`}>
+      <div className={`${S.page} animate-fade-in pt-16`} key={`q${fadeKey}`}>
+        <SiteHeader />
         {showCrisisBanner && <CrisisBanner />}
         {showCrisis && <CrisisModal />}
+        {showDisclaimer && <DisclaimerModal />}
+        {showAbout && <AboutModal />}
         <div className={`${S.box} text-center`}>
-          <p className={`${S.sub} text-sm mb-3`}>{isQ1 ? "Antes de tu reflexión:" : "Una más:"}</p>
-          <h2 className="text-xl font-normal italic leading-snug mb-6">
+          <p className={`${S.sub} text-sm mb-3`}>{isQ1 ? "Antes de tu reflexión:" : "Una pregunta más:"}</p>
+          <h2 className="text-xl font-normal italic leading-snug mb-4">
             {isQ1 ? "¿Qué es lo que más necesitas en este momento?" : "¿Esto que te pesa viene de hace tiempo o es reciente?"}
           </h2>
+
+          {/* Contextual guide */}
+          <div className="bg-[#F5ECE3]/60 rounded-lg p-4 mb-5 text-left">
+            <p className={`${S.sub} text-sm`}>{guide.why}</p>
+            <p className={`${S.sub} text-xs italic mt-1`}>{guide.example}</p>
+          </div>
+
+          <label htmlFor={`pregunta-${isQ1 ? "1" : "2"}`} className="sr-only">
+            {isQ1 ? "Qué necesitas en este momento" : "Desde cuándo te pesa esto"}
+          </label>
           <textarea
+            id={`pregunta-${isQ1 ? "1" : "2"}`}
             value={val}
             onChange={handleChange}
             placeholder="Escribe con tus palabras..."
             autoFocus
             className={S.textarea}
+            aria-label={isQ1 ? "Tu respuesta sobre lo que necesitas" : "Tu respuesta sobre la duración"}
           />
           <div className="mt-5">
             <button
               disabled={!val.trim()}
               onClick={handleContinue}
               className={`${S.btn} ${!val.trim() ? "opacity-40 cursor-default" : ""}`}
+              aria-label={isQ1 ? "Continuar a la siguiente pregunta" : "Generar mi reflexión"}
             >
-              Continuar
+              {isQ1 ? "Continuar" : "Generar mi reflexión"}
             </button>
           </div>
-          <p className={`${S.sub} text-[0.75rem] mt-6`}>{isQ1 ? "1 de 2" : "2 de 2"}</p>
+
+          {/* Progress indicator */}
+          <div className="flex items-center justify-center gap-2 mt-6">
+            <div className={`w-2 h-2 rounded-full ${isQ1 ? "bg-[#C4B6A5]" : "bg-[#D8CFC4]"}`} />
+            <div className={`w-2 h-2 rounded-full ${!isQ1 ? "bg-[#C4B6A5]" : "bg-[#D8CFC4]"}`} />
+          </div>
+          <p className={`${S.sub} text-[0.75rem] mt-2`}>{isQ1 ? "Pregunta 1 de 2" : "Pregunta 2 de 2"}</p>
+          <div className="mt-4">
+            <PrivacyBadge onClick={() => setShowDisclaimer(true)} />
+          </div>
         </div>
       </div>
     );
   }
 
-  // ── GENERATING (breathing light animation) ──
+  // ── GENERATING (rotating messages) ──────────
 
   if (step === "generating") {
     return (
@@ -788,8 +1011,8 @@ export default function MePesaMucho() {
               <div className="w-8 h-8 rounded-full bg-[#C4B6A5]/30 animate-breathe" />
             </div>
           </div>
-          <p className={`${S.sub} italic text-base animate-text-breath`}>
-            Preparando tu reflexión...
+          <p className={`${S.sub} italic text-base animate-gen-fade`} key={genMsgIndex} aria-live="polite">
+            {GEN_MESSAGES[genMsgIndex]}
           </p>
           <p className={`${S.sub} text-xs mt-4`}>
             Esto puede tomar unos segundos
@@ -799,7 +1022,7 @@ export default function MePesaMucho() {
     );
   }
 
-  // ── ESSAY (redesigned — scrollable reflection + visible closing) ────
+  // ── ESSAY (scrollable reflection + visible closing) ────
 
   if (step === "essay") {
     const cleanMarkdown = (text: string): string => {
@@ -851,6 +1074,7 @@ export default function MePesaMucho() {
     return (
       <div className={`min-h-screen bg-[#F3EFEA] text-[#3A3733] font-[var(--font-serif)] animate-fade-in`} key={fadeKey}>
         {showDisclaimer && <DisclaimerModal />}
+        {showAbout && <AboutModal />}
         {showCrisis && <CrisisModal />}
         {showCrisisBanner && <CrisisBanner />}
         {showFuentes && <FuentesModal />}
@@ -859,8 +1083,10 @@ export default function MePesaMucho() {
         {/* ── Logo header section ── */}
         <div className="flex flex-col items-center pt-8 pb-3 sm:pt-10 sm:pb-4" style={{ minHeight: "14vh" }}>
           <div className="flex flex-col items-center justify-end flex-1 pb-3">
-            <LogoIcon size={28} />
-            <p className="text-lg sm:text-xl font-light tracking-tight mt-2 text-[#3A3733]/80">mepesamucho</p>
+            <button onClick={reiniciar} className="flex flex-col items-center bg-transparent border-none cursor-pointer" aria-label="Volver al inicio">
+              <LogoIcon size={28} />
+              <p className="text-lg sm:text-xl font-light tracking-tight mt-2 text-[#3A3733]/80">mepesamucho</p>
+            </button>
             <div className="w-10 h-px bg-[#C4B6A5] mt-3 mb-2" />
             <p className="font-[var(--font-sans)] text-xs uppercase tracking-[0.2em] text-[#6F6A64] font-light">
               {MARCOS[marco!]?.nombre}
@@ -878,12 +1104,17 @@ export default function MePesaMucho() {
         {/* ── Main content area (centered 800px) ── */}
         <div style={{ maxWidth: "800px", width: "100%", margin: "0 auto", paddingLeft: "1.5rem", paddingRight: "1.5rem", paddingBottom: "3rem" }}>
 
-          {/* ── Reflection body in scrollable card ── */}
-          <div
-            className="bg-white/40 border border-[#D8CFC4] rounded-lg p-6 sm:p-8"
-            style={{ maxHeight: "60vh", overflowY: "auto" }}
-          >
-            <div className="leading-loose">{renderReflexion()}</div>
+          {/* ── Reflection body in scrollable card with scroll hint ── */}
+          <div className={`relative ${showScrollHint ? "scroll-hint-bottom" : ""}`}>
+            <div
+              ref={scrollCardRef}
+              className="bg-white/40 border border-[#D8CFC4] rounded-lg p-6 sm:p-8"
+              style={{ maxHeight: "60vh", overflowY: "auto" }}
+              role="article"
+              aria-label="Tu reflexión personalizada"
+            >
+              <div className="leading-loose">{renderReflexion()}</div>
+            </div>
           </div>
 
           {/* ── "Ver fuentes citadas" button ── */}
@@ -891,6 +1122,7 @@ export default function MePesaMucho() {
             <button
               className={`${S.link} text-sm`}
               onClick={() => setShowFuentes(true)}
+              aria-label={`Ver ${citasUsadas.length} fuentes citadas`}
             >
               Ver fuentes citadas ({citasUsadas.length})
             </button>
@@ -906,7 +1138,8 @@ export default function MePesaMucho() {
                   <button className={S.btnSm} onClick={() => setShowCierreInput(true)}>Quiero responder</button>
                 ) : (
                   <div>
-                    <textarea value={cierreTexto} onChange={handleCierreTextoChange} placeholder="Escribe lo que quieras..." autoFocus className={`${S.textarea} mb-3`} />
+                    <label htmlFor="cierre-resp" className="sr-only">Tu respuesta</label>
+                    <textarea id="cierre-resp" value={cierreTexto} onChange={handleCierreTextoChange} placeholder="Escribe lo que quieras..." autoFocus className={`${S.textarea} mb-3`} />
                     {cierreTexto.trim() && <button className={S.btnSm} onClick={() => setCierreStep(1)}>Compartir</button>}
                   </div>
                 )}
@@ -918,7 +1151,8 @@ export default function MePesaMucho() {
                 <p className="text-sm italic text-[#6F6A64] mb-4 pl-3" style={{ borderLeftWidth: "2px", borderLeftStyle: "solid", borderLeftColor: "#D8CFC4" }}>{cierreTexto}</p>
                 <p className="text-[1.05rem] leading-loose mb-5">{PROFUNDIZACIONES[cIdx]}</p>
                 <p className="text-lg italic text-center leading-relaxed mb-4">{PREGUNTAS_SEGUNDO[cIdx]}</p>
-                <textarea value={cierreTexto2} onChange={handleCierreTexto2Change} placeholder="Escribe lo que quieras..." autoFocus className={`${S.textarea} mb-3`} />
+                <label htmlFor="cierre-resp2" className="sr-only">Tu respuesta a la segunda pregunta</label>
+                <textarea id="cierre-resp2" value={cierreTexto2} onChange={handleCierreTexto2Change} placeholder="Escribe lo que quieras..." autoFocus className={`${S.textarea} mb-3`} />
                 {cierreTexto2.trim() && (
                   <div className="text-center"><button className={S.btnSm} onClick={() => setCierreStep(2)}>Continuar</button></div>
                 )}
@@ -928,11 +1162,11 @@ export default function MePesaMucho() {
             {cierreStep === 2 && (
               <div className="animate-fade-in">
                 <p className="text-[1.05rem] leading-loose mb-5">Lo que estás tocando merece más espacio.</p>
-                <div className="bg-[#EAE4DC] border border-[#D8CFC4] rounded p-5">
+                <div className="bg-[#EAE4DC] border border-[#D8CFC4] rounded-lg p-5">
                   <p className="text-[1.05rem] mb-1">Este nivel de conversación es parte de la experiencia completa.</p>
                   <p className={`${S.sub} text-sm mb-4`}>Cada respuesta tuya abre una reflexión más profunda, más tuya.</p>
                   <div className="flex flex-col gap-2 items-center">
-                    <button className={S.btn} onClick={() => checkout("subscription")}>Suscribirme — $4.99/mes</button>
+                    <button className={`${S.btn} w-full`} onClick={() => checkout("subscription")}>Suscribirme — $4.99/mes</button>
                     <button className={`${S.sub} text-sm cursor-pointer bg-transparent border-none hover:text-[#C4B6A5] transition-colors`} onClick={() => checkout("daypass")}>
                       Acceso 24h por $0.99
                     </button>
@@ -952,13 +1186,8 @@ export default function MePesaMucho() {
             </button>
           </div>
 
-          {/* Footer — legible colors, no opacity tricks */}
-          <div className="mt-12 text-center">
-            <div className={`${S.divider} mb-5`} />
-            <p className="font-[var(--font-sans)] text-xs text-[#857F78] leading-relaxed">mepesamucho.com · Un espacio de reflexión, no de consejería.</p>
-            <p className="font-[var(--font-sans)] text-xs text-[#857F78] leading-relaxed mt-1">Lo que escribiste ya fue soltado. No quedó registro.</p>
-            <button className="font-[var(--font-sans)] text-xs text-[#6F6A64] cursor-pointer underline decoration-[#D8CFC4] underline-offset-4 hover:text-[#C4B6A5] transition-colors bg-transparent border-none mt-3" onClick={() => setShowDisclaimer(true)}>Aviso legal</button>
-          </div>
+          {/* Footer */}
+          <Footer />
         </div>
       </div>
     );
@@ -1023,30 +1252,36 @@ export default function MePesaMucho() {
           {!accessDone ? (
             <>
               <h2 className="text-xl font-light mb-2">¡Pago confirmado!</h2>
-              <p className={`${S.sub} text-base mb-8`}>
-                ¿Cómo quieres guardar tu acceso?
+              <p className={`${S.subStrong} text-base mb-2`}>
+                Guarda tu acceso para recuperarlo desde cualquier dispositivo.
+              </p>
+              <p className={`${S.sub} text-sm mb-6 bg-[#F5ECE3] rounded-lg p-3`}>
+                &#9888; Si no guardas tu acceso ahora, solo funcionará en este navegador. No podrás recuperarlo después sin este paso.
               </p>
 
-              {accessError && <p className="text-sm text-[#8B6F5E] mb-4">{accessError}</p>}
+              {accessError && <p className="text-sm text-[#8B6F5E] mb-4" role="alert">{accessError}</p>}
 
               {/* Option 1: Email */}
-              <div className="border border-[#D8CFC4] rounded-md p-5 mb-4 text-left">
+              <div className="border border-[#D8CFC4] rounded-lg p-5 mb-4 text-left">
                 <p className="text-[1.05rem] font-medium mb-1">Guardar con mi email</p>
-                <p className={`${S.sub} text-sm mb-3`}>Más cómodo. Recupera tu acceso desde cualquier dispositivo con solo ingresar tu email.</p>
+                <p className={`${S.sub} text-sm mb-3`}>Más cómodo. Recupera tu acceso desde cualquier dispositivo.</p>
+                <label htmlFor="access-email" className="sr-only">Tu email</label>
                 <input
+                  id="access-email"
                   type="email"
                   value={accessEmail}
                   onChange={(e) => setAccessEmail(e.target.value)}
                   placeholder="tu@email.com"
-                  className="w-full p-3 font-[var(--font-sans)] text-sm bg-transparent border border-[#D8CFC4] rounded outline-none mb-2"
+                  className="w-full p-3 font-[var(--font-sans)] text-sm bg-transparent border border-[#D8CFC4] rounded-lg outline-none mb-2"
                 />
                 <button
-                  className={`${S.btnSm} w-full ${accessSaving ? "opacity-50" : ""}`}
+                  className={`${S.btn} w-full ${accessSaving ? "opacity-50" : ""}`}
                   disabled={!accessEmail.trim() || accessSaving}
                   onClick={handleSaveWithEmail}
                 >
                   {accessSaving ? "Guardando..." : "Guardar con email"}
                 </button>
+                <p className={`${S.sub} text-xs mt-2`}>Tu email se almacena como hash encriptado. Nunca lo veremos.</p>
               </div>
 
               {/* Divider */}
@@ -1057,11 +1292,11 @@ export default function MePesaMucho() {
               </div>
 
               {/* Option 2: Anonymous code */}
-              <div className="border border-[#D8CFC4] rounded-md p-5 mb-4 text-left">
+              <div className="border border-[#D8CFC4] rounded-lg p-5 mb-4 text-left">
                 <p className="text-[1.05rem] font-medium mb-1">Guardar con código anónimo</p>
-                <p className={`${S.sub} text-sm mb-3`}>Más privado. Se genera un código único que solo tú conocerás. Guárdalo en un lugar seguro.</p>
+                <p className={`${S.sub} text-sm mb-3`}>Más privado. Se genera un código único que solo tú conocerás.</p>
                 <button
-                  className={`${S.btnSm} w-full ${accessSaving ? "opacity-50" : ""}`}
+                  className={`${S.btnSecondary} w-full ${accessSaving ? "opacity-50" : ""}`}
                   disabled={accessSaving}
                   onClick={handleSaveWithCode}
                 >
@@ -1078,13 +1313,12 @@ export default function MePesaMucho() {
               </button>
             </>
           ) : accessCode ? (
-            /* Code generated */
             <>
               <h2 className="text-xl font-light mb-2">Tu código de acceso</h2>
               <p className={`${S.sub} text-sm mb-6`}>
-                Guarda este código en un lugar seguro. Es tu única forma de recuperar tu acceso si cambias de navegador.
+                Guarda este código en un lugar seguro. Es tu única forma de recuperar tu acceso desde otro dispositivo.
               </p>
-              <div className="bg-[#EAE4DC] border border-[#D8CFC4] rounded-md p-6 mb-4">
+              <div className="bg-[#EAE4DC] border border-[#D8CFC4] rounded-lg p-6 mb-4">
                 <p className="font-mono text-2xl tracking-[0.15em] text-[#3A3733] select-all">{accessCode}</p>
               </div>
               <button className={S.btnSm} onClick={copyCode} style={{ marginBottom: "1rem" }}>
@@ -1096,7 +1330,6 @@ export default function MePesaMucho() {
               </button>
             </>
           ) : (
-            /* Email saved */
             <>
               <h2 className="text-xl font-light mb-2">Acceso guardado</h2>
               <p className={`${S.sub} text-base mb-6`}>
