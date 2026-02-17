@@ -115,7 +115,7 @@ function descargarReflexionPDF(reflexion: string, citas: { source: string; text:
   y += 6;
 
   // Divider
-  doc.setDrawColor(196, 182, 165);
+  doc.setDrawColor(122, 139, 111);
   doc.line(pageW / 2 - 15, y, pageW / 2 + 15, y);
   y += 8;
 
@@ -135,8 +135,8 @@ function descargarReflexionPDF(reflexion: string, citas: { source: string; text:
 
     if (isCita) {
       addPageIfNeeded(20);
-      doc.setDrawColor(196, 182, 165);
-      doc.setFillColor(234, 228, 220);
+      doc.setDrawColor(122, 139, 111);
+      doc.setFillColor(232, 238, 228);
       const lines = doc.splitTextToSize(t, maxW - 10);
       const blockH = lines.length * 5 + 6;
       doc.rect(marginL, y - 2, maxW, blockH, "F");
@@ -157,7 +157,7 @@ function descargarReflexionPDF(reflexion: string, citas: { source: string; text:
       addPageIfNeeded(12);
       doc.setFont("helvetica", "italic");
       doc.setFontSize(10.5);
-      doc.setTextColor(139, 111, 94);
+      doc.setTextColor(90, 110, 77);
       const lines = doc.splitTextToSize(t, maxW);
       doc.text(lines, pageW / 2, y, { align: "center" });
       y += lines.length * 5 + 8;
@@ -239,13 +239,13 @@ const LogoIcon = ({ size = 32 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
     <path
       d="M14 34c-2-1-4-3-5-6-1-2-1-4 0-6l3-5c1-1 2-2 3-1l1 2 1-4c0-2 1-3 2-3s2 1 2 3l0 3 1-5c0-2 1-3 2-3s2 1 2 3l-1 6"
-      stroke="#C4B6A5" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"
+      stroke="#7A8B6F" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"
     />
     <path
       d="M34 34c2-1 4-3 5-6 1-2 1-4 0-6l-3-5c-1-1-2-2-3-1l-1 2-1-4c0-2-1-3-2-3s-2 1-2 3l0 3-1-5c0-2-1-3-2-3s-2 1-2 3l1 6"
-      stroke="#C4B6A5" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"
+      stroke="#7A8B6F" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"
     />
-    <path d="M14 34c3 3 7 4 10 4s7-1 10-4" stroke="#C4B6A5" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+    <path d="M14 34c3 3 7 4 10 4s7-1 10-4" stroke="#7A8B6F" strokeWidth="1.5" strokeLinecap="round" fill="none" />
   </svg>
 );
 
@@ -262,7 +262,7 @@ const PrivacyBadge = ({ onClick }: { onClick?: () => void }) => (
       {onClick && (
         <button
           onClick={onClick}
-          className="underline decoration-[#D8CFC4] underline-offset-2 hover:text-[#C4B6A5] transition-colors bg-transparent border-none cursor-pointer text-xs text-[#6F6A64] font-[var(--font-sans)]"
+          className="underline decoration-[#D8CFC4] underline-offset-2 hover:text-[#7A8B6F] transition-colors bg-transparent border-none cursor-pointer text-xs text-[#6F6A64] font-[var(--font-sans)]"
         >
           Política de privacidad
         </button>
@@ -274,9 +274,9 @@ const PrivacyBadge = ({ onClick }: { onClick?: () => void }) => (
 // ── FONT SIZE BUTTON ──────────────────────────
 
 const FONT_SIZES = [
-  { label: "A", base: "1.2rem", lg: "1.3rem", xl: "1.4rem", cita: "1.35rem" },
-  { label: "A+", base: "1.35rem", lg: "1.45rem", xl: "1.55rem", cita: "1.5rem" },
-  { label: "A++", base: "1.5rem", lg: "1.6rem", xl: "1.7rem", cita: "1.65rem" },
+  { label: "A", base: "1.25rem", lg: "1.35rem", xl: "1.45rem", cita: "1.4rem" },
+  { label: "A+", base: "1.4rem", lg: "1.5rem", xl: "1.6rem", cita: "1.55rem" },
+  { label: "A++", base: "1.55rem", lg: "1.65rem", xl: "1.75rem", cita: "1.7rem" },
 ];
 
 // ── GENERATING MESSAGES ───────────────────────
@@ -297,19 +297,19 @@ const GEN_MESSAGES = [
 // NEVER use opacity on text — kills contrast
 
 const S = {
-  page: "min-h-screen bg-[#F3EFEA] text-[#3A3733] font-[var(--font-serif)] flex flex-col items-center justify-center px-5 py-8 leading-relaxed",
-  pageTop: "min-h-screen bg-[#F3EFEA] text-[#3A3733] font-[var(--font-serif)] flex flex-col items-center justify-start px-5 pt-14 pb-12 leading-relaxed",
+  page: "min-h-screen bg-[#F3EFEA] text-[#3A3733] font-[var(--font-serif)] flex flex-col items-center justify-center px-5 py-10 leading-loose",
+  pageTop: "min-h-screen bg-[#F3EFEA] text-[#3A3733] font-[var(--font-serif)] flex flex-col items-center justify-start px-5 pt-14 pb-14 leading-loose",
   box: "max-w-[640px] w-full",
-  boxWide: "max-w-[800px] w-full",
-  btn: "font-[var(--font-serif)] text-lg px-8 py-3.5 bg-[#C4B6A5] text-white border border-[#C4B6A5] rounded-lg cursor-pointer transition-all duration-300 hover:bg-[#B0A292] hover:border-[#B0A292] btn-primary-glow",
-  btnSecondary: "font-[var(--font-serif)] text-lg px-7 py-3 bg-[#EAE4DC] text-[#3A3733] border border-[#D8CFC4] rounded-lg cursor-pointer transition-all duration-300 hover:bg-[#C4B6A5] hover:text-white hover:border-[#C4B6A5]",
-  btnSm: "font-[var(--font-serif)] text-base px-5 py-2.5 bg-[#EAE4DC] text-[#3A3733] border border-[#D8CFC4] rounded-lg cursor-pointer transition-all duration-300 hover:bg-[#C4B6A5] hover:text-white hover:border-[#C4B6A5]",
+  boxWide: "max-w-[680px] w-full",
+  btn: "font-[var(--font-serif)] text-lg px-8 py-3.5 bg-[#7A8B6F] text-white border border-[#7A8B6F] rounded-lg cursor-pointer transition-all duration-300 hover:bg-[#6B7F5E] hover:border-[#6B7F5E] btn-primary-glow",
+  btnSecondary: "font-[var(--font-serif)] text-lg px-7 py-3 bg-[#EAE4DC] text-[#3A3733] border border-[#D8CFC4] rounded-lg cursor-pointer transition-all duration-300 hover:bg-[#7A8B6F] hover:text-white hover:border-[#7A8B6F]",
+  btnSm: "font-[var(--font-serif)] text-base px-5 py-2.5 bg-[#EAE4DC] text-[#3A3733] border border-[#D8CFC4] rounded-lg cursor-pointer transition-all duration-300 hover:bg-[#7A8B6F] hover:text-white hover:border-[#7A8B6F]",
   sub: "font-[var(--font-sans)] text-[#6F6A64] font-light leading-relaxed",
   subStrong: "font-[var(--font-sans)] text-[#5C5751] font-light leading-relaxed",
-  link: "font-[var(--font-sans)] text-[#6F6A64] font-light text-xs cursor-pointer underline decoration-[#D8CFC4] underline-offset-4 hover:text-[#C4B6A5] transition-colors bg-transparent border-none",
+  link: "font-[var(--font-sans)] text-[#6F6A64] font-light text-xs cursor-pointer underline decoration-[#D8CFC4] underline-offset-4 hover:text-[#7A8B6F] transition-colors bg-transparent border-none",
   textarea: "w-full min-h-[120px] p-4 font-[var(--font-serif)] text-[1.2rem] leading-relaxed bg-transparent border border-[#D8CFC4] rounded-lg resize-y outline-none text-left",
   textareaLg: "w-full min-h-[240px] p-5 font-[var(--font-serif)] text-xl leading-relaxed bg-transparent border border-[#D8CFC4] rounded-lg resize-y outline-none",
-  divider: "w-8 h-px bg-[#C4B6A5] mx-auto",
+  divider: "w-8 h-px bg-[#7A8B6F] mx-auto",
 };
 
 // ── MAIN COMPONENT ─────────────────────────────
@@ -682,7 +682,7 @@ export default function MePesaMucho() {
 
   const SiteHeader = () => (
     <div className="fixed top-0 left-0 right-0 z-30 bg-[#F3EFEA]/90 backdrop-blur-sm" style={{ borderBottom: "1px solid rgba(216,207,196,0.5)" }}>
-      <div className="max-w-[800px] mx-auto px-5 py-3 flex items-center justify-between">
+      <div className="max-w-[680px] mx-auto px-5 py-3 flex items-center justify-between">
         <button onClick={reiniciar} className="flex items-center gap-2 bg-transparent border-none cursor-pointer" aria-label="Ir al inicio">
           <LogoIcon size={24} />
           <span className="text-lg font-light tracking-tight text-[#3A3733]">mepesamucho</span>
@@ -764,9 +764,9 @@ export default function MePesaMucho() {
             <p className={`${S.sub} text-[0.7rem] uppercase tracking-widest mb-0.5`} style={{ opacity: 0.7 }}>{l.country}</p>
             <p className="text-[1.05rem] font-medium">{l.name}</p>
             {l.isWeb ? (
-              <a href={l.url} target="_blank" rel="noopener noreferrer" className={`${S.sub} text-sm text-[#8B6F5E] underline`}>{l.phone}</a>
+              <a href={l.url} target="_blank" rel="noopener noreferrer" className={`${S.sub} text-sm text-[#6B7F5E] underline`}>{l.phone}</a>
             ) : (
-              <p className="font-[var(--font-sans)] text-lg text-[#8B6F5E] font-medium tracking-wide">{l.phone}</p>
+              <p className="font-[var(--font-sans)] text-lg text-[#6B7F5E] font-medium tracking-wide">{l.phone}</p>
             )}
             {l.note && <p className={`${S.sub} text-xs mt-0.5`} style={{ opacity: 0.6 }}>{l.note}</p>}
           </div>
@@ -836,7 +836,7 @@ export default function MePesaMucho() {
     <div className="fixed bottom-6 right-6 z-30 flex flex-col items-center gap-1">
       <button
         onClick={() => setFontSize((f) => (f + 1) % FONT_SIZES.length)}
-        className="w-11 h-11 rounded-full bg-[#EAE4DC] border border-[#D8CFC4] text-[#3A3733] font-[var(--font-serif)] text-sm cursor-pointer transition-all duration-300 hover:bg-[#C4B6A5] hover:text-white hover:border-[#C4B6A5] shadow-md flex items-center justify-center"
+        className="w-11 h-11 rounded-full bg-[#EAE4DC] border border-[#D8CFC4] text-[#3A3733] font-[var(--font-serif)] text-sm cursor-pointer transition-all duration-300 hover:bg-[#7A8B6F] hover:text-white hover:border-[#7A8B6F] shadow-md flex items-center justify-center"
         aria-label="Cambiar tamaño de letra"
       >
         {FONT_SIZES[fontSize].label}
@@ -846,20 +846,11 @@ export default function MePesaMucho() {
 
   // ── FOOTER COMPONENT ─────────────────────────
 
-  const Footer = ({ showDemo = false, showCounter = false }: { showDemo?: boolean; showCounter?: boolean }) => (
+  const Footer = ({ showDemo = false }: { showDemo?: boolean }) => (
     <footer className="mt-10 text-center" role="contentinfo">
       <div className={`${S.divider} mb-5`} />
       <p className="font-[var(--font-sans)] text-xs text-[#857F78] leading-relaxed">mepesamucho.com · Un espacio de reflexión, no de consejería.</p>
       <p className="font-[var(--font-sans)] text-xs text-[#857F78] leading-relaxed mt-1">Lo que escribes no se almacena ni se comparte.</p>
-      {showCounter && (
-        <p className="font-[var(--font-sans)] text-[0.7rem] text-[#857F78] mt-3">
-          {dayPass.active
-            ? `Acceso ampliado activo — ${dayPass.hoursLeft}h restantes`
-            : `${Math.max(0, 1 - usosHoy)} reflexión gratuita disponible hoy`
-          }
-        </p>
-      )}
-      <p className="font-[var(--font-sans)] text-[0.65rem] text-[#857F78] mt-3 italic">Más de 10,000 reflexiones compartidas</p>
       <div className="flex justify-center gap-4 mt-3 flex-wrap">
         <button className={`${S.link} text-[0.7rem]`} onClick={() => setShowAbout(true)}>Acerca de</button>
         <button className={`${S.link} text-[0.7rem]`} onClick={() => setShowDisclaimer(true)}>Aviso legal y privacidad</button>
@@ -876,7 +867,7 @@ export default function MePesaMucho() {
 
   // ── LIMIT (paywall) ────────────────────────────
 
-  if (usosHoy >= 1 && !dayPass.active && !getSinglePass() && step === "landing") {
+  if (usosHoy >= 2 && !dayPass.active && !getSinglePass() && step === "landing") {
     return (
       <div className={`${S.page} animate-fade-in pt-16`} key={fadeKey}>
         <SiteHeader />
@@ -892,7 +883,7 @@ export default function MePesaMucho() {
           </p>
 
           {/* Single — featured card, solid button */}
-          <div className="bg-[#EAE4DC] border-2 border-[#C4B6A5] rounded-lg p-6 mb-4 text-center transition-shadow duration-300 hover:shadow-lg">
+          <div className="bg-[#EAE4DC] border-2 border-[#7A8B6F] rounded-lg p-6 mb-4 text-center transition-shadow duration-300 hover:shadow-lg">
             <p className="text-lg font-medium mb-1">Continuar conversación actual</p>
             <p className="text-2xl font-light mb-2">$0.50 <span className={`${S.sub} text-sm`}>USD</span></p>
             <p className={`${S.sub} text-sm mb-4`}>Desbloquea esta reflexión completa y continúa tu conversación. Incluye descarga en PDF.</p>
@@ -912,7 +903,7 @@ export default function MePesaMucho() {
             <p className="text-base font-medium mb-1">Suscripción mensual</p>
             <p className="text-xl font-light mb-1">$4.99 <span className={`${S.sub} text-sm`}>USD / mes</span></p>
             <p className={`${S.sub} text-sm mb-3`}>Reflexiones ilimitadas, conversaciones guiadas, descarga PDF y acceso desde cualquier dispositivo.</p>
-            <button className={`font-[var(--font-serif)] text-base px-7 py-3 bg-transparent text-[#5C5751] border border-[#D8CFC4] rounded-lg cursor-pointer transition-all duration-300 hover:bg-[#EAE4DC] hover:border-[#C4B6A5] w-full`} onClick={() => checkout("subscription")} aria-label="Suscribirme por $4.99 al mes">Suscribirme</button>
+            <button className={`font-[var(--font-serif)] text-base px-7 py-3 bg-transparent text-[#5C5751] border border-[#D8CFC4] rounded-lg cursor-pointer transition-all duration-300 hover:bg-[#EAE4DC] hover:border-[#7A8B6F] w-full`} onClick={() => checkout("subscription")} aria-label="Suscribirme por $4.99 al mes">Suscribirme</button>
             <p className={`${S.sub} text-xs mt-2`}>Puedes cancelar en cualquier momento.</p>
           </div>
 
@@ -944,7 +935,7 @@ export default function MePesaMucho() {
                   autoFocus
                   style={recoveryMode === "code" ? { textTransform: "uppercase", letterSpacing: "0.1em" } : undefined}
                 />
-                {recoveryError && <p className="text-sm text-[#8B6F5E] mb-2" role="alert">{recoveryError}</p>}
+                {recoveryError && <p className="text-sm text-[#6B7F5E] mb-2" role="alert">{recoveryError}</p>}
                 <div className="flex gap-2 justify-center">
                   <button
                     className={`${S.btnSm} ${recoveryLoading ? "opacity-50" : ""}`}
@@ -1009,7 +1000,7 @@ export default function MePesaMucho() {
         <div className={`${S.box} text-center`}>
           <div className="flex justify-center"><LogoIcon size={40} /></div>
           <h1 className="text-4xl font-light tracking-tight mb-1 mt-3">mepesamucho</h1>
-          <div className="w-10 h-px bg-[#C4B6A5] mx-auto my-5" />
+          <div className="w-10 h-px bg-[#7A8B6F] mx-auto my-5" />
           <p className="text-xl text-[#5C5751] italic leading-relaxed mb-10">
             A veces las cosas pesan menos cuando las sueltas.
           </p>
@@ -1021,7 +1012,7 @@ export default function MePesaMucho() {
           {/* Discrete "¿Cómo funciona?" link below CTA */}
           <div className="mt-6">
             <button
-              className="font-[var(--font-sans)] text-sm text-[#6F6A64] font-light cursor-pointer bg-transparent border-none underline decoration-[#D8CFC4] underline-offset-4 hover:text-[#C4B6A5] transition-colors"
+              className="font-[var(--font-sans)] text-sm text-[#6F6A64] font-light cursor-pointer bg-transparent border-none underline decoration-[#D8CFC4] underline-offset-4 hover:text-[#7A8B6F] transition-colors"
               onClick={() => setShowHowItWorks(!showHowItWorks)}
               aria-expanded={showHowItWorks}
               aria-controls="how-it-works"
@@ -1043,22 +1034,22 @@ export default function MePesaMucho() {
             <div className="mt-20 pt-10" style={{ borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "#D8CFC4" }}>
               <div className="text-left max-w-[400px] mx-auto space-y-4">
                 <div className="flex items-start gap-3">
-                  <span className="font-[var(--font-sans)] text-xs text-[#C4B6A5] font-medium mt-0.5 flex-shrink-0">1</span>
+                  <span className="font-[var(--font-sans)] text-xs text-[#7A8B6F] font-medium mt-0.5 flex-shrink-0">1</span>
                   <p className={`${S.sub} text-sm`}>Escribe lo que sientes — nadie más lo verá.</p>
                 </div>
                 <div className="flex items-start gap-3">
-                  <span className="font-[var(--font-sans)] text-xs text-[#C4B6A5] font-medium mt-0.5 flex-shrink-0">2</span>
+                  <span className="font-[var(--font-sans)] text-xs text-[#7A8B6F] font-medium mt-0.5 flex-shrink-0">2</span>
                   <p className={`${S.sub} text-sm`}>Elige una tradición: filosofía, espiritualidad o textos bíblicos.</p>
                 </div>
                 <div className="flex items-start gap-3">
-                  <span className="font-[var(--font-sans)] text-xs text-[#C4B6A5] font-medium mt-0.5 flex-shrink-0">3</span>
+                  <span className="font-[var(--font-sans)] text-xs text-[#7A8B6F] font-medium mt-0.5 flex-shrink-0">3</span>
                   <p className={`${S.sub} text-sm`}>Recibe una reflexión escrita solo para ti, con citas verificadas.</p>
                 </div>
               </div>
             </div>
           </div>
 
-          <Footer showCounter />
+          <Footer />
         </div>
       </div>
     );
@@ -1161,13 +1152,13 @@ export default function MePesaMucho() {
         <div className={`${S.box} text-center`}>
           <p className={`${S.sub} text-sm mb-2`}>Ahora elige cómo quieres escucharte.</p>
           <h2 className="text-xl font-normal italic leading-snug mb-8">¿Desde qué tradición quieres recibir tu reflexión?</h2>
-          {apiError && <p className={`${S.sub} text-sm text-[#8B6F5E] mb-4`} role="alert">{apiError}</p>}
+          {apiError && <p className={`${S.sub} text-sm text-[#6B7F5E] mb-4`} role="alert">{apiError}</p>}
           <div className="flex flex-col gap-3" role="radiogroup" aria-label="Selecciona un marco de reflexión">
             {(Object.entries(MARCOS) as [Marco, { nombre: string; descripcion: string }][]).map(([key, val]) => (
               <button
                 key={key}
                 onClick={() => { setMarco(key); setPreguntaStep(0); setStep("preguntas"); }}
-                className="text-left p-5 bg-transparent border-2 border-[#D8CFC4] rounded-lg transition-all duration-300 hover:bg-[#EAE4DC] hover:border-[#C4B6A5] cursor-pointer group"
+                className="text-left p-5 bg-transparent border-2 border-[#D8CFC4] rounded-lg transition-all duration-300 hover:bg-[#EAE4DC] hover:border-[#7A8B6F] cursor-pointer group"
                 role="radio"
                 aria-checked="false"
                 aria-label={`${val.nombre}: ${val.descripcion}`}
@@ -1243,12 +1234,6 @@ export default function MePesaMucho() {
             </button>
           </div>
 
-          {/* Progress indicator */}
-          <div className="flex items-center justify-center gap-2 mt-6">
-            <div className={`w-2 h-2 rounded-full ${isQ1 ? "bg-[#C4B6A5]" : "bg-[#D8CFC4]"}`} />
-            <div className={`w-2 h-2 rounded-full ${!isQ1 ? "bg-[#C4B6A5]" : "bg-[#D8CFC4]"}`} />
-          </div>
-          <p className={`${S.sub} text-[0.75rem] mt-2`}>{isQ1 ? "Pregunta 1 de 2" : "Pregunta 2 de 2"}</p>
           <div className="mt-4">
             <PrivacyBadge onClick={() => setShowDisclaimer(true)} />
           </div>
@@ -1265,9 +1250,9 @@ export default function MePesaMucho() {
         {showCrisisBanner && <CrisisBanner />}
         <div className={`${S.box} text-center flex flex-col items-center`}>
           <div className="relative mb-8">
-            <div className="w-16 h-16 rounded-full bg-[#C4B6A5]/20 animate-breathe-glow" />
+            <div className="w-16 h-16 rounded-full bg-[#7A8B6F]/20 animate-breathe-glow" />
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-8 h-8 rounded-full bg-[#C4B6A5]/30 animate-breathe" />
+              <div className="w-8 h-8 rounded-full bg-[#7A8B6F]/30 animate-breathe" />
             </div>
           </div>
           <p className={`${S.sub} italic text-base animate-gen-fade`} key={genMsgIndex} aria-live="polite">
@@ -1284,7 +1269,7 @@ export default function MePesaMucho() {
   // ── ESSAY + CIERRE (clean separated screens) ────
 
   // Helper: render paragraphs with formatting
-  const renderParagraphs = (text: string, baseSize: string = "1.15rem") => {
+  const renderParagraphs = (text: string, baseSize: string = "1.2rem") => {
     const cleanMarkdown = (t: string): string => t.replace(/\*\*(.*?)\*\*/g, "$1").replace(/\*(.*?)\*/g, "$1");
     return text.split("\n\n").map((p, i) => {
       const t = p.trim();
@@ -1295,9 +1280,9 @@ export default function MePesaMucho() {
       const isCita = cleaned.startsWith("<<") || cleaned.startsWith("\u00AB") || cleaned.startsWith('"');
       const isAttrib = cleaned.startsWith("\u2014") || cleaned.startsWith("--");
       const isQ = cleaned.endsWith("?") && cleaned.length < 200;
-      if (isCita) return <blockquote key={i} className="my-8 py-5 px-6 bg-[#EAE4DC]/50 rounded-r-md italic leading-loose" style={{ fontSize: fs.cita, borderLeftWidth: "3px", borderLeftStyle: "solid", borderLeftColor: "#C4B6A5" }}>{cleaned}</blockquote>;
+      if (isCita) return <blockquote key={i} className="my-8 py-5 px-6 bg-[#EAE4DC]/50 rounded-r-md italic leading-loose" style={{ fontSize: fs.cita, borderLeftWidth: "3px", borderLeftStyle: "solid", borderLeftColor: "#7A8B6F" }}>{cleaned}</blockquote>;
       if (isAttrib) return <p key={i} className={`${S.sub} text-sm pl-6 mb-6 font-medium`}>{cleaned}</p>;
-      if (isQ) return <p key={i} className="my-8 italic text-[#8B6F5E] text-center leading-relaxed" style={{ fontSize: fs.lg }}>{cleaned}</p>;
+      if (isQ) return <p key={i} className="my-8 italic text-[#6B7F5E] text-center leading-relaxed" style={{ fontSize: fs.lg }}>{cleaned}</p>;
       return <p key={i} className="mb-5 text-justify leading-loose" style={{ fontSize: baseSize }}>{cleaned}</p>;
     });
   };
@@ -1319,19 +1304,19 @@ export default function MePesaMucho() {
               <LogoIcon size={28} />
               <p className="text-lg sm:text-xl font-light tracking-tight mt-2 text-[#3A3733]/80">mepesamucho</p>
             </button>
-            <div className="w-10 h-px bg-[#C4B6A5] mt-3 mb-2" />
+            <div className="w-10 h-px bg-[#7A8B6F] mt-3 mb-2" />
             <p className="font-[var(--font-sans)] text-xs uppercase tracking-[0.2em] text-[#6F6A64] font-light">{MARCOS[marco!]?.nombre}</p>
           </div>
         </div>
 
         <div className="text-center mb-4 px-5">
-          <p className="font-[var(--font-sans)] text-sm sm:text-base italic text-[#8B6F5E] font-light tracking-wide">Lee despacio. Esto fue escrito para ti.</p>
+          <p className="font-[var(--font-sans)] text-sm sm:text-base italic text-[#6B7F5E] font-light tracking-wide">Lee despacio. Esto fue escrito para ti.</p>
         </div>
 
-        <div style={{ maxWidth: "800px", width: "100%", margin: "0 auto", paddingLeft: "1.5rem", paddingRight: "1.5rem", paddingBottom: "3rem" }}>
+        <div style={{ maxWidth: "680px", width: "100%", margin: "0 auto", paddingLeft: "1.5rem", paddingRight: "1.5rem", paddingBottom: "3rem" }}>
           <div className={`relative ${showScrollHint ? "scroll-hint-bottom" : ""}`}>
             <div ref={scrollCardRef} className="bg-white/40 border border-[#D8CFC4] rounded-lg p-6 sm:p-8" style={{ maxHeight: "60vh", overflowY: "auto" }} role="article" aria-label="Tu reflexión personalizada">
-              <div className="leading-loose">{renderParagraphs(reflexion)}</div>
+              <div className="leading-loose" style={{ maxWidth: "600px", margin: "0 auto" }}>{renderParagraphs(reflexion)}</div>
             </div>
           </div>
 
@@ -1355,7 +1340,7 @@ export default function MePesaMucho() {
           </div>
 
           <div className="text-center mt-6">
-            <button onClick={reiniciar} className={`${S.link} underline underline-offset-4 decoration-[#C4B6A5] text-sm`}>Volver cuando lo necesite</button>
+            <button onClick={reiniciar} className={`${S.link} underline underline-offset-4 decoration-[#7A8B6F] text-sm`}>Volver cuando lo necesite</button>
           </div>
           <Footer />
         </div>
@@ -1413,9 +1398,9 @@ export default function MePesaMucho() {
         {showCrisisBanner && <CrisisBanner />}
         <div className={`${S.box} text-center flex flex-col items-center`}>
           <div className="relative mb-8">
-            <div className="w-16 h-16 rounded-full bg-[#C4B6A5]/20 animate-breathe-glow" />
+            <div className="w-16 h-16 rounded-full bg-[#7A8B6F]/20 animate-breathe-glow" />
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-8 h-8 rounded-full bg-[#C4B6A5]/30 animate-breathe" />
+              <div className="w-8 h-8 rounded-full bg-[#7A8B6F]/30 animate-breathe" />
             </div>
           </div>
           <p className={`${S.sub} italic text-base`}>Preparando algo más para ti...</p>
@@ -1442,7 +1427,7 @@ export default function MePesaMucho() {
             <div className="flex flex-col gap-3 items-center max-w-[380px] mx-auto">
               <button className={`${S.btn} w-full`} onClick={() => checkout("single")} aria-label="Desbloquear por $0.50">Continuar conversación — $0.50</button>
               <button className={`${S.btnSecondary} w-full text-sm`} onClick={() => checkout("daypass")} aria-label="Acceso 24h por $2.99">Acceso 24h — $2.99</button>
-              <button className={`${S.sub} text-xs cursor-pointer bg-transparent border-none hover:text-[#C4B6A5] transition-colors`} onClick={() => checkout("subscription")} aria-label="Suscripción mensual $4.99">Suscripción mensual · $4.99/mes</button>
+              <button className={`${S.sub} text-xs cursor-pointer bg-transparent border-none hover:text-[#7A8B6F] transition-colors`} onClick={() => checkout("subscription")} aria-label="Suscripción mensual $4.99">Suscripción mensual · $4.99/mes</button>
             </div>
             <div className="mt-6"><button className={`${S.link} text-sm`} onClick={() => setCierreStep(0)}>Volver a mi reflexión</button></div>
           </div>
@@ -1457,7 +1442,7 @@ export default function MePesaMucho() {
         {showCrisis && <CrisisModal />}
         {showCrisisBanner && <CrisisBanner />}
 
-        <div style={{ maxWidth: "800px", width: "100%", margin: "0 auto", paddingLeft: "1.5rem", paddingRight: "1.5rem", paddingTop: "5rem", paddingBottom: "3rem" }}>
+        <div style={{ maxWidth: "680px", width: "100%", margin: "0 auto", paddingLeft: "1.5rem", paddingRight: "1.5rem", paddingTop: "5rem", paddingBottom: "3rem" }}>
 
           {/* Continuation card */}
           <div className="bg-white/40 border border-[#D8CFC4] rounded-lg p-6 sm:p-8">
@@ -1467,9 +1452,9 @@ export default function MePesaMucho() {
                 const t = p.trim();
                 const isCita = t.startsWith("<<") || t.startsWith("\u00AB") || t.startsWith('"');
                 const isAttrib = t.startsWith("\u2014") || t.startsWith("--");
-                if (isCita) return <blockquote key={i} className="my-6 py-4 px-5 bg-[#EAE4DC]/50 rounded-r-md italic leading-loose" style={{ fontSize: "1.1rem", borderLeftWidth: "3px", borderLeftStyle: "solid", borderLeftColor: "#C4B6A5" }}>{t}</blockquote>;
+                if (isCita) return <blockquote key={i} className="my-6 py-4 px-5 bg-[#EAE4DC]/50 rounded-r-md italic leading-loose" style={{ fontSize: "1.1rem", borderLeftWidth: "3px", borderLeftStyle: "solid", borderLeftColor: "#7A8B6F" }}>{t}</blockquote>;
                 if (isAttrib) return <p key={i} className={`${S.sub} text-sm pl-5 mb-5 font-medium`}>{t}</p>;
-                return <p key={i} className="mb-5 text-justify leading-loose" style={{ fontSize: "1.15rem" }}>{t}</p>;
+                return <p key={i} className="mb-5 text-justify leading-loose" style={{ fontSize: "1.2rem" }}>{t}</p>;
               })}
 
               {/* Censored or unlocked */}
@@ -1479,9 +1464,9 @@ export default function MePesaMucho() {
                     const t = p.trim();
                     const isCita = t.startsWith("<<") || t.startsWith("\u00AB") || t.startsWith('"');
                     const isAttrib = t.startsWith("\u2014") || t.startsWith("--");
-                    if (isCita) return <blockquote key={`u${i}`} className="my-6 py-4 px-5 bg-[#EAE4DC]/50 rounded-r-md italic leading-loose" style={{ fontSize: "1.1rem", borderLeftWidth: "3px", borderLeftStyle: "solid", borderLeftColor: "#C4B6A5" }}>{t}</blockquote>;
+                    if (isCita) return <blockquote key={`u${i}`} className="my-6 py-4 px-5 bg-[#EAE4DC]/50 rounded-r-md italic leading-loose" style={{ fontSize: "1.1rem", borderLeftWidth: "3px", borderLeftStyle: "solid", borderLeftColor: "#7A8B6F" }}>{t}</blockquote>;
                     if (isAttrib) return <p key={`u${i}`} className={`${S.sub} text-sm pl-5 mb-5 font-medium`}>{t}</p>;
-                    return <p key={`u${i}`} className="mb-5 text-justify leading-loose" style={{ fontSize: "1.15rem" }}>{t}</p>;
+                    return <p key={`u${i}`} className="mb-5 text-justify leading-loose" style={{ fontSize: "1.2rem" }}>{t}</p>;
                   })}
                 </>
               ) : (
@@ -1490,7 +1475,7 @@ export default function MePesaMucho() {
                   <div className="reflection-censored" style={{ minHeight: "200px" }}>
                     <div className="censored-blur">
                       {censoredParagraphs.map((p: string, i: number) => (
-                        <p key={`b${i}`} className="mb-5 text-justify leading-loose" style={{ fontSize: "1.15rem" }}>{p.trim()}</p>
+                        <p key={`b${i}`} className="mb-5 text-justify leading-loose" style={{ fontSize: "1.2rem" }}>{p.trim()}</p>
                       ))}
                     </div>
                     <div className="censored-overlay">
@@ -1499,7 +1484,7 @@ export default function MePesaMucho() {
                         <p className={`${S.sub} text-sm mb-4`}>Lo que estás tocando merece más espacio.</p>
                         <button className={`${S.btn} w-full mb-3`} onClick={() => checkout("single")} aria-label="Desbloquear por $0.50">Continuar conversación — $0.50</button>
                         <button className={`${S.btnSecondary} w-full mb-2 text-sm`} onClick={() => checkout("daypass")} aria-label="Acceso 24h por $2.99">Acceso 24h — $2.99</button>
-                        <button className={`${S.sub} text-xs cursor-pointer bg-transparent border-none hover:text-[#C4B6A5] transition-colors block mx-auto`} onClick={() => checkout("subscription")} aria-label="Suscripción mensual $4.99">Suscripción mensual · $4.99/mes</button>
+                        <button className={`${S.sub} text-xs cursor-pointer bg-transparent border-none hover:text-[#7A8B6F] transition-colors block mx-auto`} onClick={() => checkout("subscription")} aria-label="Suscripción mensual $4.99">Suscripción mensual · $4.99/mes</button>
                       </div>
                     </div>
                   </div>
@@ -1524,7 +1509,7 @@ export default function MePesaMucho() {
                         if (!t) return null;
                         const isCita = t.startsWith("<<") || t.startsWith("\u00AB") || t.startsWith('"');
                         const isAttrib = t.startsWith("\u2014") || t.startsWith("--");
-                        if (isCita) return <blockquote key={j} className="my-4 py-3 px-4 bg-[#EAE4DC]/40 rounded-r-md italic text-[0.95rem] leading-relaxed" style={{ borderLeftWidth: "2px", borderLeftStyle: "solid", borderLeftColor: "#C4B6A5" }}>{t}</blockquote>;
+                        if (isCita) return <blockquote key={j} className="my-4 py-3 px-4 bg-[#EAE4DC]/40 rounded-r-md italic text-[0.95rem] leading-relaxed" style={{ borderLeftWidth: "2px", borderLeftStyle: "solid", borderLeftColor: "#7A8B6F" }}>{t}</blockquote>;
                         if (isAttrib) return <p key={j} className={`${S.sub} text-xs pl-4 mb-3 font-medium`}>{t}</p>;
                         return <p key={j} className="mb-3 text-[0.95rem] leading-relaxed">{t}</p>;
                       })}
@@ -1535,9 +1520,9 @@ export default function MePesaMucho() {
 
               {dialogLoading && (
                 <div className="mb-5 flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-[#C4B6A5] animate-pulse-slow" />
-                  <div className="w-2 h-2 rounded-full bg-[#C4B6A5] animate-pulse-slow" style={{ animationDelay: "0.3s" }} />
-                  <div className="w-2 h-2 rounded-full bg-[#C4B6A5] animate-pulse-slow" style={{ animationDelay: "0.6s" }} />
+                  <div className="w-2 h-2 rounded-full bg-[#7A8B6F] animate-pulse-slow" />
+                  <div className="w-2 h-2 rounded-full bg-[#7A8B6F] animate-pulse-slow" style={{ animationDelay: "0.3s" }} />
+                  <div className="w-2 h-2 rounded-full bg-[#7A8B6F] animate-pulse-slow" style={{ animationDelay: "0.6s" }} />
                 </div>
               )}
 
@@ -1545,7 +1530,7 @@ export default function MePesaMucho() {
 
               {dialogCerrado ? (
                 <div className="text-center animate-fade-in mt-6">
-                  <div className="w-10 h-px bg-[#C4B6A5] mx-auto mb-5" />
+                  <div className="w-10 h-px bg-[#7A8B6F] mx-auto mb-5" />
                   <p className="text-lg italic mb-2">Gracias por este momento.</p>
                   <p className={`${S.sub} text-sm mb-6`}>Aquí están todas las fuentes que acompañaron tu reflexión.</p>
                   <div className="text-left">
@@ -1588,7 +1573,7 @@ export default function MePesaMucho() {
           {/* Navigation */}
           <div className="text-center mt-8 flex flex-col items-center gap-3">
             <button className={`${S.link} text-sm`} onClick={() => setCierreStep(0)}>Volver a mi reflexión anterior</button>
-            <button onClick={reiniciar} className={`${S.link} underline underline-offset-4 decoration-[#C4B6A5] text-sm`}>Volver al inicio</button>
+            <button onClick={reiniciar} className={`${S.link} underline underline-offset-4 decoration-[#7A8B6F] text-sm`}>Volver al inicio</button>
           </div>
           <Footer />
         </div>
@@ -1662,7 +1647,7 @@ export default function MePesaMucho() {
                 &#9888; Si no guardas tu acceso ahora, solo funcionará en este navegador. No podrás recuperarlo después sin este paso.
               </p>
 
-              {accessError && <p className="text-sm text-[#8B6F5E] mb-4" role="alert">{accessError}</p>}
+              {accessError && <p className="text-sm text-[#6B7F5E] mb-4" role="alert">{accessError}</p>}
 
               {/* Option 1: Email */}
               <div className="border border-[#D8CFC4] rounded-lg p-5 mb-4 text-left">

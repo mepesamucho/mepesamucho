@@ -5,7 +5,7 @@
   --color-marfil-deep: #EAE4DC;
   --color-text: #3A3733;
   --color-text-sec: #6F6A64;
-  --color-accent: #C4B6A5;
+  --color-accent: #7A8B6F;
   --color-border: #D8CFC4;
   --color-crisis: #8B6F5E;
   --color-crisis-bg: #F5ECE3;
@@ -72,10 +72,10 @@ body {
 
 @keyframes breatheGlow {
   0%, 100% {
-    box-shadow: 0 0 15px 2px rgba(196, 182, 165, 0.1);
+    box-shadow: 0 0 15px 2px rgba(122, 139, 111, 0.1);
   }
   50% {
-    box-shadow: 0 0 30px 8px rgba(196, 182, 165, 0.25);
+    box-shadow: 0 0 30px 8px rgba(122, 139, 111, 0.25);
   }
 }
 
@@ -166,7 +166,7 @@ body {
 textarea:focus {
   border-color: var(--color-accent) !important;
   outline: none;
-  box-shadow: 0 0 0 3px rgba(196, 182, 165, 0.15);
+  box-shadow: 0 0 0 3px rgba(122, 139, 111, 0.15);
 }
 
 /* Selection */
@@ -223,16 +223,16 @@ textarea:focus-visible {
 }
 
 .btn-primary-glow {
-  box-shadow: 0 2px 12px rgba(196, 182, 165, 0.25);
+  box-shadow: 0 2px 12px rgba(122, 139, 111, 0.25);
   transition: all 0.3s ease;
 }
 .btn-primary-glow:hover {
-  box-shadow: 0 4px 20px rgba(196, 182, 165, 0.4);
+  box-shadow: 0 4px 20px rgba(122, 139, 111, 0.4);
   transform: translateY(-1px);
 }
 .btn-primary-glow:active {
   transform: translateY(0);
-  box-shadow: 0 1px 6px rgba(196, 182, 165, 0.2);
+  box-shadow: 0 1px 6px rgba(122, 139, 111, 0.2);
 }
 
 /* Micro-interactions for secondary buttons */
@@ -253,14 +253,14 @@ a, .link-hover-animate {
   transition: box-shadow 0.3s ease, transform 0.3s ease;
 }
 .card-hover-lift:hover {
-  box-shadow: 0 4px 16px rgba(196, 182, 165, 0.15);
+  box-shadow: 0 4px 16px rgba(122, 139, 111, 0.15);
   transform: translateY(-2px);
 }
 
 /* Textarea focus glow */
 textarea:focus {
   border-color: var(--color-accent) !important;
-  box-shadow: 0 0 0 3px rgba(196, 182, 165, 0.15), 0 2px 8px rgba(196, 182, 165, 0.1);
+  box-shadow: 0 0 0 3px rgba(122, 139, 111, 0.15), 0 2px 8px rgba(122, 139, 111, 0.1);
 }
 
 /* Accordion smooth open */
