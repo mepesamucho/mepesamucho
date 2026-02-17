@@ -86,7 +86,7 @@ function useSinglePass() {
 
 // ── DOWNLOAD REFLECTION AS PDF ─────────────────
 
-function descargarReflexionPDF(reflexion: string, citas: { source: string; text: string }[], marcoNombre: string) {
+function descargarReflexionPDF(reflexion: string, citas: { source: string; text: string }[], marcoNombre: string, fraseUsuario?: string) {
   const fecha = new Date().toLocaleDateString("es-MX", { year: "numeric", month: "long", day: "numeric" });
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const pageW = doc.internal.pageSize.getWidth();
@@ -122,7 +122,20 @@ function descargarReflexionPDF(reflexion: string, citas: { source: string; text:
   doc.setFontSize(8);
   doc.setTextColor(111, 106, 100);
   doc.text(marcoNombre.toUpperCase(), pageW / 2, y, { align: "center" });
-  y += 12;
+  y += 10;
+
+  // User's selected phrase
+  if (fraseUsuario && fraseUsuario.trim()) {
+    addPageIfNeeded(16);
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(9);
+    doc.setTextColor(111, 106, 100);
+    const fraseLines = doc.splitTextToSize(`"${fraseUsuario.trim()}"`, maxW - 20);
+    doc.text(fraseLines, pageW / 2, y, { align: "center" });
+    y += fraseLines.length * 4 + 10;
+  } else {
+    y += 2;
+  }
 
   // Reflection body
   const paragraphs = reflexion.split("\n\n").filter((p) => p.trim());
@@ -1338,7 +1351,7 @@ export default function MePesaMucho() {
           <div className="text-center mt-4">
             <button
               className={`${S.link} text-sm`}
-              onClick={() => descargarReflexionPDF(reflexion, citasUsadas, MARCOS[marco!]?.nombre || "")}
+              onClick={() => descargarReflexionPDF(reflexion, citasUsadas, MARCOS[marco!]?.nombre || "", resp1)}
               aria-label="Descargar reflexión en formato PDF"
             >
               Descargar reflexión (PDF)
@@ -1362,8 +1375,7 @@ export default function MePesaMucho() {
         {showCrisis && <CrisisModal />}
         {showCrisisBanner && <CrisisBanner />}
         <div className={`${S.box} text-center`}>
-          <p className={`${S.sub} text-sm mb-3`}>Sobre tu reflexión:</p>
-          <h2 className="text-xl font-normal italic leading-snug mb-6">{PREGUNTAS_CIERRE[cIdx]}</h2>
+          <h2 className="text-2xl font-light italic leading-relaxed mb-8">{PREGUNTAS_CIERRE[cIdx]}</h2>
           <label htmlFor="cierre-resp" className="sr-only">Tu respuesta</label>
           <textarea id="cierre-resp" value={cierreTexto} onChange={handleCierreTextoChange} placeholder="Escribe lo que quieras..." autoFocus className={S.textarea} />
           <div className="mt-5 flex flex-col items-center gap-4">
@@ -1383,9 +1395,9 @@ export default function MePesaMucho() {
         {showCrisis && <CrisisModal />}
         {showCrisisBanner && <CrisisBanner />}
         <div className={`${S.box}`}>
-          <p className="text-base italic text-[#6F6A64] mb-5 pl-4 leading-relaxed" style={{ borderLeftWidth: "2px", borderLeftStyle: "solid", borderLeftColor: "#D8CFC4", fontSize: "1rem" }}>{cierreTexto}</p>
-          <p className="text-[1.15rem] leading-loose mb-6">{PROFUNDIZACIONES[cIdx]}</p>
-          <h2 className="text-lg italic text-center leading-relaxed mb-5">{PREGUNTAS_SEGUNDO[cIdx]}</h2>
+          <p className="italic text-[#6F6A64] mb-6 pl-5 leading-loose" style={{ borderLeftWidth: "2px", borderLeftStyle: "solid", borderLeftColor: "#D8CFC4", fontSize: "1.2rem" }}>{cierreTexto}</p>
+          <p className="leading-loose mb-6" style={{ fontSize: "1.2rem" }}>{PROFUNDIZACIONES[cIdx]}</p>
+          <h2 className="text-xl italic text-center leading-relaxed mb-6">{PREGUNTAS_SEGUNDO[cIdx]}</h2>
           <label htmlFor="cierre-resp2" className="sr-only">Tu respuesta a la segunda pregunta</label>
           <textarea id="cierre-resp2" value={cierreTexto2} onChange={handleCierreTexto2Change} placeholder="Escribe lo que quieras..." autoFocus className={S.textarea} />
           <div className="mt-5 flex flex-col items-center gap-4">
