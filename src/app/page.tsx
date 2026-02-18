@@ -1160,11 +1160,17 @@ export default function MePesaMucho() {
         {showCrisis && <CrisisModal />}
         <div className={`${S.box} text-center`}>
           <p
-            className="text-2xl text-[#5C5751] italic font-light transition-all duration-[1200ms] mb-8"
+            className="text-2xl text-[#5C5751] italic font-light transition-all duration-[1200ms] mb-4"
             style={{ opacity: msgOpacity, transform: msgOpacity === 0 ? "translateY(12px)" : "translateY(0)" }}
             aria-live="polite"
           >
             Ya no lo cargas solo.
+          </p>
+          <p
+            className="text-base text-[#6F6A64] font-light transition-all duration-[1400ms] mb-10 leading-relaxed max-w-[340px] mx-auto"
+            style={{ opacity: readyContinue ? 1 : 0, transform: readyContinue ? "translateY(0)" : "translateY(8px)", transitionDelay: "0.3s" }}
+          >
+            Lo que acabas de soltar tiene valor. Ahora vamos a darle el espacio que merece.
           </p>
           {readyContinue && (
             <div className="animate-fade-in">
@@ -1193,8 +1199,8 @@ export default function MePesaMucho() {
         {showDisclaimer && <DisclaimerModal />}
         {showAbout && <AboutModal />}
         <div className={`${S.box} text-center`}>
-          <p className={`${S.sub} text-sm mb-2`}>Ahora elige cómo quieres escucharte.</p>
-          <h2 className="text-xl font-normal italic leading-snug mb-8">¿Desde qué tradición quieres recibir tu reflexión?</h2>
+          <p className={`${S.sub} text-sm mb-2`}>Hay muchas formas de escuchar lo que necesitas oír.</p>
+          <h2 className="text-xl font-normal italic leading-snug mb-8">¿Desde dónde quieres recibir tu reflexión?</h2>
           {apiError && <p className={`${S.sub} text-sm text-[#6B7F5E] mb-4`} role="alert">{apiError}</p>}
           <div className="flex flex-col gap-3" role="radiogroup" aria-label="Selecciona tradición">
             {(Object.entries(MARCOS) as [Marco, { nombre: string; descripcion: string }][]).map(([key, val]) => (
