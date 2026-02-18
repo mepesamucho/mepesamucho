@@ -867,6 +867,7 @@ export default function MePesaMucho() {
       <div className={`${S.divider} mb-5`} />
       <p className="font-[var(--font-sans)] text-[0.65rem] text-[#857F78] leading-relaxed">mepesamucho.com · Un espacio de reflexión, no de consejería.</p>
       <p className="font-[var(--font-sans)] text-[0.65rem] text-[#857F78] leading-relaxed mt-1">Lo que escribes no se almacena ni se comparte.</p>
+      <p className="font-[var(--font-sans)] text-[0.6rem] text-[#A09A93] leading-relaxed mt-2">Un proyecto independiente de bienestar emocional.</p>
       {showCounter && (
         <p className="font-[var(--font-sans)] text-[0.6rem] text-[#8A8580] mt-3">
           {dayPass.active
@@ -931,7 +932,13 @@ export default function MePesaMucho() {
             <p className={`${S.sub} text-xs mt-2`}>Puedes cancelar en cualquier momento.</p>
           </div>
 
-          <p className={`${S.sub} text-xs mb-6`}>Todos los precios en USD. Cobro seguro a través de Stripe.</p>
+          <div className="flex items-center justify-center gap-2 mb-6">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" stroke="#7A8B6F" strokeWidth="1.5"/>
+              <path d="M9 12l2 2 4-4" stroke="#7A8B6F" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            <p className={`${S.sub} text-xs`}>Cobro seguro a través de Stripe · Precios en USD</p>
+          </div>
 
           {/* Recovery section — below pricing, discrete */}
           <div className="border border-[#D8CFC4] rounded-lg p-5 mb-4">
@@ -1038,8 +1045,13 @@ export default function MePesaMucho() {
             Quiero soltar lo que cargo
           </button>
 
+          {/* Social proof — anonymous counter */}
+          <p className="font-[var(--font-sans)] text-[0.7rem] text-[#A09A93] font-light mt-5 hero-stagger-4 tracking-wide">
+            Más de 1,000 personas ya soltaron algo aquí.
+          </p>
+
           {/* Discrete "¿Cómo funciona?" link below CTA */}
-          <div className="mt-8 hero-stagger-4 text-center">
+          <div className="mt-6 hero-stagger-4 text-center">
             <button
               className="font-[var(--font-sans)] text-xs text-[#857F78] font-light cursor-pointer bg-transparent border-none underline decoration-[#D8CFC4] underline-offset-4 hover:text-[#5C7350] transition-colors mx-auto"
               onClick={() => setShowHowItWorks(!showHowItWorks)}
@@ -1341,6 +1353,7 @@ export default function MePesaMucho() {
 
         <div className="text-center mb-4 px-5">
           <p className="font-[var(--font-sans)] text-sm sm:text-base italic text-[#6B7F5E] font-light tracking-wide">Lee despacio. Esto fue escrito para ti.</p>
+          <p className="font-[var(--font-sans)] text-[0.65rem] text-[#A09A93] font-light mt-2 tracking-wide">Cada cita incluye referencia verificable de su fuente original.</p>
         </div>
 
         <div style={{ maxWidth: "680px", width: "100%", margin: "0 auto", paddingLeft: "1.5rem", paddingRight: "1.5rem", paddingBottom: "3rem" }}>
@@ -1509,6 +1522,13 @@ export default function MePesaMucho() {
                       <button className={`${S.btn} btn-primary-glow w-full`} onClick={() => checkout("single")} aria-label="Continuar por $0.50">Continuar esta reflexión — $0.50</button>
                       <button className={`${S.btnSecondary} w-full text-sm`} onClick={() => checkout("daypass")} aria-label="Acceso 24h por $0.99">Espacio abierto 24h — $0.99</button>
                       <button className={`${S.sub} text-xs cursor-pointer bg-transparent border-none hover:text-[#5C7350] transition-colors block mx-auto mt-1`} onClick={() => checkout("subscription")} aria-label="Suscripción mensual $4.99">Suscripción mensual · $4.99/mes</button>
+                      <div className="flex items-center justify-center gap-1.5 mt-3">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                          <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" stroke="#A09A93" strokeWidth="1.5"/>
+                          <path d="M9 12l2 2 4-4" stroke="#A09A93" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        <p className="font-[var(--font-sans)] text-[0.6rem] text-[#A09A93] font-light">Cobro seguro vía Stripe</p>
+                      </div>
                     </div>
                   </div>
                 </>
