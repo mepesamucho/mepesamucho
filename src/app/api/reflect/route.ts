@@ -13,15 +13,14 @@ IDENTIDAD: Silencioso, premium, seguro, intimo, no tecnologico, no clinico. Eres
 
 REGLAS ESTRICTAS:
 1. SOLO puedes citar las fuentes que se te proporcionan en el campo "citas_disponibles". NUNCA inventes una cita.
-2. Usa exactamente 3 citas del corpus proporcionado. Cita el texto exacto entre comillas angulares y la fuente completa.
-3. La reflexion debe tener entre 600-900 palabras.
+2. Usa exactamente 2 citas del corpus proporcionado. Cita el texto exacto entre comillas angulares y la fuente completa.
+3. La reflexion debe tener entre 300-450 palabras. Se conciso y profundo — cada frase debe tener peso.
 4. Escribe en segunda persona (tu), con tono intimo, calido pero no cursi.
 5. No eres terapeuta. No diagnosticas. No das consejos directos. Ofreces perspectivas desde la tradicion elegida.
-6. Estructura (cada bloque sigue el patron: espejo emocional + cita + puente interpretativo):
-   - ESPEJO EMOCIONAL DE APERTURA: Parrafo que refleje lo que el usuario siente, sin repetirlo literalmente. Reconoce su emocion con empatia.
-   - Primera cita + PUENTE INTERPRETATIVO que conecte la cita con la experiencia del usuario (2-3 parrafos)
-   - Segunda cita + PUENTE que conecte esta nueva perspectiva con la anterior
-   - Tercera cita + PUENTE de cierre que integre todo
+6. Estructura (concisa, cada bloque tiene peso):
+   - ESPEJO EMOCIONAL DE APERTURA: Un parrafo breve que refleje lo que el usuario siente, sin repetirlo literalmente.
+   - Primera cita + PUENTE INTERPRETATIVO breve (1-2 parrafos)
+   - Segunda cita + PUENTE de cierre que integre todo (1-2 parrafos)
    - PREGUNTA ABIERTA final (una sola, breve, que invite a profundizar)
 7. Cada cita debe ir en su propio parrafo, formateada asi:
    [linea vacia]
@@ -59,10 +58,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Datos incompletos" }, { status: 400 });
     }
 
-    // Seleccionar 5 citas aleatorias del marco para que el LLM elija 3
+    // Seleccionar 4 citas aleatorias del marco para que el LLM elija 2
     const citasMarco = CITAS[marco];
     const shuffled = [...citasMarco].sort(() => Math.random() - 0.5);
-    const citasSeleccionadas = shuffled.slice(0, 5);
+    const citasSeleccionadas = shuffled.slice(0, 4);
 
     const crisisAddendum = crisisDetected ? `
 
@@ -93,7 +92,7 @@ Respuesta a "Que es lo que mas necesitas en este momento?": "${respuesta1?.slice
 
 Respuesta a "Esto que te pesa viene de hace tiempo o es reciente?": "${respuesta2?.slice(0, 500) || "No respondio"}"
 
-CITAS DISPONIBLES (usa exactamente 3 de estas):
+CITAS DISPONIBLES (usa exactamente 2 de estas):
 ${citasSeleccionadas.map((c, i) => `${i + 1}. "${c.text}" — ${c.source}`).join("\n")}
 ${crisisAddendum}
 Genera la reflexion personalizada siguiendo todas las reglas.`;
@@ -101,7 +100,7 @@ Genera la reflexion personalizada siguiendo todas las reglas.`;
     const anthropic = getAnthropic();
     const message = await anthropic.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 2000,
+      max_tokens: 1200,
       messages: [
         {
           role: "user",
@@ -123,7 +122,7 @@ Genera la reflexion personalizada siguiendo todas las reglas.`;
 
     return NextResponse.json({
       reflexion: content.text,
-      citasUsadas: citasUsadas.length > 0 ? citasUsadas : citasSeleccionadas.slice(0, 3),
+      citasUsadas: citasUsadas.length > 0 ? citasUsadas : citasSeleccionadas.slice(0, 2),
       marco,
     });
   } catch (error) {

@@ -894,11 +894,11 @@ export default function MePesaMucho() {
 
   if (usosHoy >= 2 && !dayPass.active && !getSinglePass() && step === "landing") {
     return (
-      <div className={`${S.page} animate-fade-in pt-16`} key={fadeKey}>
+      <div className={`${S.page} animate-step-in`} key={fadeKey}>
         <SiteHeader />
         {showDisclaimer && <DisclaimerModal />}
         {showAbout && <AboutModal />}
-        <div className={`${S.box} text-center`}>
+        <div className={`${S.box} text-center`} style={{ maxWidth: "440px" }}>
           {/* Emotional header */}
           <p className="text-xl font-light italic leading-relaxed mb-2">
             Lo que estás tocando merece más espacio.
@@ -1388,30 +1388,8 @@ export default function MePesaMucho() {
           <label htmlFor="cierre-resp" className="sr-only">Responder reflexión</label>
           <textarea id="cierre-resp" value={cierreTexto} onChange={handleCierreTextoChange} placeholder="Escribe lo que quieras..." autoFocus className={S.textarea} aria-label="Responder reflexión" />
           <div className="mt-5 flex flex-col items-center gap-4">
-            {cierreTexto.trim() && <button className={S.btn} onClick={() => setCierreStep(2)}>Compartir</button>}
+            {cierreTexto.trim() && <button className={S.btn} onClick={() => { setCierreStep(3); generarContinuacion(); }}>Continuar</button>}
             <button className={`${S.link} text-sm`} onClick={() => { setCierreStep(0); setShowCierreInput(false); }}>Volver a mi reflexión</button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Cierre step 2 — profundización + second question (clean screen)
-  if (step === "essay" && cierreStep === 2) {
-    return (
-      <div className={`${S.page} animate-fade-in pt-16`} key={`c2-${fadeKey}`}>
-        <SiteHeader />
-        {showCrisis && <CrisisModal />}
-        {showCrisisBanner && <CrisisBanner />}
-        <div className={`${S.box}`}>
-          <p className="italic text-[#6F6A64] mb-6 pl-5 leading-loose" style={{ borderLeftWidth: "2px", borderLeftStyle: "solid", borderLeftColor: "#D8CFC4", fontSize: "1.2rem" }}>{cierreTexto}</p>
-          <p className="leading-loose mb-6" style={{ fontSize: "1.2rem" }}>{PROFUNDIZACIONES[cIdx]}</p>
-          <h2 className="text-xl italic text-center leading-relaxed mb-6">{PREGUNTAS_SEGUNDO[cIdx]}</h2>
-          <label htmlFor="cierre-resp2" className="sr-only">Responder reflexión</label>
-          <textarea id="cierre-resp2" value={cierreTexto2} onChange={handleCierreTexto2Change} placeholder="Escribe lo que quieras..." autoFocus className={S.textarea} aria-label="Responder reflexión" />
-          <div className="mt-5 flex flex-col items-center gap-4">
-            {cierreTexto2.trim() && <button className={S.btn} onClick={() => { setCierreStep(3); generarContinuacion(); }}>Continuar</button>}
-            <button className={`${S.link} text-sm`} onClick={() => setCierreStep(1)}>Volver</button>
           </div>
         </div>
       </div>
