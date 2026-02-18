@@ -1431,7 +1431,7 @@ export default function MePesaMucho() {
             <p className={`${S.sub} text-base mb-6`}>Puedes seguir profundizando ahora mismo.</p>
             <div className="flex flex-col gap-3 items-center max-w-[380px] mx-auto">
               <button className={`${S.btn} btn-primary-glow w-full`} onClick={() => checkout("single")} aria-label="Continuar conversación por $0.99">Continuar conversación — $0.99</button>
-              <button className={`${S.sub} text-xs cursor-pointer bg-transparent border-none hover:text-[#5C7350] transition-colors mt-2`} onClick={() => checkout("subscription")} aria-label="Suscripción mensual $4.99">O suscríbete por $4.99/mes · reflexiones ilimitadas</button>
+              <button className={`${S.btnSecondary} w-full text-sm`} onClick={() => checkout("subscription")} aria-label="Suscripción mensual $4.99">Reflexiones ilimitadas · $4.99/mes</button>
             </div>
             <div className="mt-6"><button className={`${S.link} text-sm`} onClick={() => setCierreStep(0)}>Volver a mi reflexión</button></div>
           </div>
@@ -1482,7 +1482,7 @@ export default function MePesaMucho() {
                     <p className={`${S.sub} text-sm mb-8`}>Tu reflexión puede ir más profundo. Continúa cuando estés listo.</p>
                     <div className="flex flex-col gap-3 items-center max-w-[340px] mx-auto">
                       <button className={`${S.btn} btn-primary-glow w-full`} onClick={() => checkout("single")} aria-label="Continuar esta reflexión por $0.99">Continuar esta reflexión — $0.99</button>
-                      <button className={`${S.sub} text-xs cursor-pointer bg-transparent border-none hover:text-[#5C7350] transition-colors block mx-auto mt-2`} onClick={() => checkout("subscription")} aria-label="Suscripción mensual $4.99">O suscríbete por $4.99/mes · reflexiones ilimitadas</button>
+                      <button className={`${S.btnSecondary} w-full text-sm`} onClick={() => checkout("subscription")} aria-label="Suscripción mensual $4.99">Reflexiones ilimitadas · $4.99/mes</button>
                       <div className="flex items-center justify-center gap-1.5 mt-3">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                           <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" stroke="#A09A93" strokeWidth="1.5"/>
