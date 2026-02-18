@@ -1079,7 +1079,7 @@ export default function MePesaMucho() {
           </div>
 
           <div className="hero-stagger-5">
-            <Footer showCounter />
+            <Footer />
           </div>
         </div>
       </div>
