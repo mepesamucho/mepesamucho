@@ -371,6 +371,10 @@ export default function MePesaMucho() {
   const [showScrollHint, setShowScrollHint] = useState(true);
   const [readyContinue, setReadyContinue] = useState(false);
   const [showHowItWorks, setShowHowItWorks] = useState(false);
+  const [showHeroCode, setShowHeroCode] = useState(false);
+  const [heroCodeInput, setHeroCodeInput] = useState("");
+  const [heroCodeLoading, setHeroCodeLoading] = useState(false);
+  const [heroCodeError, setHeroCodeError] = useState("");
   const [continuacion, setContinuacion] = useState("");
   const [continuacionCitas, setContinuacionCitas] = useState<{ source: string; text: string }[]>([]);
   const [continuacionLoading, setContinuacionLoading] = useState(false);
@@ -1082,7 +1086,110 @@ export default function MePesaMucho() {
             </div>
           </div>
 
-          <div className="hero-stagger-5">
+          {/* ── Acceso suscriptores ── */}
+          <div className="mt-8 hero-stagger-5">
+            {!showHeroCode ? (
+              <button
+                className="font-[var(--font-sans)] text-sm text-[#5C5751] font-normal cursor-pointer bg-transparent border border-[#D9CFBF] rounded-lg px-5 py-2.5 hover:bg-[#EBE3D8] transition-colors"
+                onClick={() => setShowHeroCode(true)}
+              >
+                Ya tengo un código de acceso
+              </button>
+            ) : (
+              <div
+                className="mt-2 mx-auto text-center"
+                style={{
+                  maxWidth: "360px",
+                  animation: "stepTransition 0.6s cubic-bezier(0.25, 0.1, 0.25, 1) forwards",
+                }}
+              >
+                <p className="font-[var(--font-sans)] text-sm text-[#6F6A64] font-light mb-3">
+                  Ingresa tu código o email para continuar.
+                </p>
+                <input
+                  type="text"
+                  value={heroCodeInput}
+                  onChange={(e) => { setHeroCodeInput(e.target.value); setHeroCodeError(""); }}
+                  placeholder="MPM-XXXX-XXXX o tu email"
+                  className="w-full font-[var(--font-sans)] text-base px-4 py-3 border border-[#D9CFBF] rounded-lg bg-white/60 text-[#3A3733] focus:outline-none focus:border-[#7A8B6F] transition-colors mb-3"
+                  style={{ letterSpacing: "0.04em" }}
+                  onKeyDown={(e) => { if (e.key === "Enter" && heroCodeInput.trim()) document.getElementById("hero-code-btn")?.click(); }}
+                />
+                {heroCodeError && (
+                  <div className="mb-3 p-4 border border-[#D9CFBF] rounded-lg bg-white/70 text-left" style={{ animation: "stepTransition 0.4s ease forwards" }}>
+                    <p className="font-[var(--font-sans)] text-sm text-[#5C5751] mb-3">{heroCodeError}</p>
+                    <div className="flex gap-2 justify-center">
+                      <button
+                        className="font-[var(--font-sans)] text-sm px-4 py-2 bg-[#5C7350] text-white rounded-lg hover:bg-[#4E6642] transition-colors"
+                        onClick={() => checkout("subscription")}
+                      >
+                        Suscribirme · $4.99/mes
+                      </button>
+                      <button
+                        className="font-[var(--font-sans)] text-sm px-4 py-2 bg-[#EBE3D8] text-[#3A3733] border border-[#D9CFBF] rounded-lg hover:bg-[#D9CFBF] transition-colors"
+                        onClick={() => { setShowHeroCode(false); setHeroCodeInput(""); setHeroCodeError(""); }}
+                      >
+                        Volver
+                      </button>
+                    </div>
+                  </div>
+                )}
+                {!heroCodeError && (
+                  <div className="flex gap-2 justify-center">
+                    <button
+                      id="hero-code-btn"
+                      className={`${S.btn} text-base px-6 py-3 ${heroCodeLoading ? "opacity-50" : ""}`}
+                      disabled={!heroCodeInput.trim() || heroCodeLoading}
+                      onClick={async () => {
+                        setHeroCodeLoading(true);
+                        setHeroCodeError("");
+                        try {
+                          const input = heroCodeInput.trim();
+                          const isEmail = input.includes("@");
+                          const body = isEmail ? { email: input } : { code: input.toUpperCase() };
+                          const res = await fetch("/api/recover-access", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify(body),
+                          });
+                          const data = await res.json();
+                          if (data.success) {
+                            if (data.type === "subscription") {
+                              activateDayPass();
+                              setDayPass({ active: true, hoursLeft: 720 });
+                            } else if (data.type === "daypass" && data.expiresAt) {
+                              localStorage.setItem("mpm_daypass", JSON.stringify({ expires: data.expiresAt }));
+                              setDayPass({ active: true, hoursLeft: data.hoursLeft || 24 });
+                            } else if (data.type === "single") {
+                              activateSinglePass();
+                            }
+                            setUsosHoy(0);
+                            saveUsosHoy(0);
+                            setStep("writing");
+                          } else {
+                            setHeroCodeError(data.error || "Tu código no existe o ya venció. Puedes suscribirte para tener acceso ilimitado.");
+                          }
+                        } catch {
+                          setHeroCodeError("Error de conexión. Intenta de nuevo.");
+                        }
+                        setHeroCodeLoading(false);
+                      }}
+                    >
+                      {heroCodeLoading ? "Verificando..." : "Acceder"}
+                    </button>
+                    <button
+                      className="font-[var(--font-sans)] text-sm px-4 py-3 text-[#857F78] hover:text-[#5C5751] transition-colors"
+                      onClick={() => { setShowHeroCode(false); setHeroCodeInput(""); setHeroCodeError(""); }}
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="hero-stagger-5 mt-4">
             <Footer />
           </div>
         </div>
@@ -1152,15 +1259,15 @@ export default function MePesaMucho() {
         {showCrisis && <CrisisModal />}
         <div className={`${S.box} text-center`}>
           <p
-            className="text-2xl text-[#5C5751] italic font-light transition-all duration-[1200ms] mb-4"
-            style={{ opacity: msgOpacity, transform: msgOpacity === 0 ? "translateY(12px)" : "translateY(0)" }}
+            className="text-2xl text-[#5C5751] italic font-light mb-4"
+            style={{ opacity: msgOpacity, transform: msgOpacity === 0 ? "translateY(12px)" : "translateY(0)", transition: "opacity 1.2s ease, transform 1.2s ease" }}
             aria-live="polite"
           >
             Ya no lo cargas solo.
           </p>
           <p
-            className="text-base text-[#6F6A64] font-light transition-all duration-[1400ms] mb-10 leading-relaxed max-w-[340px] mx-auto"
-            style={{ opacity: readyContinue ? 1 : 0, transform: readyContinue ? "translateY(0)" : "translateY(8px)", transitionDelay: "0.3s" }}
+            className="text-base text-[#6F6A64] font-light mb-10 leading-relaxed max-w-[340px] mx-auto text-center"
+            style={{ opacity: readyContinue ? 1 : 0, transform: readyContinue ? "translateY(0)" : "translateY(8px)", transition: "opacity 1.4s ease, transform 1.4s ease", transitionDelay: "0.3s" }}
           >
             Lo que acabas de soltar tiene valor. Ahora vamos a darle el espacio que merece.
           </p>
