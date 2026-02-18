@@ -375,6 +375,10 @@ export default function MePesaMucho() {
   const [heroCodeInput, setHeroCodeInput] = useState("");
   const [heroCodeLoading, setHeroCodeLoading] = useState(false);
   const [heroCodeError, setHeroCodeError] = useState("");
+  const [showPaywallCode, setShowPaywallCode] = useState(false);
+  const [paywallCodeInput, setPaywallCodeInput] = useState("");
+  const [paywallCodeLoading, setPaywallCodeLoading] = useState(false);
+  const [paywallCodeError, setPaywallCodeError] = useState("");
   const [continuacion, setContinuacion] = useState("");
   const [continuacionCitas, setContinuacionCitas] = useState<{ source: string; text: string }[]>([]);
   const [continuacionLoading, setContinuacionLoading] = useState(false);
@@ -1257,17 +1261,17 @@ export default function MePesaMucho() {
       <div className={`${S.page} animate-step-in`}>
         {showCrisisBanner && <CrisisBanner />}
         {showCrisis && <CrisisModal />}
-        <div className={`${S.box} text-center`}>
+        <div className={`${S.box}`} style={{ textAlign: "center" }}>
           <p
             className="text-2xl text-[#5C5751] italic font-light mb-4"
-            style={{ opacity: msgOpacity, transform: msgOpacity === 0 ? "translateY(12px)" : "translateY(0)", transition: "opacity 1.2s ease, transform 1.2s ease" }}
+            style={{ opacity: msgOpacity, transform: msgOpacity === 0 ? "translateY(12px)" : "translateY(0)", transition: "opacity 1.2s ease, transform 1.2s ease", textAlign: "center" }}
             aria-live="polite"
           >
             Ya no lo cargas solo.
           </p>
           <p
             className="text-base text-[#6F6A64] font-light mb-10 leading-relaxed"
-            style={{ opacity: readyContinue ? 1 : 0, transform: readyContinue ? "translateY(0)" : "translateY(8px)", transition: "opacity 1.4s ease, transform 1.4s ease", transitionDelay: "0.3s" }}
+            style={{ opacity: readyContinue ? 1 : 0, transform: readyContinue ? "translateY(0)" : "translateY(8px)", transition: "opacity 1.4s ease, transform 1.4s ease", transitionDelay: "0.3s", textAlign: "center" }}
           >
             Lo que acabas de soltar tiene valor. Ahora vamos a darle el espacio que merece.
           </p>
@@ -1586,11 +1590,11 @@ export default function MePesaMucho() {
 
           {/* Paywall — fuera del card, centrado en la página */}
           {!continuacionDesbloqueada && (
-            <div className="mt-10 text-center animate-fade-in">
+            <div className="mt-10 animate-fade-in" style={{ textAlign: "center", width: "100%" }}>
               <div className="w-8 h-px bg-[#7A8B6F] mx-auto mb-6" />
-              <p className="text-xl italic leading-relaxed mb-2">Lo que compartiste merece más espacio.</p>
-              <p className={`${S.sub} text-sm mb-8`}>Tu reflexión puede ir más profundo. Continúa cuando estés listo.</p>
-              <div className="flex flex-col gap-3 items-center max-w-[340px] mx-auto">
+              <p className="text-xl italic leading-relaxed mb-2" style={{ textAlign: "center" }}>Lo que compartiste merece más espacio.</p>
+              <p className={`${S.sub} text-sm mb-8`} style={{ textAlign: "center" }}>Tu reflexión puede ir más profundo. Continúa cuando estés listo.</p>
+              <div className="flex flex-col gap-3 items-center mx-auto" style={{ maxWidth: "340px" }}>
                 <button className={`${S.btn} btn-primary-glow w-full`} onClick={() => checkout("single")} aria-label="Continuar esta reflexión por $0.99">Continuar esta reflexión — $0.99</button>
                 <button className={`${S.btnSecondary} w-full text-sm`} onClick={() => checkout("subscription")} aria-label="Suscripción mensual $4.99">Reflexiones ilimitadas · $4.99/mes</button>
                 <div className="flex items-center justify-center gap-1.5 mt-3">
@@ -1600,6 +1604,108 @@ export default function MePesaMucho() {
                   </svg>
                   <p className="font-[var(--font-sans)] text-[0.6rem] text-[#A09A93] font-light">Cobro seguro vía Stripe</p>
                 </div>
+              </div>
+
+              {/* ── Código de acceso en paywall inline ── */}
+              <div className="mt-6">
+                {!showPaywallCode ? (
+                  <button
+                    className="font-[var(--font-sans)] text-sm text-[#5C5751] font-normal cursor-pointer bg-transparent border border-[#D9CFBF] rounded-lg px-5 py-2.5 hover:bg-[#EBE3D8] transition-colors"
+                    onClick={() => setShowPaywallCode(true)}
+                  >
+                    Ya tengo un código de acceso
+                  </button>
+                ) : (
+                  <div
+                    className="mt-2 mx-auto"
+                    style={{
+                      maxWidth: "360px",
+                      textAlign: "center",
+                      animation: "stepTransition 0.6s cubic-bezier(0.25, 0.1, 0.25, 1) forwards",
+                    }}
+                  >
+                    <p className="font-[var(--font-sans)] text-sm text-[#6F6A64] font-light mb-3">
+                      Ingresa tu código o email para desbloquear tu reflexión.
+                    </p>
+                    <input
+                      type="text"
+                      value={paywallCodeInput}
+                      onChange={(e) => { setPaywallCodeInput(e.target.value); setPaywallCodeError(""); }}
+                      placeholder="MPM-XXXX-XXXX o tu email"
+                      className="w-full font-[var(--font-sans)] text-base px-4 py-3 border border-[#D9CFBF] rounded-lg bg-white/60 text-[#3A3733] focus:outline-none focus:border-[#7A8B6F] transition-colors mb-3"
+                      style={{ letterSpacing: "0.04em" }}
+                      onKeyDown={(e) => { if (e.key === "Enter" && paywallCodeInput.trim()) document.getElementById("paywall-code-btn")?.click(); }}
+                    />
+                    {paywallCodeError && (
+                      <div className="mb-3 p-4 border border-[#D9CFBF] rounded-lg bg-white/70 text-left" style={{ animation: "stepTransition 0.4s ease forwards" }}>
+                        <p className="font-[var(--font-sans)] text-sm text-[#5C5751] mb-3">{paywallCodeError}</p>
+                        <div className="flex gap-2 justify-center">
+                          <button
+                            className="font-[var(--font-sans)] text-sm px-4 py-2 bg-[#5C7350] text-white rounded-lg hover:bg-[#4E6642] transition-colors"
+                            onClick={() => checkout("subscription")}
+                          >
+                            Suscribirme · $4.99/mes
+                          </button>
+                          <button
+                            className="font-[var(--font-sans)] text-sm px-4 py-2 bg-[#EBE3D8] text-[#3A3733] border border-[#D9CFBF] rounded-lg hover:bg-[#D9CFBF] transition-colors"
+                            onClick={() => { setShowPaywallCode(false); setPaywallCodeInput(""); setPaywallCodeError(""); }}
+                          >
+                            Volver
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    {!paywallCodeError && (
+                      <div className="flex gap-2 justify-center">
+                        <button
+                          id="paywall-code-btn"
+                          className={`${S.btn} text-base px-6 py-3 ${paywallCodeLoading ? "opacity-50" : ""}`}
+                          disabled={!paywallCodeInput.trim() || paywallCodeLoading}
+                          onClick={async () => {
+                            setPaywallCodeLoading(true);
+                            setPaywallCodeError("");
+                            try {
+                              const input = paywallCodeInput.trim();
+                              const isEmail = input.includes("@");
+                              const body = isEmail ? { email: input } : { code: input.toUpperCase() };
+                              const res = await fetch("/api/recover-access", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify(body),
+                              });
+                              const data = await res.json();
+                              if (data.success) {
+                                if (data.type === "subscription") {
+                                  activateDayPass();
+                                  setDayPass({ active: true, hoursLeft: 720 });
+                                } else if (data.type === "daypass" && data.expiresAt) {
+                                  localStorage.setItem("mpm_daypass", JSON.stringify({ expires: data.expiresAt }));
+                                  setDayPass({ active: true, hoursLeft: data.hoursLeft || 24 });
+                                } else if (data.type === "single") {
+                                  activateSinglePass();
+                                }
+                                setContinuacionDesbloqueada(true);
+                              } else {
+                                setPaywallCodeError(data.error || "Tu código no existe o ya venció. Puedes suscribirte para tener acceso ilimitado.");
+                              }
+                            } catch {
+                              setPaywallCodeError("Error de conexión. Intenta de nuevo.");
+                            }
+                            setPaywallCodeLoading(false);
+                          }}
+                        >
+                          {paywallCodeLoading ? "Verificando..." : "Desbloquear"}
+                        </button>
+                        <button
+                          className="font-[var(--font-sans)] text-sm px-4 py-3 text-[#857F78] hover:text-[#5C5751] transition-colors"
+                          onClick={() => { setShowPaywallCode(false); setPaywallCodeInput(""); setPaywallCodeError(""); }}
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           )}
