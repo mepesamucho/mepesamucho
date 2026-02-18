@@ -1018,24 +1018,30 @@ export default function MePesaMucho() {
 
   if (step === "landing") {
     return (
-      <div className={`${S.page} animate-fade-in`} key={fadeKey}>
+      <div className={`${S.page}`} key={fadeKey} style={{ paddingBottom: "6vh" }}>
         {showDisclaimer && <DisclaimerModal />}
         {showAbout && <AboutModal />}
-        <div className={`${S.box} text-center`}>
-          <div className="flex justify-center mb-12"><LogoIcon size={44} /></div>
 
-          <p className="text-2xl sm:text-3xl text-[#5C5751] italic leading-relaxed font-light mb-14" style={{ letterSpacing: "-0.01em" }}>
+        {/* Capa ambiental — silencio digital con textura */}
+        <div className="ambient-layer" />
+        {/* Línea de anclaje lateral */}
+        <div className="accent-line" />
+
+        <div className={`${S.box} text-center`} style={{ position: "relative", zIndex: 1 }}>
+          <div className="flex justify-center mb-12 hero-stagger-1 icon-breathe"><LogoIcon size={44} /></div>
+
+          <p className="text-2xl sm:text-3xl text-[#5C5751] italic leading-relaxed font-light mb-14 hero-stagger-2" style={{ letterSpacing: "-0.01em" }}>
             A veces las cosas pesan menos cuando las sueltas.
           </p>
 
-          <button className={`${S.btn} text-lg px-10 py-4`} onClick={() => setStep("writing")} aria-label="Comenzar a escribir">
+          <button className={`${S.btn} text-lg px-10 py-4 hero-stagger-3`} onClick={() => setStep("writing")} aria-label="Comenzar a escribir">
             Quiero soltar lo que cargo
           </button>
 
           {/* Discrete "¿Cómo funciona?" link below CTA */}
-          <div className="mt-8">
+          <div className="mt-8 hero-stagger-4 text-center">
             <button
-              className="font-[var(--font-sans)] text-xs text-[#857F78] font-light cursor-pointer bg-transparent border-none underline decoration-[#D8CFC4] underline-offset-4 hover:text-[#5C7350] transition-colors"
+              className="font-[var(--font-sans)] text-xs text-[#857F78] font-light cursor-pointer bg-transparent border-none underline decoration-[#D8CFC4] underline-offset-4 hover:text-[#5C7350] transition-colors mx-auto"
               onClick={() => setShowHowItWorks(!showHowItWorks)}
               aria-expanded={showHowItWorks}
               aria-controls="how-it-works"
@@ -1072,7 +1078,9 @@ export default function MePesaMucho() {
             </div>
           </div>
 
-          <Footer showCounter />
+          <div className="hero-stagger-5">
+            <Footer showCounter />
+          </div>
         </div>
       </div>
     );

@@ -272,3 +272,97 @@ textarea:focus {
   from { opacity: 0; transform: translateY(-4px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* ═══════════════════════════════════════════
+   HERO: Silencio digital con textura
+   Fondo que "respira" — gradiente sutil que
+   se mueve como luz natural.
+   ═══════════════════════════════════════════ */
+@keyframes ambientShift {
+  0% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.02); }
+  100% { opacity: 0.5; transform: scale(1.01); }
+}
+
+.ambient-layer {
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 40%, rgba(214, 200, 180, 0.25) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 50% at 30% 60%, rgba(180, 170, 155, 0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 70% 30%, rgba(200, 190, 175, 0.10) 0%, transparent 50%);
+  animation: ambientShift 20s ease-in-out infinite alternate;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Línea de anclaje lateral */
+@keyframes lineGrow {
+  to { height: 80px; }
+}
+
+.accent-line {
+  position: fixed;
+  left: 7%;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 0;
+  background: linear-gradient(to bottom, transparent, #C8C2BA 30%, #C8C2BA 70%, transparent);
+  animation: lineGrow 3s ease-out 1s forwards;
+  z-index: 0;
+  opacity: 0.4;
+}
+
+/* Ícono con respiración */
+@keyframes iconBreathe {
+  0%, 100% {
+    filter: drop-shadow(0 0 0px rgba(92, 115, 80, 0.0));
+    transform: scale(1);
+  }
+  50% {
+    filter: drop-shadow(0 0 12px rgba(92, 115, 80, 0.12));
+    transform: scale(1.03);
+  }
+}
+
+.icon-breathe svg {
+  animation: iconBreathe 6s ease-in-out 2.5s infinite;
+}
+
+/* Aparición secuencial del hero */
+@keyframes heroFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hero-stagger-1 {
+  opacity: 0;
+  animation: heroFadeIn 2s ease-out 0.3s forwards;
+}
+
+.hero-stagger-2 {
+  opacity: 0;
+  animation: heroFadeIn 2.2s ease-out 0.8s forwards;
+}
+
+.hero-stagger-3 {
+  opacity: 0;
+  animation: heroFadeIn 2s ease-out 1.4s forwards;
+}
+
+.hero-stagger-4 {
+  opacity: 0;
+  animation: heroFadeIn 1.8s ease-out 2s forwards;
+}
+
+.hero-stagger-5 {
+  opacity: 0;
+  animation: heroFadeIn 2s ease-out 2.8s forwards;
+}
