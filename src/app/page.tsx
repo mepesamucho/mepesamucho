@@ -1500,21 +1500,15 @@ export default function MePesaMucho() {
                 </>
               ) : (
                 <>
-                  {/* Blurred with paywall overlay inside the card */}
-                  <div className="reflection-censored" style={{ minHeight: "200px" }}>
-                    <div className="censored-blur">
-                      {censoredParagraphs.map((p: string, i: number) => (
-                        <p key={`b${i}`} className="mb-5 text-justify leading-loose" style={{ fontSize: "1.2rem" }}>{p.trim()}</p>
-                      ))}
-                    </div>
-                    <div className="censored-overlay">
-                      <div className="bg-[#F3EFEA] border border-[#D8CFC4] rounded-lg p-6 mx-4 mb-4 text-center" style={{ width: "calc(100% - 2rem)", maxWidth: "400px" }}>
-                        <p className="text-lg italic leading-relaxed mb-1">Desbloquear la reflexión completa</p>
-                        <p className={`${S.sub} text-sm mb-4`}>Lo que estás tocando merece más espacio.</p>
-                        <button className={`${S.btn} btn-primary-glow w-full mb-3`} onClick={() => checkout("single")} aria-label="Desbloquear por $0.50">Continuar conversación — $0.50</button>
-                        <button className={`${S.btnSecondary} w-full mb-2 text-sm`} onClick={() => checkout("daypass")} aria-label="Acceso 24h por $0.99">Acceso 24h — $0.99</button>
-                        <button className={`${S.sub} text-xs cursor-pointer bg-transparent border-none hover:text-[#5C7350] transition-colors block mx-auto`} onClick={() => checkout("subscription")} aria-label="Suscripción mensual $4.99">Suscripción mensual · $4.99/mes</button>
-                      </div>
+                  {/* Invitación limpia — sin texto borroso ni contenido retenido */}
+                  <div className="mt-8 pt-8 text-center animate-fade-in" style={{ borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "#E8E2DB" }}>
+                    <div className="w-8 h-px bg-[#7A8B6F] mx-auto mb-6" />
+                    <p className="text-xl italic leading-relaxed mb-2">Lo que compartiste merece más espacio.</p>
+                    <p className={`${S.sub} text-sm mb-8`}>Tu reflexión puede ir más profundo. Continúa cuando estés listo.</p>
+                    <div className="flex flex-col gap-3 items-center max-w-[340px] mx-auto">
+                      <button className={`${S.btn} btn-primary-glow w-full`} onClick={() => checkout("single")} aria-label="Continuar por $0.50">Continuar esta reflexión — $0.50</button>
+                      <button className={`${S.btnSecondary} w-full text-sm`} onClick={() => checkout("daypass")} aria-label="Acceso 24h por $0.99">Espacio abierto 24h — $0.99</button>
+                      <button className={`${S.sub} text-xs cursor-pointer bg-transparent border-none hover:text-[#5C7350] transition-colors block mx-auto mt-1`} onClick={() => checkout("subscription")} aria-label="Suscripción mensual $4.99">Suscripción mensual · $4.99/mes</button>
                     </div>
                   </div>
                 </>
