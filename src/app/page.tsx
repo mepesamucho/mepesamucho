@@ -1266,7 +1266,7 @@ export default function MePesaMucho() {
             Ya no lo cargas solo.
           </p>
           <p
-            className="text-base text-[#6F6A64] font-light mb-10 leading-relaxed max-w-[340px] mx-auto text-center"
+            className="text-base text-[#6F6A64] font-light mb-10 leading-relaxed"
             style={{ opacity: readyContinue ? 1 : 0, transform: readyContinue ? "translateY(0)" : "translateY(8px)", transition: "opacity 1.4s ease, transform 1.4s ease", transitionDelay: "0.3s" }}
           >
             Lo que acabas de soltar tiene valor. Ahora vamos a darle el espacio que merece.
