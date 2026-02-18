@@ -1219,26 +1219,13 @@ export default function MePesaMucho() {
   // ── PREGUNTAS (with contextual guide) ─────────
 
   if (step === "preguntas") {
-    const isQ1 = preguntaStep === 0;
-    const val = isQ1 ? resp1 : resp2;
-    const handleChange = isQ1 ? handleResp1Change : handleResp2Change;
-
     const handleContinue = () => {
       if (crisisDetectedInText && !crisisAck) {
         setShowCrisis(true);
         return;
       }
-      if (isQ1) {
-        setPreguntaStep(1);
-      } else {
-        generarReflexion();
-      }
+      generarReflexion();
     };
-
-    const placeholderQ1 = "Por ejemplo: necesito paz, quiero entender por qué me siento así";
-    const placeholderQ2 = "Por ejemplo: viene de hace mucho, pero hoy regresó; pasó ayer";
-    const whyQ1 = "Esto nos ayuda a centrar tu reflexión en lo que más importa ahora mismo.";
-    const whyQ2 = "Saber si es algo reciente o de tiempo atrás nos ayuda a encontrar las palabras correctas para ti.";
 
     return (
       <div className={`${S.page} animate-fade-in pt-16`} key={`q${fadeKey}`}>
@@ -1249,30 +1236,30 @@ export default function MePesaMucho() {
         {showAbout && <AboutModal />}
         <div className={`${S.box} text-center`}>
           <h2 className="text-2xl font-light italic leading-relaxed mb-4">
-            {isQ1 ? "¿Qué es lo que más necesitas en este momento?" : "¿Esto que te pesa viene de hace tiempo o es reciente?"}
+            ¿Qué es lo que más necesitas en este momento?
           </h2>
-          <p className={`${S.sub} text-sm mb-8 text-center leading-relaxed`}>{isQ1 ? whyQ1 : whyQ2}</p>
+          <p className={`${S.sub} text-sm mb-8 text-center leading-relaxed`}>Esto nos ayuda a centrar tu reflexión en lo que más importa ahora mismo.</p>
 
-          <label htmlFor={`pregunta-${isQ1 ? "1" : "2"}`} className="sr-only">
-            {isQ1 ? "Qué necesitas en este momento" : "Desde cuándo te pesa esto"}
+          <label htmlFor="pregunta-1" className="sr-only">
+            Qué necesitas en este momento
           </label>
           <textarea
-            id={`pregunta-${isQ1 ? "1" : "2"}`}
-            value={val}
-            onChange={handleChange}
-            placeholder={isQ1 ? placeholderQ1 : placeholderQ2}
+            id="pregunta-1"
+            value={resp1}
+            onChange={handleResp1Change}
+            placeholder="Por ejemplo: necesito paz, quiero entender por qué me siento así"
             autoFocus
             className={S.textarea}
-            aria-label={isQ1 ? "Tu respuesta sobre lo que necesitas" : "Tu respuesta sobre la duración"}
+            aria-label="Tu respuesta sobre lo que necesitas"
           />
           <div className="mt-6">
             <button
-              disabled={!val.trim()}
+              disabled={!resp1.trim()}
               onClick={handleContinue}
-              className={`${S.btn} ${!val.trim() ? "opacity-30 cursor-default" : ""}`}
-              aria-label={isQ1 ? "Continuar a la siguiente pregunta" : "Generar mi reflexión"}
+              className={`${S.btn} ${!resp1.trim() ? "opacity-30 cursor-default" : ""}`}
+              aria-label="Generar mi reflexión"
             >
-              {isQ1 ? "Continuar" : "Generar mi reflexión"}
+              Generar mi reflexión
             </button>
           </div>
 
