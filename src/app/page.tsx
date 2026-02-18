@@ -760,7 +760,7 @@ export default function MePesaMucho() {
           Cada reflexión que recibes es única, generada a partir de lo que escribes y del marco que eliges. Las citas son reales y verificadas. Tu texto no se almacena ni se comparte.
         </p>
         <p className={`${S.sub} text-sm leading-relaxed`}>
-          Desarrollado por <strong className="text-[#5C5751]">Lemon Films</strong> como un proyecto de bienestar emocional.
+          Un proyecto independiente de bienestar emocional.
         </p>
       </div>
       <div className="mt-6 pt-6 border-t border-[#D8CFC4] text-center">
