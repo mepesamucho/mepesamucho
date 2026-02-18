@@ -918,7 +918,8 @@ export default function MePesaMucho() {
           {/* Single reflection — featured card */}
           <div className="card-hover-lift bg-[#EBE3D8] border-2 border-[#7A8B6F] rounded-lg p-6 mb-4 text-center">
             <p className="text-lg font-medium mb-1">Continuar esta reflexión</p>
-            <p className="text-2xl font-light mb-2">$0.99 <span className={`${S.sub} text-sm`}>USD</span></p>
+            <p className="text-2xl font-light mb-1">$0.99 <span className={`${S.sub} text-sm`}>USD</span></p>
+            <p className="font-[var(--font-sans)] text-[0.7rem] text-[#A09A93] font-light italic mb-3">Menos que un café. Más que un momento.</p>
             <p className={`${S.sub} text-sm mb-4`}>Desbloquea la reflexión completa, continúa la conversación e incluye descarga en PDF.</p>
             <button className={`${S.btn} btn-primary-glow w-full`} onClick={() => checkout("single")} aria-label="Continuar esta reflexión por $0.99">Continuar esta reflexión — $0.99</button>
           </div>
@@ -1343,11 +1344,13 @@ export default function MePesaMucho() {
         {showCrisis && <CrisisModal />}
         {showDisclaimer && <DisclaimerModal />}
         {showAbout && <AboutModal />}
-        <div className={`${S.box} text-center`}>
-          <h2 className="text-2xl font-light italic leading-relaxed mb-4">
+        <div className={`${S.box}`} style={{ textAlign: "center" }}>
+          {/* Conversational tone — not a form */}
+          <p className="text-lg text-[#6F6A64] font-light italic leading-relaxed mb-2">Hay muchas formas de escuchar lo que necesitas oír.</p>
+          <h2 className="text-2xl font-light italic leading-relaxed mb-3">
             ¿Qué es lo que más necesitas en este momento?
           </h2>
-          <p className={`${S.sub} text-sm mb-8 text-center leading-relaxed`}>Esto nos ayuda a centrar tu reflexión en lo que más importa ahora mismo.</p>
+          <p className={`${S.sub} text-sm mb-8 leading-relaxed`}>Esto nos ayuda a centrar tu reflexión en lo que más importa ahora mismo.</p>
 
           <label htmlFor="pregunta-1" className="sr-only">
             Qué necesitas en este momento
@@ -1372,7 +1375,9 @@ export default function MePesaMucho() {
             </button>
           </div>
 
-          <div className="mt-6">
+          <p className="font-[var(--font-sans)] text-[0.65rem] text-[#A09A93] font-light mt-5">Puedes escribir tanto o tan poco como quieras. No hay respuestas incorrectas.</p>
+
+          <div className="mt-4">
             <PrivacyBadge onClick={() => setShowDisclaimer(true)} />
           </div>
         </div>
@@ -1478,8 +1483,19 @@ export default function MePesaMucho() {
             </button>
           </div>
 
-          <div className="text-center mt-6">
-            <button onClick={reiniciar} className={`${S.link} underline underline-offset-4 decoration-[#7A8B6F] text-sm`}>Volver cuando lo necesite</button>
+          {/* Ritual closing — memorable goodbye */}
+          <div className="text-center mt-10 pt-8" style={{ borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "#E8E2DB" }}>
+            <div className="w-6 h-6 mx-auto mb-4 opacity-40">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M12 3c-1.5 2-3 4.5-3 7a3 3 0 006 0c0-2.5-1.5-5-3-7z" fill="#7A8B6F" opacity="0.5"/>
+                <path d="M12 14v4m-2 2h4" stroke="#7A8B6F" strokeWidth="1.2" strokeLinecap="round"/>
+              </svg>
+            </div>
+            <p className="text-base italic text-[#6F6A64] leading-relaxed mb-2">Este espacio siempre va a estar aquí.</p>
+            <p className="font-[var(--font-sans)] text-[0.75rem] text-[#A09A93] font-light leading-relaxed mb-5">Vuelve cuando necesites soltar algo más.</p>
+            <button onClick={reiniciar} className={`${S.btnSecondary} text-base px-8 py-3`}>
+              Volver al inicio
+            </button>
           </div>
           <Footer />
         </div>
@@ -1593,7 +1609,8 @@ export default function MePesaMucho() {
             <div className="mt-10 animate-fade-in" style={{ textAlign: "center", width: "100%" }}>
               <div className="w-8 h-px bg-[#7A8B6F] mx-auto mb-6" />
               <p className="text-xl italic leading-relaxed mb-2" style={{ textAlign: "center" }}>Lo que compartiste merece más espacio.</p>
-              <p className={`${S.sub} text-sm mb-8`} style={{ textAlign: "center" }}>Tu reflexión puede ir más profundo. Continúa cuando estés listo.</p>
+              <p className={`${S.sub} text-sm mb-2`} style={{ textAlign: "center" }}>Tu reflexión puede ir más profundo. Continúa cuando estés listo.</p>
+              <p className="font-[var(--font-sans)] text-[0.7rem] text-[#A09A93] font-light italic mb-6" style={{ textAlign: "center" }}>Menos que un café. Más que un momento.</p>
               <div className="flex flex-col gap-3 items-center mx-auto" style={{ maxWidth: "340px" }}>
                 <button className={`${S.btn} btn-primary-glow w-full`} onClick={() => checkout("single")} aria-label="Continuar esta reflexión por $0.99">Continuar esta reflexión — $0.99</button>
                 <button className={`${S.btnSecondary} w-full text-sm`} onClick={() => checkout("subscription")} aria-label="Suscripción mensual $4.99">Reflexiones ilimitadas · $4.99/mes</button>
@@ -1791,7 +1808,15 @@ export default function MePesaMucho() {
           {/* Navigation */}
           <div className="text-center mt-8 flex flex-col items-center gap-3">
             <button className={`${S.link} text-sm`} onClick={() => setCierreStep(0)}>Volver a mi reflexión anterior</button>
-            <button onClick={reiniciar} className={`${S.link} underline underline-offset-4 decoration-[#7A8B6F] text-sm`}>Volver al inicio</button>
+          </div>
+
+          {/* Ritual closing */}
+          <div className="text-center mt-10 pt-8" style={{ borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "#E8E2DB" }}>
+            <p className="text-base italic text-[#6F6A64] leading-relaxed mb-2">Este espacio siempre va a estar aquí.</p>
+            <p className="font-[var(--font-sans)] text-[0.75rem] text-[#A09A93] font-light leading-relaxed mb-5">Vuelve cuando necesites soltar algo más.</p>
+            <button onClick={reiniciar} className={`${S.btnSecondary} text-base px-8 py-3`}>
+              Volver al inicio
+            </button>
           </div>
           <Footer />
         </div>
