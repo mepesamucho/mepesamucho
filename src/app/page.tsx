@@ -302,7 +302,7 @@ const GEN_MESSAGES = [
 ];
 
 // ── SHARED STYLES ──────────────────────────────
-// Color theory: bg #F3EFEA (luminance ~0.87)
+// Color theory: bg #F4F0E8 (luminance ~0.87)
 // #3A3733 = primary text (ratio ~10.3:1 ✓ AAA)
 // #5C5751 = strong secondary (ratio ~6.3:1 ✓ AA)
 // #6F6A64 = secondary text (ratio ~4.7:1 ✓ AA)
@@ -313,8 +313,8 @@ const GEN_MESSAGES = [
 // NEVER use opacity on text — kills contrast
 
 const S = {
-  page: "min-h-screen bg-[#F3EFEA] text-[#3A3733] font-[var(--font-serif)] flex flex-col items-center justify-center px-5 py-10 leading-loose",
-  pageTop: "min-h-screen bg-[#F3EFEA] text-[#3A3733] font-[var(--font-serif)] flex flex-col items-center justify-start px-5 pt-14 pb-14 leading-loose",
+  page: "min-h-screen bg-[#F4F0E8] text-[#3A3733] font-[var(--font-serif)] flex flex-col items-center justify-center px-5 py-10 leading-loose",
+  pageTop: "min-h-screen bg-[#F4F0E8] text-[#3A3733] font-[var(--font-serif)] flex flex-col items-center justify-start px-5 pt-14 pb-14 leading-loose",
   box: "max-w-[640px] w-full",
   boxWide: "max-w-[680px] w-full",
   btn: "font-[var(--font-serif)] text-lg px-8 py-3.5 bg-[#5C7350] text-white border border-[#5C7350] rounded-lg cursor-pointer transition-all duration-250 hover:bg-[#4E6642] hover:border-[#4E6642] btn-primary-glow",
@@ -697,7 +697,7 @@ export default function MePesaMucho() {
   // ── HEADER COMPONENT ─────────────────────────
 
   const SiteHeader = () => (
-    <div className="fixed top-0 left-0 right-0 z-30 bg-[#F3EFEA]/90 backdrop-blur-sm" style={{ borderBottom: "1px solid rgba(216,207,196,0.5)" }}>
+    <div className="fixed top-0 left-0 right-0 z-30 bg-[#F4F0E8]/90 backdrop-blur-sm" style={{ borderBottom: "1px solid rgba(216,207,196,0.5)" }}>
       <div className="max-w-[680px] mx-auto px-5 py-3 flex items-center justify-between">
         <button onClick={reiniciar} className="flex items-center gap-2 bg-transparent border-none cursor-pointer" aria-label="Ir al inicio">
           <LogoIcon size={24} />
@@ -715,7 +715,7 @@ export default function MePesaMucho() {
 
   const Overlay = ({ children }: { children: React.ReactNode }) => (
     <div className="fixed inset-0 bg-[#3A3733]/40 flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true">
-      <div className="bg-[#F3EFEA] max-w-[560px] w-full rounded-lg p-8 max-h-[90vh] overflow-y-auto border border-[#D8CFC4]">
+      <div className="bg-[#F4F0E8] max-w-[560px] w-full rounded-lg p-8 max-h-[90vh] overflow-y-auto border border-[#D8CFC4]">
         {children}
       </div>
     </div>
@@ -1025,7 +1025,7 @@ export default function MePesaMucho() {
 
   if (step === "landing") {
     return (
-      <div className={`${S.page}`} key={fadeKey} style={{ paddingBottom: "6vh" }}>
+      <div className={`${S.page}`} key={fadeKey} style={{ paddingBottom: "12vh" }}>
         {showDisclaimer && <DisclaimerModal />}
         {showAbout && <AboutModal />}
 
@@ -1155,7 +1155,7 @@ export default function MePesaMucho() {
 
   if (step === "message") {
     return (
-      <div className={S.page}>
+      <div className={`${S.page} animate-step-in`}>
         {showCrisisBanner && <CrisisBanner />}
         {showCrisis && <CrisisModal />}
         <div className={`${S.box} text-center`}>
@@ -1192,7 +1192,7 @@ export default function MePesaMucho() {
 
   if (step === "framework") {
     return (
-      <div className={`${S.page} animate-fade-in pt-16`} key={fadeKey}>
+      <div className={`${S.page} animate-step-in pt-16`} key={fadeKey}>
         <SiteHeader />
         {showCrisisBanner && <CrisisBanner />}
         {showCrisis && <CrisisModal />}
@@ -1281,7 +1281,7 @@ export default function MePesaMucho() {
 
   if (step === "generating") {
     return (
-      <div className={S.page}>
+      <div className={`${S.page} animate-step-in`}>
         {showCrisisBanner && <CrisisBanner />}
         <div className={`${S.box} text-center flex flex-col items-center`}>
           <div className="relative mb-8">
@@ -1325,7 +1325,7 @@ export default function MePesaMucho() {
   // Essay page — main reflection (cierreStep 0 = reading, click "Quiero responder" goes to cierreStep 1)
   if (step === "essay" && cierreStep <= 0) {
     return (
-      <div className={`min-h-screen bg-[#F3EFEA] text-[#3A3733] font-[var(--font-serif)] animate-fade-in`} key={fadeKey}>
+      <div className={`min-h-screen bg-[#F4F0E8] text-[#3A3733] font-[var(--font-serif)] animate-fade-in`} key={fadeKey}>
         {showDisclaimer && <DisclaimerModal />}
         {showAbout && <AboutModal />}
         {showCrisis && <CrisisModal />}
@@ -1471,7 +1471,7 @@ export default function MePesaMucho() {
     }
 
     return (
-      <div className={`min-h-screen bg-[#F3EFEA] text-[#3A3733] font-[var(--font-serif)] animate-fade-in`} key={`c3-${fadeKey}`}>
+      <div className={`min-h-screen bg-[#F4F0E8] text-[#3A3733] font-[var(--font-serif)] animate-fade-in`} key={`c3-${fadeKey}`}>
         <SiteHeader />
         {showDisclaimer && <DisclaimerModal />}
         {showCrisis && <CrisisModal />}

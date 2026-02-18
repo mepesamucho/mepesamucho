@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen bg-[#F3EFEA] text-[#3A3733] font-[var(--font-serif)] flex flex-col items-center justify-center px-5">
+    <div className="min-h-screen bg-[#F4F0E8] text-[#3A3733] font-[var(--font-serif)] flex flex-col items-center justify-center px-5">
       <div className="text-center max-w-[440px]">
         {/* Ícono de manos */}
         <div className="flex justify-center mb-8">
