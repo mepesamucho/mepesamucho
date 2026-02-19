@@ -1626,9 +1626,9 @@ export default function MePesaMucho() {
               <p className="text-xl italic leading-relaxed mb-2" style={{ textAlign: "center" }}>Lo que compartiste merece más espacio.</p>
               <p className={`${S.sub} text-sm mb-2`} style={{ textAlign: "center" }}>Tu reflexión puede ir más profundo. Continúa cuando estés listo.</p>
               <p className="font-[var(--font-sans)] text-[0.7rem] text-[#A09A93] font-light italic mb-6" style={{ textAlign: "center" }}>Menos que un café. Más que un momento.</p>
-              <div className="flex flex-col gap-3 items-center mx-auto" style={{ maxWidth: "340px" }}>
-                <button className={`${S.btn} btn-primary-glow w-full`} onClick={() => { setCheckoutError(""); checkout("single", undefined, setCheckoutError); }} aria-label="Continuar esta reflexión por $0.99">Continuar esta reflexión — $0.99</button>
-                <button className={`${S.btnSecondary} w-full text-sm`} onClick={() => { setCheckoutError(""); checkout("subscription", undefined, setCheckoutError); }} aria-label="Suscripción mensual $4.99">Reflexiones ilimitadas · $4.99/mes</button>
+              <div className="flex flex-col gap-3 items-center" style={{ maxWidth: "320px", margin: "0 auto" }}>
+                <button className={`${S.btn} btn-primary-glow`} style={{ width: "100%", maxWidth: "320px" }} onClick={() => { setCheckoutError(""); checkout("single", undefined, setCheckoutError); }} aria-label="Continuar esta reflexión por $0.99">Continuar esta reflexión — $0.99</button>
+                <button className={`${S.btnSecondary} text-sm`} style={{ width: "100%", maxWidth: "320px" }} onClick={() => { setCheckoutError(""); checkout("subscription", undefined, setCheckoutError); }} aria-label="Suscripción mensual $4.99">Reflexiones ilimitadas · $4.99/mes</button>
                 {checkoutError && <p className="font-[var(--font-sans)] text-[0.8rem] text-[#C0392B] mt-2">{checkoutError}</p>}
                 <div className="flex items-center justify-center gap-1.5 mt-3">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -1812,12 +1812,14 @@ export default function MePesaMucho() {
             </div>
           )}
 
-          {/* Clean closing — single back button */}
-          <div className="text-center mt-10">
-            <button onClick={reiniciar} className={`${S.btnSecondary} text-sm px-8 py-2.5`}>
-              Volver al inicio
-            </button>
-          </div>
+          {/* Clean closing — only show when dialog is active/done */}
+          {continuacionDesbloqueada && (
+            <div className="text-center mt-10">
+              <button onClick={reiniciar} className={`${S.btnSecondary} text-sm px-8 py-2.5`}>
+                Volver al inicio
+              </button>
+            </div>
+          )}
         </div>
       </div>
     );
