@@ -1639,107 +1639,98 @@ export default function MePesaMucho() {
                 </div>
               </div>
 
-              {/* ── Código de acceso en paywall inline ── */}
-              <div className="mt-6">
-                {!showPaywallCode ? (
-                  <button
-                    className="font-[var(--font-sans)] text-sm text-[#5C5751] font-normal cursor-pointer bg-transparent border border-[#D9CFBF] rounded-lg px-5 py-2.5 hover:bg-[#EBE3D8] transition-colors"
-                    onClick={() => setShowPaywallCode(true)}
-                  >
-                    Ya tengo un código de acceso
-                  </button>
-                ) : (
-                  <div
-                    className="mt-2 mx-auto"
-                    style={{
-                      maxWidth: "360px",
-                      textAlign: "center",
-                      animation: "stepTransition 0.6s cubic-bezier(0.25, 0.1, 0.25, 1) forwards",
-                    }}
-                  >
-                    <p className="font-[var(--font-sans)] text-sm text-[#6F6A64] font-light mb-3">
-                      Ingresa tu código o email para desbloquear tu reflexión.
-                    </p>
-                    <input
-                      type="text"
-                      value={paywallCodeInput}
-                      onChange={(e) => { setPaywallCodeInput(e.target.value); setPaywallCodeError(""); }}
-                      placeholder="MPM-XXXX-XXXX o tu email"
-                      className="w-full font-[var(--font-sans)] text-base px-4 py-3 border border-[#D9CFBF] rounded-lg bg-white/60 text-[#3A3733] focus:outline-none focus:border-[#7A8B6F] transition-colors mb-3"
-                      style={{ letterSpacing: "0.04em" }}
-                      onKeyDown={(e) => { if (e.key === "Enter" && paywallCodeInput.trim()) document.getElementById("paywall-code-btn")?.click(); }}
-                    />
-                    {paywallCodeError && (
-                      <div className="mb-3 p-4 border border-[#D9CFBF] rounded-lg bg-white/70 text-left" style={{ animation: "stepTransition 0.4s ease forwards" }}>
-                        <p className="font-[var(--font-sans)] text-sm text-[#5C5751] mb-3">{paywallCodeError}</p>
-                        <div className="flex gap-2 justify-center">
-                          <button
-                            className="font-[var(--font-sans)] text-sm px-4 py-2 bg-[#5C7350] text-white rounded-lg hover:bg-[#4E6642] transition-colors"
-                            onClick={() => { setCheckoutError(""); checkout("subscription", undefined, (msg) => setPaywallCodeError(msg)); }}
-                          >
-                            Suscribirme · $4.99/mes
-                          </button>
-                          <button
-                            className="font-[var(--font-sans)] text-sm px-4 py-2 bg-[#EBE3D8] text-[#3A3733] border border-[#D9CFBF] rounded-lg hover:bg-[#D9CFBF] transition-colors"
-                            onClick={() => { setShowPaywallCode(false); setPaywallCodeInput(""); setPaywallCodeError(""); }}
-                          >
-                            Volver
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                    {!paywallCodeError && (
-                      <div className="flex gap-2 justify-center">
-                        <button
-                          id="paywall-code-btn"
-                          className={`${S.btn} text-base px-6 py-3 ${paywallCodeLoading ? "opacity-50" : ""}`}
-                          disabled={!paywallCodeInput.trim() || paywallCodeLoading}
-                          onClick={async () => {
-                            setPaywallCodeLoading(true);
-                            setPaywallCodeError("");
-                            try {
-                              const input = paywallCodeInput.trim();
-                              const isEmail = input.includes("@");
-                              const body = isEmail ? { email: input } : { code: input.toUpperCase() };
-                              const res = await fetch("/api/recover-access", {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify(body),
-                              });
-                              const data = await res.json();
-                              if (data.success) {
-                                if (data.type === "subscription") {
-                                  activateDayPass();
-                                  setDayPass({ active: true, hoursLeft: 720 });
-                                } else if (data.type === "daypass" && data.expiresAt) {
-                                  localStorage.setItem("mpm_daypass", JSON.stringify({ expires: data.expiresAt }));
-                                  setDayPass({ active: true, hoursLeft: data.hoursLeft || 24 });
-                                } else if (data.type === "single") {
-                                  activateSinglePass();
-                                }
-                                setContinuacionDesbloqueada(true);
-                              } else {
-                                setPaywallCodeError(data.error || "Tu código no existe o ya venció. Puedes suscribirte para tener acceso ilimitado.");
-                              }
-                            } catch {
-                              setPaywallCodeError("Error de conexión. Intenta de nuevo.");
-                            }
-                            setPaywallCodeLoading(false);
-                          }}
-                        >
-                          {paywallCodeLoading ? "Verificando..." : "Desbloquear"}
-                        </button>
-                        <button
-                          className="font-[var(--font-sans)] text-sm px-4 py-3 text-[#857F78] hover:text-[#5C5751] transition-colors"
-                          onClick={() => { setShowPaywallCode(false); setPaywallCodeInput(""); setPaywallCodeError(""); }}
-                        >
-                          Cancelar
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
+              {/* 3-button navigation bar */}
+              <div className="grid grid-cols-3 gap-3 mt-8 mx-auto" style={{ maxWidth: "480px" }}>
+                <button
+                  className="font-[var(--font-sans)] text-[0.75rem] text-[#5C5751] font-normal bg-transparent border border-[#D9CFBF] rounded-lg px-3 py-3 hover:bg-[#EBE3D8] transition-colors text-center"
+                  onClick={() => setCierreStep(0)}
+                >
+                  ← Volver a mi reflexión
+                </button>
+                <button
+                  className="font-[var(--font-sans)] text-[0.75rem] text-[#5C5751] font-normal bg-transparent border border-[#D9CFBF] rounded-lg px-3 py-3 hover:bg-[#EBE3D8] transition-colors text-center"
+                  onClick={() => setShowPaywallCode(true)}
+                >
+                  Ya tengo un código
+                </button>
+                <button
+                  className="font-[var(--font-sans)] text-[0.75rem] text-[#5C5751] font-normal bg-transparent border border-[#D9CFBF] rounded-lg px-3 py-3 hover:bg-[#EBE3D8] transition-colors text-center"
+                  onClick={reiniciar}
+                >
+                  Volver al inicio
+                </button>
               </div>
+
+              {/* Inline code input (shown when "Ya tengo un código" is clicked) */}
+              {showPaywallCode && (
+                <div
+                  className="mt-4 mx-auto"
+                  style={{
+                    maxWidth: "360px",
+                    textAlign: "center",
+                    animation: "stepTransition 0.6s cubic-bezier(0.25, 0.1, 0.25, 1) forwards",
+                  }}
+                >
+                  <input
+                    type="text"
+                    value={paywallCodeInput}
+                    onChange={(e) => { setPaywallCodeInput(e.target.value); setPaywallCodeError(""); }}
+                    placeholder="MPM-XXXX-XXXX o tu email"
+                    className="w-full font-[var(--font-sans)] text-base px-4 py-3 border border-[#D9CFBF] rounded-lg bg-white/60 text-[#3A3733] focus:outline-none focus:border-[#7A8B6F] transition-colors mb-3"
+                    style={{ letterSpacing: "0.04em" }}
+                    autoFocus
+                    onKeyDown={(e) => { if (e.key === "Enter" && paywallCodeInput.trim()) document.getElementById("paywall-code-btn")?.click(); }}
+                  />
+                  {paywallCodeError && <p className="font-[var(--font-sans)] text-sm text-[#C0392B] mb-2">{paywallCodeError}</p>}
+                  <div className="flex gap-2 justify-center">
+                    <button
+                      id="paywall-code-btn"
+                      className={`${S.btn} text-base px-6 py-3 ${paywallCodeLoading ? "opacity-50" : ""}`}
+                      disabled={!paywallCodeInput.trim() || paywallCodeLoading}
+                      onClick={async () => {
+                        setPaywallCodeLoading(true);
+                        setPaywallCodeError("");
+                        try {
+                          const input = paywallCodeInput.trim();
+                          const isEmail = input.includes("@");
+                          const body = isEmail ? { email: input } : { code: input.toUpperCase() };
+                          const res = await fetch("/api/recover-access", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify(body),
+                          });
+                          const data = await res.json();
+                          if (data.success) {
+                            if (data.type === "subscription") {
+                              activateDayPass();
+                              setDayPass({ active: true, hoursLeft: 720 });
+                            } else if (data.type === "daypass" && data.expiresAt) {
+                              localStorage.setItem("mpm_daypass", JSON.stringify({ expires: data.expiresAt }));
+                              setDayPass({ active: true, hoursLeft: data.hoursLeft || 24 });
+                            } else if (data.type === "single") {
+                              activateSinglePass();
+                            }
+                            setContinuacionDesbloqueada(true);
+                          } else {
+                            setPaywallCodeError(data.error || "Código no válido o expirado.");
+                          }
+                        } catch {
+                          setPaywallCodeError("Error de conexión.");
+                        }
+                        setPaywallCodeLoading(false);
+                      }}
+                    >
+                      {paywallCodeLoading ? "Verificando..." : "Desbloquear"}
+                    </button>
+                    <button
+                      className="font-[var(--font-sans)] text-sm px-4 py-3 text-[#857F78] hover:text-[#5C5751] transition-colors"
+                      onClick={() => { setShowPaywallCode(false); setPaywallCodeInput(""); setPaywallCodeError(""); }}
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -1821,14 +1812,9 @@ export default function MePesaMucho() {
             </div>
           )}
 
-          {/* Navigation */}
-          <div className="text-center mt-8 flex flex-col items-center gap-3">
-            <button className={`${S.link} text-sm`} onClick={() => setCierreStep(0)}>Volver a mi reflexión anterior</button>
-          </div>
-
-          {/* Clean closing */}
-          <div className="text-center mt-14 pt-8">
-            <button onClick={reiniciar} className={`${S.btnSecondary} text-base px-8 py-3`}>
+          {/* Clean closing — single back button */}
+          <div className="text-center mt-10">
+            <button onClick={reiniciar} className={`${S.btnSecondary} text-sm px-8 py-2.5`}>
               Volver al inicio
             </button>
           </div>
