@@ -1522,7 +1522,7 @@ export default function MePesaMucho() {
         {showFuentes && <FuentesModal />}
         <FontSizeToggle />
 
-        <div className="flex flex-col items-center pt-8 pb-3 sm:pt-10 sm:pb-4" style={{ minHeight: "14vh" }}>
+        <div className="flex flex-col items-center pt-14 pb-3 sm:pt-16 sm:pb-4" style={{ minHeight: "14vh" }}>
           <div className="flex flex-col items-center justify-end flex-1 pb-3">
             <button onClick={reiniciar} className="flex flex-col items-center bg-transparent border-none cursor-pointer" aria-label="Volver al inicio">
               <LogoIcon size={28} />
@@ -1569,21 +1569,12 @@ export default function MePesaMucho() {
             )}
           </div>
 
-          {/* Ritual closing — memorable goodbye */}
-          <div className="text-center mt-10 pt-8" style={{ borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "#E8E2DB" }}>
-            <div className="w-6 h-6 mx-auto mb-4 opacity-40">
-              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                <path d="M12 3c-1.5 2-3 4.5-3 7a3 3 0 006 0c0-2.5-1.5-5-3-7z" fill="#7A8B6F" opacity="0.5"/>
-                <path d="M12 14v4m-2 2h4" stroke="#7A8B6F" strokeWidth="1.2" strokeLinecap="round"/>
-              </svg>
-            </div>
-            <p className="text-base italic text-[#6F6A64] leading-relaxed mb-2">Este espacio siempre va a estar aquí.</p>
-            <p className="font-[var(--font-sans)] text-[0.75rem] text-[#A09A93] font-light leading-relaxed mb-5">Vuelve cuando necesites soltar algo más.</p>
+          {/* Clean closing — just back button */}
+          <div className="text-center mt-14 pt-8">
             <button onClick={reiniciar} className={`${S.btnSecondary} text-base px-8 py-3`}>
               Volver al inicio
             </button>
           </div>
-          <Footer />
         </div>
       </div>
     );
@@ -1899,15 +1890,12 @@ export default function MePesaMucho() {
             <button className={`${S.link} text-sm`} onClick={() => setCierreStep(0)}>Volver a mi reflexión anterior</button>
           </div>
 
-          {/* Ritual closing */}
-          <div className="text-center mt-10 pt-8" style={{ borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "#E8E2DB" }}>
-            <p className="text-base italic text-[#6F6A64] leading-relaxed mb-2">Este espacio siempre va a estar aquí.</p>
-            <p className="font-[var(--font-sans)] text-[0.75rem] text-[#A09A93] font-light leading-relaxed mb-5">Vuelve cuando necesites soltar algo más.</p>
+          {/* Clean closing */}
+          <div className="text-center mt-14 pt-8">
             <button onClick={reiniciar} className={`${S.btnSecondary} text-base px-8 py-3`}>
               Volver al inicio
             </button>
           </div>
-          <Footer />
         </div>
       </div>
     );
