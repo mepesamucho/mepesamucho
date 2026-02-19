@@ -974,7 +974,7 @@ export default function MePesaMucho() {
         {showDisclaimer && <DisclaimerModal />}
         {showHowItWorks && <HowItWorksModal />}
         {showAbout && <AboutModal />}
-        <div className={`${S.box} text-center`} style={{ maxWidth: "480px" }}>
+        <div className={`${S.box} text-center mx-auto`} style={{ maxWidth: "480px" }}>
 
           {/* Truncated reflection preview — teaser */}
           {reflexion && (
@@ -1132,7 +1132,11 @@ export default function MePesaMucho() {
             </div>
           )}
 
-          <Footer showDemo />
+          <div className="mt-6">
+            <button onClick={reiniciar} className={`${S.btnSecondary} text-sm px-8 py-2.5`}>
+              Volver al inicio
+            </button>
+          </div>
         </div>
       </div>
     );
