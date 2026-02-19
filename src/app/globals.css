@@ -395,3 +395,13 @@ blockquote {
   background: #8A8567;
   color: white;
 }
+
+/* Tradition card active state */
+.tradition-card:active {
+  transform: scale(0.97) !important;
+}
+
+/* Paywall card rounded corners */
+.rounded-2xl {
+  border-radius: 1rem;
+}
