@@ -39,6 +39,11 @@ type DialogTurn = {
 };
 
 export async function POST(req: NextRequest) {
+  // Rate limit: max 20 dialog turns per IP per hour
+  const { checkRateLimit } = await import("@/lib/rate-limit");
+  const limited = checkRateLimit(req, "dialog", 20, 3600_000);
+  if (limited) return limited;
+
   try {
     const body = await req.json();
     const {
@@ -61,6 +66,16 @@ export async function POST(req: NextRequest) {
 
     if (!marco || !respuestaUsuario || !CITAS[marco]) {
       return NextResponse.json({ error: "Datos incompletos" }, { status: 400 });
+    }
+
+    // Limit conversation length to prevent abuse
+    const MAX_DIALOG_TURNS = 12;
+    if (historial && historial.length > MAX_DIALOG_TURNS * 2) {
+      return NextResponse.json({
+        respuesta: "Esta conversación ha llegado a su cierre natural. Te invito a comenzar una nueva reflexión cuando lo necesites. Este espacio siempre va a estar aquí.",
+        cita: null,
+        conversationEnded: true,
+      });
     }
 
     // Pick 1 unused cita

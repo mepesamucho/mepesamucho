@@ -16,12 +16,25 @@ const PRICE_MAP: Record<ProductType, string | undefined> = {
 
 export async function POST(req: NextRequest) {
   try {
+    // Check Stripe is configured before anything
+    if (!process.env.STRIPE_SECRET_KEY) {
+      console.error("STRIPE_SECRET_KEY not configured");
+      return NextResponse.json(
+        { error: "El sistema de pagos no está configurado. Intenta más tarde." },
+        { status: 503 }
+      );
+    }
+
     const stripe = getStripe();
     const { type } = (await req.json()) as { type: ProductType };
 
     const priceId = PRICE_MAP[type];
     if (!priceId) {
-      return NextResponse.json({ error: "Tipo de producto invalido" }, { status: 400 });
+      console.error(`Price ID not configured for type: ${type}`);
+      return NextResponse.json(
+        { error: "Este tipo de pago no está disponible en este momento." },
+        { status: 400 }
+      );
     }
 
     const isSubscription = type === "subscription";

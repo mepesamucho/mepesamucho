@@ -3,10 +3,26 @@ import crypto from "crypto";
 
 // ── REDIS CLIENT ──────────────────────────────
 
-const redis = new Redis({
-  url: process.env.KV_REST_API_URL!,
-  token: process.env.KV_REST_API_TOKEN!,
-});
+export function isRedisConfigured(): boolean {
+  return !!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN);
+}
+
+function getRedis(): Redis {
+  if (!isRedisConfigured()) {
+    throw new Error("Redis not configured: KV_REST_API_URL and KV_REST_API_TOKEN are required");
+  }
+  return new Redis({
+    url: process.env.KV_REST_API_URL!,
+    token: process.env.KV_REST_API_TOKEN!,
+  });
+}
+
+// Lazy singleton
+let _redis: Redis | null = null;
+function redis(): Redis {
+  if (!_redis) _redis = getRedis();
+  return _redis;
+}
 
 // ── TYPES ──────────────────────────────────────
 
@@ -34,7 +50,8 @@ export function generateAccessCode(): string {
 // ── EMAIL HASHING ──────────────────────────────
 
 export function hashEmail(email: string): string {
-  const secret = process.env.EMAIL_HASH_SECRET || "mpm_default_hash_secret_change_me";
+  const secret = process.env.EMAIL_HASH_SECRET;
+  if (!secret) throw new Error("EMAIL_HASH_SECRET is required for secure email hashing");
   return crypto
     .createHmac("sha256", secret)
     .update(email.toLowerCase().trim())
@@ -86,7 +103,7 @@ export async function saveEmailAccess(
     stripeSessionId,
     stripeCustomerId,
   };
-  await redis.set(`email:${hash}`, JSON.stringify(record), { ex: getTtlSeconds(type) });
+  await redis().set(`email:${hash}`, JSON.stringify(record), { ex: getTtlSeconds(type) });
 }
 
 export async function saveCodeAccess(
@@ -102,14 +119,14 @@ export async function saveCodeAccess(
     stripeSessionId,
     stripeCustomerId,
   };
-  await redis.set(`code:${code}`, JSON.stringify(record), { ex: getTtlSeconds(type) });
+  await redis().set(`code:${code}`, JSON.stringify(record), { ex: getTtlSeconds(type) });
 }
 
 // ── VERIFY / RECOVER ACCESS ────────────────────
 
 export async function verifyEmailAccess(email: string): Promise<AccessRecord | null> {
   const hash = hashEmail(email);
-  const raw = await redis.get<string>(`email:${hash}`);
+  const raw = await redis().get<string>(`email:${hash}`);
   if (!raw) return null;
   const record: AccessRecord = typeof raw === "string" ? JSON.parse(raw) : (raw as unknown as AccessRecord);
   if (record.expiresAt && record.expiresAt < Date.now()) return null;
@@ -118,7 +135,7 @@ export async function verifyEmailAccess(email: string): Promise<AccessRecord | n
 
 export async function verifyCodeAccess(code: string): Promise<AccessRecord | null> {
   const normalized = code.toUpperCase().trim();
-  const raw = await redis.get<string>(`code:${normalized}`);
+  const raw = await redis().get<string>(`code:${normalized}`);
   if (!raw) return null;
   const record: AccessRecord = typeof raw === "string" ? JSON.parse(raw) : (raw as unknown as AccessRecord);
   if (record.expiresAt && record.expiresAt < Date.now()) return null;
@@ -133,7 +150,7 @@ export async function savePaymentSession(
   type: AccessType,
   customerId?: string
 ): Promise<void> {
-  await redis.set(
+  await redis().set(
     `session:${stripeSessionId}`,
     JSON.stringify({ type, customerId, createdAt: Date.now() }),
     { ex: 3600 } // 1 hour TTL
@@ -143,7 +160,7 @@ export async function savePaymentSession(
 export async function getPaymentSession(
   stripeSessionId: string
 ): Promise<{ type: AccessType; customerId?: string } | null> {
-  const raw = await redis.get<string>(`session:${stripeSessionId}`);
+  const raw = await redis().get<string>(`session:${stripeSessionId}`);
   if (!raw) return null;
   return typeof raw === "string" ? JSON.parse(raw) : (raw as unknown as { type: AccessType; customerId?: string });
 }
@@ -151,7 +168,7 @@ export async function getPaymentSession(
 // ── SUBSCRIPTION STATUS ────────────────────────
 
 export async function markSubscriptionCancelled(customerId: string): Promise<void> {
-  await redis.set(
+  await redis().set(
     `sub:${customerId}`,
     JSON.stringify({ status: "cancelled", cancelledAt: Date.now() }),
     { ex: 86400 * 7 } // keep for 7 days
@@ -159,7 +176,7 @@ export async function markSubscriptionCancelled(customerId: string): Promise<voi
 }
 
 export async function isSubscriptionCancelled(customerId: string): Promise<boolean> {
-  const raw = await redis.get<string>(`sub:${customerId}`);
+  const raw = await redis().get<string>(`sub:${customerId}`);
   if (!raw) return false;
   const data = typeof raw === "string" ? JSON.parse(raw) : (raw as unknown as { status: string });
   return data.status === "cancelled";

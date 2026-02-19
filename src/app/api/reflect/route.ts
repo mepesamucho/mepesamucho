@@ -44,6 +44,11 @@ REGLA DE SEGURIDAD ABSOLUTA — PRIORIDAD MAXIMA:
 - Usa sentido comun: si alguien dice "quiero morir" o "me quiero matar", eso es una senal de crisis. Responde con compasion y orientacion hacia la vida.`;
 
 export async function POST(req: NextRequest) {
+  // Rate limit: max 10 reflections per IP per hour
+  const { checkRateLimit } = await import("@/lib/rate-limit");
+  const limited = checkRateLimit(req, "reflect", 10, 3600_000);
+  if (limited) return limited;
+
   try {
     const body = await req.json();
     const { texto, marco, respuesta1, respuesta2, crisisDetected } = body as {

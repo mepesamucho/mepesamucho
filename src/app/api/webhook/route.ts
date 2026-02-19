@@ -7,6 +7,23 @@ function getStripe() {
   return new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2026-01-28.clover" });
 }
 
+// ── Idempotency: track processed events (in-memory per instance) ──
+const processedEvents = new Map<string, number>();
+const MAX_PROCESSED = 1000;
+
+function wasAlreadyProcessed(eventId: string): boolean {
+  if (processedEvents.has(eventId)) return true;
+  // Cleanup old entries if map gets large
+  if (processedEvents.size > MAX_PROCESSED) {
+    const cutoff = Date.now() - 3600_000; // 1 hour
+    for (const [id, ts] of processedEvents) {
+      if (ts < cutoff) processedEvents.delete(id);
+    }
+  }
+  processedEvents.set(eventId, Date.now());
+  return false;
+}
+
 export async function POST(req: NextRequest) {
   const stripe = getStripe();
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -22,6 +39,12 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     console.error("Webhook signature verification failed:", err);
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
+  }
+
+  // Idempotency check — skip if already processed
+  if (wasAlreadyProcessed(event.id)) {
+    console.log(`Evento ya procesado (idempotente): ${event.id}`);
+    return NextResponse.json({ received: true });
   }
 
   switch (event.type) {

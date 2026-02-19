@@ -231,7 +231,11 @@ function descargarReflexionPDF(reflexion: string, citas: { source: string; text:
 
 // ── CHECKOUT HELPER ────────────────────────────
 
-async function checkout(type: "subscription" | "daypass" | "single", beforeRedirect?: () => void) {
+async function checkout(
+  type: "subscription" | "daypass" | "single",
+  beforeRedirect?: () => void,
+  onError?: (msg: string) => void
+) {
   try {
     if (beforeRedirect) beforeRedirect();
     const res = await fetch("/api/checkout", {
@@ -240,9 +244,15 @@ async function checkout(type: "subscription" | "daypass" | "single", beforeRedir
       body: JSON.stringify({ type }),
     });
     const data = await res.json();
-    if (data.url) window.location.href = data.url;
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      const msg = data.error || "No pudimos iniciar el pago. Intenta de nuevo.";
+      if (onError) onError(msg);
+    }
   } catch (err) {
     console.error("Checkout error:", err);
+    if (onError) onError("Error de conexión. Verifica tu internet e intenta de nuevo.");
   }
 }
 
@@ -355,6 +365,7 @@ export default function MePesaMucho() {
   const [fontSize, setFontSize] = useState(0);
   const [showCrisisBanner, setShowCrisisBanner] = useState(false);
   const [crisisDetectedInText, setCrisisDetectedInText] = useState(false);
+  const [checkoutError, setCheckoutError] = useState("");
   const [showFuentes, setShowFuentes] = useState(false);
   const [lastSessionId, setLastSessionId] = useState("");
   const [lastPaymentType, setLastPaymentType] = useState("");
@@ -921,7 +932,7 @@ export default function MePesaMucho() {
             <p className="text-2xl font-light mb-1">$0.99 <span className={`${S.sub} text-sm`}>USD</span></p>
             <p className="font-[var(--font-sans)] text-[0.7rem] text-[#A09A93] font-light italic mb-3">Menos que un café. Más que un momento.</p>
             <p className={`${S.sub} text-sm mb-4`}>Desbloquea la reflexión completa, continúa la conversación e incluye descarga en PDF.</p>
-            <button className={`${S.btn} btn-primary-glow w-full`} onClick={() => checkout("single")} aria-label="Continuar esta reflexión por $0.99">Continuar esta reflexión — $0.99</button>
+            <button className={`${S.btn} btn-primary-glow w-full`} onClick={() => { setCheckoutError(""); checkout("single", undefined, setCheckoutError); }} aria-label="Continuar esta reflexión por $0.99">Continuar esta reflexión — $0.99</button>
           </div>
 
           {/* Subscription — best value card */}
@@ -929,9 +940,13 @@ export default function MePesaMucho() {
             <p className="text-base font-medium mb-1">Reflexiones ilimitadas</p>
             <p className="text-xl font-light mb-1">$4.99 <span className={`${S.sub} text-sm`}>USD / mes</span></p>
             <p className={`${S.sub} text-sm mb-3`}>Todo incluido: reflexiones, conversaciones guiadas, descarga PDF y acceso desde cualquier dispositivo.</p>
-            <button className={S.btnSecondary + " w-full"} onClick={() => checkout("subscription")} aria-label="Suscribirme por $4.99 al mes">Suscribirme · $4.99/mes</button>
+            <button className={S.btnSecondary + " w-full"} onClick={() => { setCheckoutError(""); checkout("subscription", undefined, setCheckoutError); }} aria-label="Suscribirme por $4.99 al mes">Suscribirme · $4.99/mes</button>
             <p className={`${S.sub} text-xs mt-2`}>Cancela cuando quieras.</p>
           </div>
+
+          {checkoutError && (
+            <p className="font-[var(--font-sans)] text-[0.8rem] text-[#C0392B] text-center mb-4">{checkoutError}</p>
+          )}
 
           <div className="flex items-center justify-center gap-2 mb-6">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -1042,7 +1057,7 @@ export default function MePesaMucho() {
             A veces las cosas pesan menos cuando las sueltas.
           </p>
 
-          <button className={`${S.btn} text-lg px-10 py-4 hero-stagger-3`} onClick={() => setStep("writing")} aria-label="Comenzar a escribir">
+          <button className={`${S.btn} text-lg px-10 py-4 hero-stagger-3`} onClick={() => setStep("writing")} aria-label="Quiero soltar lo que cargo">
             Quiero soltar lo que cargo
           </button>
 
@@ -1126,7 +1141,7 @@ export default function MePesaMucho() {
                     <div className="flex gap-2 justify-center">
                       <button
                         className="font-[var(--font-sans)] text-sm px-4 py-2 bg-[#5C7350] text-white rounded-lg hover:bg-[#4E6642] transition-colors"
-                        onClick={() => checkout("subscription")}
+                        onClick={() => { setCheckoutError(""); checkout("subscription", undefined, (msg) => setHeroCodeError(msg)); }}
                       >
                         Suscribirme · $4.99/mes
                       </button>
@@ -1557,8 +1572,9 @@ export default function MePesaMucho() {
             <p className="text-xl italic leading-relaxed mb-2">Lo que estás tocando merece más espacio.</p>
             <p className={`${S.sub} text-base mb-6`}>Puedes seguir profundizando ahora mismo.</p>
             <div className="flex flex-col gap-3 items-center max-w-[380px] mx-auto">
-              <button className={`${S.btn} btn-primary-glow w-full`} onClick={() => checkout("single")} aria-label="Continuar conversación por $0.99">Continuar conversación — $0.99</button>
-              <button className={`${S.btnSecondary} w-full text-sm`} onClick={() => checkout("subscription")} aria-label="Suscripción mensual $4.99">Reflexiones ilimitadas · $4.99/mes</button>
+              <button className={`${S.btn} btn-primary-glow w-full`} onClick={() => { setCheckoutError(""); checkout("single", undefined, setCheckoutError); }} aria-label="Continuar conversación por $0.99">Continuar conversación — $0.99</button>
+              <button className={`${S.btnSecondary} w-full text-sm`} onClick={() => { setCheckoutError(""); checkout("subscription", undefined, setCheckoutError); }} aria-label="Suscripción mensual $4.99">Reflexiones ilimitadas · $4.99/mes</button>
+              {checkoutError && <p className="font-[var(--font-sans)] text-[0.8rem] text-[#C0392B] mt-2">{checkoutError}</p>}
             </div>
             <div className="mt-6"><button className={`${S.link} text-sm`} onClick={() => setCierreStep(0)}>Volver a mi reflexión</button></div>
           </div>
@@ -1612,8 +1628,9 @@ export default function MePesaMucho() {
               <p className={`${S.sub} text-sm mb-2`} style={{ textAlign: "center" }}>Tu reflexión puede ir más profundo. Continúa cuando estés listo.</p>
               <p className="font-[var(--font-sans)] text-[0.7rem] text-[#A09A93] font-light italic mb-6" style={{ textAlign: "center" }}>Menos que un café. Más que un momento.</p>
               <div className="flex flex-col gap-3 items-center mx-auto" style={{ maxWidth: "340px" }}>
-                <button className={`${S.btn} btn-primary-glow w-full`} onClick={() => checkout("single")} aria-label="Continuar esta reflexión por $0.99">Continuar esta reflexión — $0.99</button>
-                <button className={`${S.btnSecondary} w-full text-sm`} onClick={() => checkout("subscription")} aria-label="Suscripción mensual $4.99">Reflexiones ilimitadas · $4.99/mes</button>
+                <button className={`${S.btn} btn-primary-glow w-full`} onClick={() => { setCheckoutError(""); checkout("single", undefined, setCheckoutError); }} aria-label="Continuar esta reflexión por $0.99">Continuar esta reflexión — $0.99</button>
+                <button className={`${S.btnSecondary} w-full text-sm`} onClick={() => { setCheckoutError(""); checkout("subscription", undefined, setCheckoutError); }} aria-label="Suscripción mensual $4.99">Reflexiones ilimitadas · $4.99/mes</button>
+                {checkoutError && <p className="font-[var(--font-sans)] text-[0.8rem] text-[#C0392B] mt-2">{checkoutError}</p>}
                 <div className="flex items-center justify-center gap-1.5 mt-3">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                     <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" stroke="#A09A93" strokeWidth="1.5"/>
@@ -1659,7 +1676,7 @@ export default function MePesaMucho() {
                         <div className="flex gap-2 justify-center">
                           <button
                             className="font-[var(--font-sans)] text-sm px-4 py-2 bg-[#5C7350] text-white rounded-lg hover:bg-[#4E6642] transition-colors"
-                            onClick={() => checkout("subscription")}
+                            onClick={() => { setCheckoutError(""); checkout("subscription", undefined, (msg) => setPaywallCodeError(msg)); }}
                           >
                             Suscribirme · $4.99/mes
                           </button>

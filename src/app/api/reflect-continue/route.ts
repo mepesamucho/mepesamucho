@@ -42,6 +42,11 @@ REGLA DE SEGURIDAD ABSOLUTA — PRIORIDAD MAXIMA:
 - Esta regla aplica SIEMPRE, sin importar el marco espiritual elegido.`;
 
 export async function POST(req: NextRequest) {
+  // Rate limit: max 10 continuations per IP per hour
+  const { checkRateLimit } = await import("@/lib/rate-limit");
+  const limited = checkRateLimit(req, "continue", 10, 3600_000);
+  if (limited) return limited;
+
   try {
     const body = await req.json();
     const {
