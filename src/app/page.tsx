@@ -723,8 +723,7 @@ export default function MePesaMucho() {
           <span className="text-lg font-light tracking-tight text-[#3A3733]">mepesamucho</span>
         </button>
         <div className="flex items-center gap-4">
-          <button className={`${S.link} text-[0.7rem]`} onClick={() => setShowAbout(true)}>Acerca de</button>
-          <button className={`${S.link} text-[0.7rem]`} onClick={() => setShowDisclaimer(true)}>Aviso legal</button>
+          <button className={`${S.link} text-[0.7rem]`} onClick={() => setShowHowItWorks(!showHowItWorks)}>Cómo funciona</button>
         </div>
       </div>
     </div>
@@ -837,6 +836,35 @@ export default function MePesaMucho() {
     </Overlay>
   );
 
+  // ── HOW IT WORKS MODAL ──────────────────────────
+  const HowItWorksModal = () => (
+    <Overlay>
+      <div className={`${S.divider} mb-6`} style={{ width: 40 }} />
+      <h2 className="text-xl font-medium text-center mb-6">¿Cómo funciona?</h2>
+      <div className="space-y-6">
+        {[
+          { num: "1", title: "Escribe lo que te pesa", desc: "Sin filtros, sin juicios. Un espacio seguro donde tu información es privada y nunca se almacena." },
+          { num: "2", title: "Elige tu tradición", desc: "Recibe tu reflexión desde la sabiduría bíblica, la filosofía clásica o la espiritualidad universal." },
+          { num: "3", title: "Recibe una reflexión personalizada", desc: "Una reflexión escrita especialmente para ti, con citas verificables de fuentes originales." },
+          { num: "4", title: "Profundiza si quieres", desc: "Puedes responder, continuar la conversación o descargar tu reflexión en PDF para llevarla contigo." },
+        ].map((s) => (
+          <div key={s.num} className="flex items-start gap-4">
+            <div className="w-8 h-8 min-w-[2rem] rounded-full bg-[#7A8B6F]/10 flex items-center justify-center">
+              <span className="font-[var(--font-sans)] text-sm text-[#7A8B6F] font-medium">{s.num}</span>
+            </div>
+            <div>
+              <p className="text-base font-medium mb-0.5">{s.title}</p>
+              <p className={`${S.sub} text-sm leading-relaxed`}>{s.desc}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="mt-6 pt-6 border-t border-[#D8CFC4] text-center">
+        <button className={S.btnSecondary} onClick={() => setShowHowItWorks(false)}>Entendido</button>
+      </div>
+    </Overlay>
+  );
+
   // ── CRISIS BANNER (persistent, non-intrusive) ─
 
   const CrisisBanner = () => (
@@ -905,6 +933,34 @@ export default function MePesaMucho() {
     </footer>
   );
 
+  // ── TRADITION ICONS ─────────────────────────────
+  const TraditionIcon = ({ type }: { type: Marco }) => {
+    const icons: Record<Marco, React.ReactNode> = {
+      biblica: (
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#7A8B6F" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M4 19.5A2.5 2.5 0 016.5 17H20" />
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
+          <path d="M12 6v8M8 10h8" />
+        </svg>
+      ),
+      estoica: (
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#7A8B6F" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="10" />
+          <path d="M12 2a14.5 14.5 0 000 20 14.5 14.5 0 000-20" />
+          <path d="M2 12h20" />
+        </svg>
+      ),
+      universal: (
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#7A8B6F" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 2L2 7l10 5 10-5-10-5z" />
+          <path d="M2 17l10 5 10-5" />
+          <path d="M2 12l10 5 10-5" />
+        </svg>
+      ),
+    };
+    return <>{icons[type]}</>;
+  };
+
   // ═══════════════════════════════════════════════
   // RENDER
   // ═══════════════════════════════════════════════
@@ -913,11 +969,39 @@ export default function MePesaMucho() {
 
   if (usosHoy >= 2 && !dayPass.active && !getSinglePass() && step === "landing") {
     return (
-      <div className={`${S.page} animate-step-in`} key={fadeKey}>
+      <div className={`${S.pageTop} animate-step-in`} key={fadeKey}>
         <SiteHeader />
         {showDisclaimer && <DisclaimerModal />}
+        {showHowItWorks && <HowItWorksModal />}
         {showAbout && <AboutModal />}
-        <div className={`${S.box} text-center`} style={{ maxWidth: "440px" }}>
+        <div className={`${S.box} text-center`} style={{ maxWidth: "480px" }}>
+
+          {/* Truncated reflection preview — teaser */}
+          {reflexion && (
+            <div className="mb-8 relative">
+              <div className="bg-white/40 border border-[#D8CFC4] rounded-2xl p-6 text-left" style={{ maxHeight: "180px", overflow: "hidden" }}>
+                <div className="leading-loose text-base" style={{ fontSize: "1rem" }}>
+                  {reflexion.split("\n\n").slice(0, 2).map((p, i) => {
+                    const t = p.trim().replace(/\*\*(.*?)\*\*/g, "$1").replace(/\*(.*?)\*/g, "$1");
+                    if (!t) return null;
+                    return <p key={i} className="mb-3 text-[#3A3733]">{t}</p>;
+                  })}
+                </div>
+              </div>
+              {/* Fade overlay */}
+              <div style={{
+                position: "absolute",
+                bottom: 0,
+                left: 0,
+                right: 0,
+                height: "80px",
+                background: "linear-gradient(to bottom, transparent, #F4F0E8)",
+                borderRadius: "0 0 16px 16px",
+                pointerEvents: "none",
+              }} />
+            </div>
+          )}
+
           {/* Emotional header */}
           <p className="text-xl font-light italic leading-relaxed mb-2">
             Lo que estás tocando merece más espacio.
@@ -927,19 +1011,23 @@ export default function MePesaMucho() {
           </p>
 
           {/* Single reflection — featured card */}
-          <div className="card-hover-lift bg-[#EBE3D8] border-2 border-[#7A8B6F] rounded-lg p-6 mb-4 text-center">
-            <p className="text-lg font-medium mb-1">Continuar esta reflexión</p>
-            <p className="text-2xl font-light mb-1">$0.99 <span className={`${S.sub} text-sm`}>USD</span></p>
-            <p className="font-[var(--font-sans)] text-[0.7rem] text-[#A09A93] font-light italic mb-3">Menos que un café. Más que un momento.</p>
-            <p className={`${S.sub} text-sm mb-4`}>Desbloquea la reflexión completa, continúa la conversación e incluye descarga en PDF.</p>
+          <div className="card-hover-lift bg-white/40 border-2 border-[#7A8B6F] rounded-2xl p-6 mb-4 text-center">
+            <div className="flex justify-between items-baseline mb-1">
+              <p className="text-lg font-medium">Continuar esta reflexión</p>
+              <p className="text-xl font-light">$0.99 <span className={`${S.sub} text-sm`}>USD</span></p>
+            </div>
+            <p className="font-[var(--font-sans)] text-[0.7rem] text-[#7A8B6F] font-light italic mb-2">Menos que un café. Más que un momento.</p>
+            <p className={`${S.sub} text-sm mb-4 text-left`}>Desbloquea la reflexión completa, continúa la conversación e incluye descarga en PDF.</p>
             <button className={`${S.btn} btn-primary-glow w-full`} onClick={() => { setCheckoutError(""); checkout("single", undefined, setCheckoutError); }} aria-label="Continuar esta reflexión por $0.99">Continuar esta reflexión — $0.99</button>
           </div>
 
           {/* Subscription — best value card */}
-          <div className="card-hover-lift border border-[#D9CFBF] rounded-lg p-5 mb-6 text-center">
-            <p className="text-base font-medium mb-1">Reflexiones ilimitadas</p>
-            <p className="text-xl font-light mb-1">$4.99 <span className={`${S.sub} text-sm`}>USD / mes</span></p>
-            <p className={`${S.sub} text-sm mb-3`}>Todo incluido: reflexiones, conversaciones guiadas, descarga PDF y acceso desde cualquier dispositivo.</p>
+          <div className="card-hover-lift bg-white/40 border border-[#D9CFBF] rounded-2xl p-5 mb-6 text-center">
+            <div className="flex justify-between items-baseline mb-1">
+              <p className="text-base font-medium">Reflexiones ilimitadas</p>
+              <p className="text-lg font-light">$4.99 <span className={`${S.sub} text-sm`}>USD / mes</span></p>
+            </div>
+            <p className={`${S.sub} text-sm mb-3 text-left`}>Todo incluido: reflexiones, conversaciones guiadas, descarga PDF y acceso desde cualquier dispositivo.</p>
             <button className={S.btnSecondary + " w-full"} onClick={() => { setCheckoutError(""); checkout("subscription", undefined, setCheckoutError); }} aria-label="Suscribirme por $4.99 al mes">Suscribirme · $4.99/mes</button>
             <p className={`${S.sub} text-xs mt-2`}>Cancela cuando quieras.</p>
           </div>
@@ -1031,6 +1119,19 @@ export default function MePesaMucho() {
             )}
           </div>
 
+          {/* Back to reflection button */}
+          {reflexion && (
+            <div className="mt-4 mb-2">
+              <button
+                className={`${S.btnSecondary} text-sm px-6 py-2.5`}
+                onClick={() => { setUsosHoy(Math.max(0, usosHoy - 1)); saveUsosHoy(Math.max(0, usosHoy - 1)); setStep("essay"); setCierreStep(0); }}
+                aria-label="Volver a mi reflexión"
+              >
+                ← Volver a mi reflexión
+              </button>
+            </div>
+          )}
+
           <Footer showDemo />
         </div>
       </div>
@@ -1043,6 +1144,7 @@ export default function MePesaMucho() {
     return (
       <div className={`${S.page}`} key={fadeKey} style={{ paddingBottom: "12vh" }}>
         {showDisclaimer && <DisclaimerModal />}
+        {showHowItWorks && <HowItWorksModal />}
         {showAbout && <AboutModal />}
 
         {/* Capa ambiental — silencio digital con textura */}
@@ -1065,46 +1167,6 @@ export default function MePesaMucho() {
           <p className="font-[var(--font-sans)] text-[0.7rem] text-[#A09A93] font-light mt-5 hero-stagger-4 tracking-wide">
             Más de 1,000 personas ya soltaron algo aquí.
           </p>
-
-          {/* Discrete "¿Cómo funciona?" link below CTA */}
-          <div className="mt-6 hero-stagger-4 text-center">
-            <button
-              className="font-[var(--font-sans)] text-xs text-[#857F78] font-light cursor-pointer bg-transparent border-none underline decoration-[#D8CFC4] underline-offset-4 hover:text-[#5C7350] transition-colors mx-auto"
-              onClick={() => setShowHowItWorks(!showHowItWorks)}
-              aria-expanded={showHowItWorks}
-              aria-controls="how-it-works"
-            >
-              ¿Cómo funciona?
-            </button>
-          </div>
-
-          {/* Accordion content — expands below */}
-          <div
-            id="how-it-works"
-            style={{
-              maxHeight: showHowItWorks ? "280px" : "0",
-              opacity: showHowItWorks ? 1 : 0,
-              overflow: "hidden",
-              transition: "max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease",
-            }}
-          >
-            <div className="mt-8 pt-6" style={{ borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "#E8E2DB" }}>
-              <div className="text-left max-w-[380px] mx-auto space-y-5">
-                <div className="flex items-start gap-4">
-                  <span className="font-[var(--font-sans)] text-[0.65rem] text-[#857F78] font-light mt-0.5 flex-shrink-0 tabular-nums">1</span>
-                  <p className={`${S.sub} text-sm leading-relaxed`}>Escribes lo que necesitas soltar</p>
-                </div>
-                <div className="flex items-start gap-4">
-                  <span className="font-[var(--font-sans)] text-[0.65rem] text-[#857F78] font-light mt-0.5 flex-shrink-0 tabular-nums">2</span>
-                  <p className={`${S.sub} text-sm leading-relaxed`}>Eliges desde qué tradición quieres recibir la reflexión</p>
-                </div>
-                <div className="flex items-start gap-4">
-                  <span className="font-[var(--font-sans)] text-[0.65rem] text-[#857F78] font-light mt-0.5 flex-shrink-0 tabular-nums">3</span>
-                  <p className={`${S.sub} text-sm leading-relaxed`}>Recibes una reflexión escrita especialmente para ti</p>
-                </div>
-              </div>
-            </div>
-          </div>
 
           {/* ── Acceso suscriptores ── */}
           <div className="mt-8 hero-stagger-5">
@@ -1226,6 +1288,7 @@ export default function MePesaMucho() {
         {showCrisis && <CrisisModal />}
         {showCrisisBanner && <CrisisBanner />}
         {showDisclaimer && <DisclaimerModal />}
+        {showHowItWorks && <HowItWorksModal />}
         {showAbout && <AboutModal />}
         <div className={`${S.box}`}>
           <PrivacyBadge onClick={() => setShowDisclaimer(true)} />
@@ -1316,23 +1379,27 @@ export default function MePesaMucho() {
         {showCrisisBanner && <CrisisBanner />}
         {showCrisis && <CrisisModal />}
         {showDisclaimer && <DisclaimerModal />}
+        {showHowItWorks && <HowItWorksModal />}
         {showAbout && <AboutModal />}
-        <div className={`${S.box} text-center`}>
-          <p className={`${S.sub} text-sm mb-2`}>Hay muchas formas de escuchar lo que necesitas oír.</p>
-          <h2 className="text-xl font-normal italic leading-snug mb-8">¿Desde dónde quieres recibir tu reflexión?</h2>
+        <div className={`${S.boxWide} text-center`}>
+          <p className="font-[var(--font-sans)] text-xs uppercase tracking-[0.15em] text-[#857F78] font-light mb-2">Hay muchas formas de escuchar lo que necesitas oír</p>
+          <h2 className="text-xl sm:text-2xl font-normal italic leading-snug mb-10">¿Desde dónde quieres recibir tu reflexión?</h2>
           {apiError && <p className={`${S.sub} text-sm text-[#6B7F5E] mb-4`} role="alert">{apiError}</p>}
-          <div className="flex flex-col gap-3" role="radiogroup" aria-label="Selecciona tradición">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4" role="radiogroup" aria-label="Selecciona tradición">
             {(Object.entries(MARCOS) as [Marco, { nombre: string; descripcion: string }][]).map(([key, val]) => (
               <button
                 key={key}
                 onClick={() => { setMarco(key); setPreguntaStep(0); setStep("preguntas"); }}
-                className="text-left p-5 bg-transparent border-2 border-[#D8CFC4] rounded-lg transition-all duration-250 hover:bg-[#EAE4DC] hover:border-[#5C7350] hover:shadow-sm cursor-pointer group"
+                className="tradition-card flex flex-col items-center text-center p-6 sm:p-8 bg-white/40 border-2 border-[#D8CFC4] rounded-2xl transition-all duration-300 hover:bg-[#EAE4DC] hover:border-[#5C7350] hover:shadow-lg hover:-translate-y-1 cursor-pointer group"
                 role="radio"
                 aria-checked="false"
                 aria-label={`${val.nombre}: ${val.descripcion}`}
               >
-                <span className="block text-lg font-medium group-hover:text-[#3A3733]">{val.nombre}</span>
-                <span className={`block ${S.sub} text-sm mt-1`}>{val.descripcion}</span>
+                <div className="w-14 h-14 rounded-full bg-[#7A8B6F]/10 flex items-center justify-center mb-5 group-hover:bg-[#7A8B6F]/20 transition-colors">
+                  <TraditionIcon type={key} />
+                </div>
+                <span className="block text-lg font-medium group-hover:text-[#3A3733] mb-1">{val.nombre}</span>
+                <span className={`block ${S.sub} text-sm`}>{val.descripcion}</span>
               </button>
             ))}
           </div>
@@ -1358,6 +1425,7 @@ export default function MePesaMucho() {
         {showCrisisBanner && <CrisisBanner />}
         {showCrisis && <CrisisModal />}
         {showDisclaimer && <DisclaimerModal />}
+        {showHowItWorks && <HowItWorksModal />}
         {showAbout && <AboutModal />}
         <div className={`${S.box}`} style={{ textAlign: "center" }}>
           {/* Conversational tone — not a form */}
@@ -1450,6 +1518,7 @@ export default function MePesaMucho() {
     return (
       <div className={`min-h-screen bg-[#F4F0E8] text-[#3A3733] font-[var(--font-serif)] animate-fade-in`} key={fadeKey}>
         {showDisclaimer && <DisclaimerModal />}
+        {showHowItWorks && <HowItWorksModal />}
         {showAbout && <AboutModal />}
         {showCrisis && <CrisisModal />}
         {showCrisisBanner && <CrisisBanner />}
@@ -1479,23 +1548,28 @@ export default function MePesaMucho() {
             </div>
           </div>
 
-          {/* Primary CTA: Invitation to respond — big and prominent */}
-          <div className="mt-8 py-6 text-center" style={{ borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "#D8CFC4" }}>
-            <p className="text-lg italic leading-relaxed mb-5">{PREGUNTAS_CIERRE[cIdx]}</p>
+          {/* Primary CTA: Invitation to respond */}
+          <div className="mt-8 py-6 text-center flex flex-col items-center gap-4" style={{ borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "#D8CFC4" }}>
+            <p className="text-lg italic leading-relaxed">{PREGUNTAS_CIERRE[cIdx]}</p>
             <button className={`${S.btn} text-lg px-10 py-4`} onClick={() => { setShowCierreInput(true); setCierreStep(1); }} aria-label="Responder a la reflexión">
               Quiero responder
             </button>
-          </div>
 
-          {/* Secondary: Download PDF — corner-like, lower hierarchy */}
-          <div className="text-center mt-4">
-            <button
-              className={`${S.link} text-sm`}
-              onClick={() => descargarReflexionPDF(reflexion, citasUsadas, MARCOS[marco!]?.nombre || "", resp1)}
-              aria-label="Descargar reflexión en formato PDF"
-            >
-              Descargar reflexión (PDF)
-            </button>
+            {/* Download PDF — disabled for non-subscribers */}
+            {dayPass.active ? (
+              <button
+                className={`${S.link} text-sm`}
+                onClick={() => descargarReflexionPDF(reflexion, citasUsadas, MARCOS[marco!]?.nombre || "", resp1)}
+                aria-label="Descargar reflexión en formato PDF"
+              >
+                Descargar reflexión (PDF)
+              </button>
+            ) : (
+              <span className="font-[var(--font-sans)] text-sm text-[#B8B0A4] font-light cursor-default" title="Disponible con suscripción" aria-label="Descarga de PDF disponible con suscripción">
+                <span style={{ opacity: 0.5 }}>Descargar reflexión (PDF)</span>
+                <span className="block text-[0.7rem] text-[#A09A93] mt-0.5 italic">Disponible con suscripción</span>
+              </span>
+            )}
           </div>
 
           {/* Ritual closing — memorable goodbye */}
@@ -1586,6 +1660,7 @@ export default function MePesaMucho() {
       <div className={`min-h-screen bg-[#F4F0E8] text-[#3A3733] font-[var(--font-serif)] animate-fade-in`} key={`c3-${fadeKey}`}>
         <SiteHeader />
         {showDisclaimer && <DisclaimerModal />}
+        {showHowItWorks && <HowItWorksModal />}
         {showCrisis && <CrisisModal />}
         {showCrisisBanner && <CrisisBanner />}
 
