@@ -1011,25 +1011,25 @@ export default function MePesaMucho() {
           </p>
 
           {/* Single reflection — featured card */}
-          <div className="card-hover-lift bg-white/40 border-2 border-[#7A8B6F] rounded-2xl p-6 mb-4 text-center">
-            <div className="flex justify-between items-baseline mb-1">
-              <p className="text-lg font-medium">Continuar esta reflexión</p>
-              <p className="text-xl font-light">$0.99 <span className={`${S.sub} text-sm`}>USD</span></p>
+          <div className="card-hover-lift bg-white/40 border-2 border-[#7A8B6F] rounded-2xl p-6 mb-4">
+            <p className="text-lg font-medium text-center mb-1">Continuar esta reflexión</p>
+            <p className="text-center text-xl font-light mb-1">$0.99 <span className={`${S.sub} text-sm`}>USD</span></p>
+            <p className="font-[var(--font-sans)] text-[0.7rem] text-[#7A8B6F] font-light italic mb-2 text-center">Menos que un café. Más que un momento.</p>
+            <p className={`${S.sub} text-sm mb-4 text-center`}>Desbloquea la reflexión completa, continúa la conversación e incluye descarga en PDF.</p>
+            <div className="flex justify-center">
+              <button className={`${S.btn} btn-primary-glow w-full`} style={{ maxWidth: "320px" }} onClick={() => { setCheckoutError(""); checkout("single", undefined, setCheckoutError); }} aria-label="Continuar esta reflexión por $0.99">Continuar esta reflexión — $0.99</button>
             </div>
-            <p className="font-[var(--font-sans)] text-[0.7rem] text-[#7A8B6F] font-light italic mb-2">Menos que un café. Más que un momento.</p>
-            <p className={`${S.sub} text-sm mb-4 text-left`}>Desbloquea la reflexión completa, continúa la conversación e incluye descarga en PDF.</p>
-            <button className={`${S.btn} btn-primary-glow w-full`} onClick={() => { setCheckoutError(""); checkout("single", undefined, setCheckoutError); }} aria-label="Continuar esta reflexión por $0.99">Continuar esta reflexión — $0.99</button>
           </div>
 
           {/* Subscription — best value card */}
-          <div className="card-hover-lift bg-white/40 border border-[#D9CFBF] rounded-2xl p-5 mb-6 text-center">
-            <div className="flex justify-between items-baseline mb-1">
-              <p className="text-base font-medium">Reflexiones ilimitadas</p>
-              <p className="text-lg font-light">$4.99 <span className={`${S.sub} text-sm`}>USD / mes</span></p>
+          <div className="card-hover-lift bg-white/40 border border-[#D9CFBF] rounded-2xl p-5 mb-6">
+            <p className="text-base font-medium text-center mb-1">Reflexiones ilimitadas</p>
+            <p className="text-center text-lg font-light mb-1">$4.99 <span className={`${S.sub} text-sm`}>USD / mes</span></p>
+            <p className={`${S.sub} text-sm mb-3 text-center`}>Todo incluido: reflexiones, conversaciones guiadas, descarga PDF y acceso desde cualquier dispositivo.</p>
+            <div className="flex justify-center">
+              <button className={S.btnSecondary + " w-full"} style={{ maxWidth: "320px" }} onClick={() => { setCheckoutError(""); checkout("subscription", undefined, setCheckoutError); }} aria-label="Suscribirme por $4.99 al mes">Suscribirme · $4.99/mes</button>
             </div>
-            <p className={`${S.sub} text-sm mb-3 text-left`}>Todo incluido: reflexiones, conversaciones guiadas, descarga PDF y acceso desde cualquier dispositivo.</p>
-            <button className={S.btnSecondary + " w-full"} onClick={() => { setCheckoutError(""); checkout("subscription", undefined, setCheckoutError); }} aria-label="Suscribirme por $4.99 al mes">Suscribirme · $4.99/mes</button>
-            <p className={`${S.sub} text-xs mt-2`}>Cancela cuando quieras.</p>
+            <p className={`${S.sub} text-xs mt-2 text-center`}>Cancela cuando quieras.</p>
           </div>
 
           {checkoutError && (
@@ -1044,96 +1044,28 @@ export default function MePesaMucho() {
             <p className={`${S.sub} text-xs`}>Cobro seguro a través de Stripe · Precios en USD</p>
           </div>
 
-          {/* Recovery section — below pricing, discrete */}
-          <div className="border border-[#D8CFC4] rounded-lg p-5 mb-4">
-            <p className="text-sm font-medium mb-1">¿Ya pagaste antes?</p>
-            <p className={`${S.sub} text-xs mb-3`}>Recupera tu acceso con el email o código que registraste.</p>
-            {!recoveryMode ? (
-              <div className="flex gap-2 flex-wrap justify-center">
-                <button className={S.btnSm} onClick={() => { setRecoveryMode("email"); setRecoveryInput(""); setRecoveryError(""); }}>
-                  Recuperar con email
-                </button>
-                <button className={S.btnSm} onClick={() => { setRecoveryMode("code"); setRecoveryInput(""); setRecoveryError(""); }}>
-                  Recuperar con código
-                </button>
-              </div>
-            ) : (
-              <div>
-                <label className="sr-only" htmlFor="recovery-input">{recoveryMode === "email" ? "Email de recuperación" : "Código de acceso"}</label>
-                <input
-                  id="recovery-input"
-                  type={recoveryMode === "email" ? "email" : "text"}
-                  value={recoveryInput}
-                  onChange={(e) => setRecoveryInput(e.target.value)}
-                  placeholder={recoveryMode === "email" ? "Tu email..." : "MPM-XXXX-XXXX"}
-                  className="w-full p-3 font-[var(--font-sans)] text-sm bg-white/60 border border-[#D8CFC4] rounded-lg outline-none mb-2"
-                  autoFocus
-                  style={recoveryMode === "code" ? { textTransform: "uppercase", letterSpacing: "0.1em" } : undefined}
-                />
-                {recoveryError && <p className="text-sm text-[#6B7F5E] mb-2" role="alert">{recoveryError}</p>}
-                <div className="flex gap-2 justify-center">
-                  <button
-                    className={`${S.btnSm} ${recoveryLoading ? "opacity-50" : ""}`}
-                    disabled={!recoveryInput.trim() || recoveryLoading}
-                    onClick={async () => {
-                      setRecoveryLoading(true);
-                      setRecoveryError("");
-                      try {
-                        const body = recoveryMode === "email"
-                          ? { email: recoveryInput.trim() }
-                          : { code: recoveryInput.trim().toUpperCase() };
-                        const res = await fetch("/api/recover-access", {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify(body),
-                        });
-                        const data = await res.json();
-                        if (data.success) {
-                          if (data.type === "daypass" && data.expiresAt) {
-                            localStorage.setItem("mpm_daypass", JSON.stringify({ expires: data.expiresAt }));
-                            setDayPass({ active: true, hoursLeft: data.hoursLeft || 24 });
-                          } else if (data.type === "single") {
-                            activateSinglePass();
-                          } else if (data.type === "subscription") {
-                            activateDayPass();
-                            setDayPass({ active: true, hoursLeft: 720 });
-                          }
-                          setUsosHoy(0);
-                          saveUsosHoy(0);
-                          setRecoveryMode(null);
-                          setStep("landing");
-                        } else {
-                          setRecoveryError(data.error || "No se encontró acceso activo con estos datos.");
-                        }
-                      } catch {
-                        setRecoveryError("Error de conexión. Intenta de nuevo.");
-                      }
-                      setRecoveryLoading(false);
-                    }}
-                  >
-                    {recoveryLoading ? "Verificando..." : "Verificar acceso"}
-                  </button>
-                  <button className={`${S.link} text-sm`} onClick={() => setRecoveryMode(null)}>Cancelar</button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Back to reflection button */}
-          {reflexion && (
-            <div className="mt-4 mb-2">
+          {/* 3-button navigation bar */}
+          <div className="grid grid-cols-3 gap-3 mt-8 w-full">
+            {reflexion ? (
               <button
-                className={`${S.btnSecondary} text-sm px-6 py-2.5`}
+                className="font-[var(--font-sans)] text-[0.75rem] text-[#5C5751] font-normal bg-transparent border border-[#D9CFBF] rounded-lg px-3 py-3 hover:bg-[#EBE3D8] transition-colors text-center"
                 onClick={() => { setUsosHoy(Math.max(0, usosHoy - 1)); saveUsosHoy(Math.max(0, usosHoy - 1)); setStep("essay"); setCierreStep(0); }}
-                aria-label="Volver a mi reflexión"
               >
                 ← Volver a mi reflexión
               </button>
-            </div>
-          )}
-
-          <div className="mt-6">
-            <button onClick={reiniciar} className={`${S.btnSecondary} text-sm px-8 py-2.5`}>
+            ) : (
+              <div />
+            )}
+            <button
+              className="font-[var(--font-sans)] text-[0.75rem] text-[#5C5751] font-normal bg-transparent border border-[#D9CFBF] rounded-lg px-3 py-3 hover:bg-[#EBE3D8] transition-colors text-center"
+              onClick={() => setShowHeroCode(true)}
+            >
+              Ya tengo un código
+            </button>
+            <button
+              className="font-[var(--font-sans)] text-[0.75rem] text-[#5C5751] font-normal bg-transparent border border-[#D9CFBF] rounded-lg px-3 py-3 hover:bg-[#EBE3D8] transition-colors text-center"
+              onClick={reiniciar}
+            >
               Volver al inicio
             </button>
           </div>
