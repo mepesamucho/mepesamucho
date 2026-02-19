@@ -1380,7 +1380,7 @@ export default function MePesaMucho() {
         {showAbout && <AboutModal />}
         <div className={`${S.boxWide} text-center`}>
           <p className="font-[var(--font-sans)] text-xs uppercase tracking-[0.15em] text-[#857F78] font-light mb-2">Hay muchas formas de escuchar lo que necesitas oír</p>
-          <h2 className="text-xl sm:text-2xl font-normal italic leading-snug mb-10">¿Desde dónde quieres recibir tu reflexión?</h2>
+          <h2 className="text-xl sm:text-2xl font-normal italic leading-snug mb-16">¿Desde dónde quieres recibir tu reflexión?</h2>
           {apiError && <p className={`${S.sub} text-sm text-[#6B7F5E] mb-4`} role="alert">{apiError}</p>}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4" role="radiogroup" aria-label="Selecciona tradición">
             {(Object.entries(MARCOS) as [Marco, { nombre: string; descripcion: string }][]).map(([key, val]) => (
