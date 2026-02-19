@@ -1142,7 +1142,8 @@ export default function MePesaMucho() {
 
   if (step === "landing") {
     return (
-      <div className={`${S.page}`} key={fadeKey} style={{ paddingBottom: "12vh" }}>
+      <div className={`${S.page}`} key={fadeKey} style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
+        <SiteHeader />
         {showDisclaimer && <DisclaimerModal />}
         {showHowItWorks && <HowItWorksModal />}
         {showAbout && <AboutModal />}
@@ -1152,7 +1153,7 @@ export default function MePesaMucho() {
         {/* Línea de anclaje lateral */}
         <div className="accent-line" />
 
-        <div className={`${S.box} text-center`} style={{ position: "relative", zIndex: 1 }}>
+        <div className={`${S.box} text-center`} style={{ position: "relative", zIndex: 1, flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", paddingTop: "60px" }}>
           <div className="flex justify-center mb-12 hero-stagger-1 icon-breathe"><LogoIcon size={44} /></div>
 
           <p className="text-2xl sm:text-3xl text-[#5C5751] italic leading-relaxed font-light mb-14 hero-stagger-2" style={{ letterSpacing: "-0.01em" }}>
@@ -1266,9 +1267,10 @@ export default function MePesaMucho() {
             )}
           </div>
 
-          <div className="hero-stagger-5 mt-4">
-            <Footer />
-          </div>
+        </div>
+
+        <div className="hero-stagger-5" style={{ position: "relative", zIndex: 1 }}>
+          <Footer />
         </div>
       </div>
     );
