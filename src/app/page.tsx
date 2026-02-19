@@ -1163,11 +1163,6 @@ export default function MePesaMucho() {
             Quiero soltar lo que cargo
           </button>
 
-          {/* Social proof — anonymous counter */}
-          <p className="font-[var(--font-sans)] text-[0.7rem] text-[#A09A93] font-light mt-5 hero-stagger-4 tracking-wide">
-            Más de 1,000 personas ya soltaron algo aquí.
-          </p>
-
           {/* ── Acceso suscriptores ── */}
           <div className="mt-8 hero-stagger-5">
             {!showHeroCode ? (
