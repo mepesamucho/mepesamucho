@@ -403,6 +403,7 @@ export default function MePesaMucho() {
   const [allCitas, setAllCitas] = useState<{ source: string; text: string }[]>([]);
   const [globalTextSize, setGlobalTextSize] = useState<"normal" | "large" | "xlarge">("normal");
   const [verifyingPayment, setVerifyingPayment] = useState(false);
+  const paymentDataRef = useRef<{ sid: string; type: string } | null>(null);
   const dialogEndRef = useRef<HTMLDivElement>(null);
   const crisisShownOnce = useRef(false);
   const scrollCardRef = useRef<HTMLDivElement>(null);
@@ -424,30 +425,48 @@ export default function MePesaMucho() {
     } catch {}
 
     const params = new URLSearchParams(window.location.search);
-    const sid = params.get("session_id");
-    const type = params.get("type");
+    let sid = params.get("session_id");
+    let type = params.get("type");
     const wasCanceled = params.get("canceled");
     if (wasCanceled) {
       window.history.replaceState({}, "", "/");
     }
+
+    // If URL params are missing, check sessionStorage (survives re-mounts caused by Next.js router)
+    if (!sid || !type) {
+      try {
+        const pending = sessionStorage.getItem("mpm_payment_pending");
+        if (pending) {
+          const data = JSON.parse(pending);
+          sid = data.sid;
+          type = data.type;
+        }
+      } catch {}
+    }
+
     if (sid && type) {
+      // Persist payment data BEFORE doing anything else — survives re-renders and re-mounts
+      paymentDataRef.current = { sid, type };
+      try { sessionStorage.setItem("mpm_payment_pending", JSON.stringify({ sid, type })); } catch {}
       setVerifyingPayment(true);
-      window.history.replaceState({}, "", "/");
 
       // Verify payment with retry (Stripe webhook might be delayed)
       const verifyWithRetry = async (retries = 0): Promise<void> => {
+        // Use ref as source of truth (survives re-renders)
+        const paymentSid = paymentDataRef.current?.sid || sid;
+        const paymentType = paymentDataRef.current?.type || type;
         try {
           const res = await fetch("/api/verify-session", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ sessionId: sid }),
+            body: JSON.stringify({ sessionId: paymentSid }),
           });
           const d = await res.json();
 
           if (d.success) {
-            if (type === "daypass") { activateDayPass(); setDayPass({ active: true, hoursLeft: 24 }); }
-            if (type === "single") activateSinglePass();
-            if (type === "subscription") { activateDayPass(); setDayPass({ active: true, hoursLeft: 720 }); }
+            if (paymentType === "daypass") { activateDayPass(); setDayPass({ active: true, hoursLeft: 24 }); }
+            if (paymentType === "single") activateSinglePass();
+            if (paymentType === "subscription") { activateDayPass(); setDayPass({ active: true, hoursLeft: 720 }); }
 
             // Check if there's a saved continuación to restore (post-payment from essay)
             try {
@@ -464,18 +483,24 @@ export default function MePesaMucho() {
                   setCierreStep(2);
                   setStep("essay");
                   sessionStorage.removeItem("mpm_continuacion");
-                  setLastSessionId(sid);
-                  setLastPaymentType(type);
+                  setLastSessionId(paymentSid);
+                  setLastPaymentType(paymentType);
                   setVerifyingPayment(false);
+                  // NOW safe to clean up URL and sessionStorage
+                  try { sessionStorage.removeItem("mpm_payment_pending"); } catch {}
+                  try { window.history.replaceState({}, "", "/"); } catch {}
                   return;
                 }
               }
             } catch {}
 
-            setLastSessionId(sid);
-            setLastPaymentType(type);
+            setLastSessionId(paymentSid);
+            setLastPaymentType(paymentType);
             setVerifyingPayment(false);
             setStep("access_choice");
+            // NOW safe to clean up URL and sessionStorage
+            try { sessionStorage.removeItem("mpm_payment_pending"); } catch {}
+            try { window.history.replaceState({}, "", "/"); } catch {}
           } else if (retries < 5) {
             // Payment might not be confirmed yet, retry after a delay
             await new Promise((r) => setTimeout(r, 2000));
@@ -483,6 +508,8 @@ export default function MePesaMucho() {
           } else {
             console.error("Payment verification failed after retries:", d);
             setVerifyingPayment(false);
+            try { sessionStorage.removeItem("mpm_payment_pending"); } catch {}
+            try { window.history.replaceState({}, "", "/"); } catch {}
             setCheckoutError("No pudimos verificar tu pago. Si completaste el pago, espera unos segundos y recarga la página.");
           }
         } catch (err) {
@@ -492,6 +519,8 @@ export default function MePesaMucho() {
           }
           console.error("Error verifying payment:", err);
           setVerifyingPayment(false);
+          try { sessionStorage.removeItem("mpm_payment_pending"); } catch {}
+          try { window.history.replaceState({}, "", "/"); } catch {}
           setCheckoutError("Error de conexión al verificar tu pago. Recarga la página para intentar de nuevo.");
         }
       };
@@ -1954,7 +1983,7 @@ export default function MePesaMucho() {
     };
 
     return (
-      <div className={`${S.page} animate-fade-in`} key={fadeKey}>
+      <div className={`${S.page} animate-fade-in`} key="access_choice_stable">
         <div className={`${S.box} text-center`}>
           <div className={`${S.divider} mb-6`} style={{ width: 40 }} />
 
