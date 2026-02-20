@@ -402,6 +402,7 @@ export default function MePesaMucho() {
   const [dialogCerrado, setDialogCerrado] = useState(false);
   const [allCitas, setAllCitas] = useState<{ source: string; text: string }[]>([]);
   const [globalTextSize, setGlobalTextSize] = useState<"normal" | "large" | "xlarge">("normal");
+  const [verifyingPayment, setVerifyingPayment] = useState(false);
   const dialogEndRef = useRef<HTMLDivElement>(null);
   const crisisShownOnce = useRef(false);
   const scrollCardRef = useRef<HTMLDivElement>(null);
@@ -425,7 +426,13 @@ export default function MePesaMucho() {
     const params = new URLSearchParams(window.location.search);
     const sid = params.get("session_id");
     const type = params.get("type");
+    const wasCanceled = params.get("canceled");
+    if (wasCanceled) {
+      window.history.replaceState({}, "", "/");
+    }
     if (sid && type) {
+      setVerifyingPayment(true);
+      window.history.replaceState({}, "", "/");
       fetch("/api/verify-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -437,7 +444,6 @@ export default function MePesaMucho() {
             if (type === "daypass") { activateDayPass(); setDayPass({ active: true, hoursLeft: 24 }); }
             if (type === "single") activateSinglePass();
             if (type === "subscription") { activateDayPass(); setDayPass({ active: true, hoursLeft: 720 }); }
-            window.history.replaceState({}, "", "/");
 
             // Check if there's a saved continuación to restore (post-payment from essay)
             try {
@@ -456,6 +462,7 @@ export default function MePesaMucho() {
                   sessionStorage.removeItem("mpm_continuacion");
                   setLastSessionId(sid);
                   setLastPaymentType(type);
+                  setVerifyingPayment(false);
                   return; // Skip access_choice, go directly to essay
                 }
               }
@@ -463,10 +470,20 @@ export default function MePesaMucho() {
 
             setLastSessionId(sid);
             setLastPaymentType(type);
+            setVerifyingPayment(false);
             setStep("access_choice");
+          } else {
+            // Payment verification failed — show error and go to landing
+            console.error("Payment verification failed:", d);
+            setVerifyingPayment(false);
+            setCheckoutError("No pudimos verificar tu pago. Si completaste el pago, espera unos segundos y recarga la página.");
           }
         })
-        .catch(console.error);
+        .catch((err) => {
+          console.error("Error verifying payment:", err);
+          setVerifyingPayment(false);
+          setCheckoutError("Error de conexión al verificar tu pago. Recarga la página para intentar de nuevo.");
+        });
     }
   }, []);
 
@@ -986,6 +1003,25 @@ export default function MePesaMucho() {
   // RENDER
   // ═══════════════════════════════════════════════
 
+  // ── VERIFYING PAYMENT (post-Stripe redirect) ──
+
+  if (verifyingPayment) {
+    return (
+      <div className={`${S.page} animate-fade-in`} style={{ display: "flex", flexDirection: "column", minHeight: "100vh", justifyContent: "center", alignItems: "center" }}>
+        <div className={`${S.box} text-center`}>
+          <div className="flex justify-center mb-4">
+            <svg className="animate-spin" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#6B7F5E" strokeWidth="2">
+              <circle cx="12" cy="12" r="10" strokeOpacity="0.3" />
+              <path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-light mb-2">Verificando tu pago...</h2>
+          <p className={`${S.sub} text-base`}>Un momento, estamos confirmando tu compra.</p>
+        </div>
+      </div>
+    );
+  }
+
   // ── LIMIT (paywall) ────────────────────────────
 
   if (usosHoy >= 2 && !dayPass.active && !getSinglePass() && step === "landing") {
@@ -1116,6 +1152,13 @@ export default function MePesaMucho() {
           <p className="text-2xl sm:text-3xl text-[#5C5751] italic leading-relaxed font-light mb-14 hero-stagger-2" style={{ letterSpacing: "-0.01em" }}>
             A veces las cosas pesan menos cuando las sueltas.
           </p>
+
+          {checkoutError && (
+            <div className="bg-[#FDF2F0] border border-[#E8C4BC] rounded-lg p-4 mb-6 max-w-md hero-stagger-2">
+              <p className="text-sm text-[#8B3A2A]">{checkoutError}</p>
+              <button className={`${S.link} text-sm mt-2`} onClick={() => setCheckoutError("")}>Cerrar</button>
+            </div>
+          )}
 
           <button className={`${S.btn} text-lg px-10 py-4 hero-stagger-3`} onClick={() => setStep("writing")} aria-label="Quiero soltar lo que cargo">
             Quiero soltar lo que cargo
