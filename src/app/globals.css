@@ -4,7 +4,7 @@
   --color-marfil: #F4F0E8;
   --color-marfil-deep: #EBE3D8;
   --color-text: #3A3733;
-  --color-text-sec: #6F6A64;
+  --color-text-sec: #5C5751;
   --color-accent: #7A8B6F;
   --color-border: #D9CFBF;
   --color-crisis: #8B6F5E;
@@ -17,6 +17,38 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+}
+
+/* ═══════════════════════════════════════════
+   ACCESSIBILITY: Responsive font scaling
+   Mobile gets larger base font for readability.
+   Toggle adds extra scaling for tired eyes.
+   ═══════════════════════════════════════════ */
+html {
+  font-size: 16px;
+}
+
+@media (max-width: 640px) {
+  html {
+    font-size: 17px;
+  }
+}
+
+/* Accessibility toggle: larger text */
+html[data-text-size="large"] {
+  font-size: 18px;
+}
+html[data-text-size="xlarge"] {
+  font-size: 20px;
+}
+
+@media (max-width: 640px) {
+  html[data-text-size="large"] {
+    font-size: 19.5px;
+  }
+  html[data-text-size="xlarge"] {
+    font-size: 22px;
+  }
 }
 
 body {

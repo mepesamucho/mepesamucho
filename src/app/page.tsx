@@ -276,16 +276,16 @@ const LogoIcon = ({ size = 32 }: { size?: number }) => (
 
 const PrivacyBadge = ({ onClick }: { onClick?: () => void }) => (
   <div className="flex items-center gap-2 justify-center">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6F6A64" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5C5751" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
       <path d="M7 11V7a5 5 0 0110 0v4" />
     </svg>
-    <span className="font-[var(--font-sans)] text-xs text-[#6F6A64]">
+    <span className="font-[var(--font-sans)] text-sm text-[#5C5751]">
       Tu información es privada y segura.{" "}
       {onClick && (
         <button
           onClick={onClick}
-          className="underline decoration-[#D8CFC4] underline-offset-2 hover:text-[#5C7350] transition-colors bg-transparent border-none cursor-pointer text-xs text-[#6F6A64] font-[var(--font-sans)]"
+          className="underline decoration-[#D8CFC4] underline-offset-2 hover:text-[#5C7350] transition-colors bg-transparent border-none cursor-pointer text-sm text-[#5C5751] font-[var(--font-sans)]"
         >
           Política de privacidad
         </button>
@@ -330,11 +330,11 @@ const S = {
   btn: "font-[var(--font-serif)] text-lg px-8 py-3.5 bg-[#5C7350] text-white border border-[#5C7350] rounded-lg cursor-pointer transition-all duration-250 hover:bg-[#4E6642] hover:border-[#4E6642] btn-primary-glow",
   btnSecondary: "font-[var(--font-serif)] text-lg px-7 py-3 bg-[#EAE4DC] text-[#3A3733] border border-[#D8CFC4] rounded-lg cursor-pointer transition-all duration-250 hover:bg-[#5C7350] hover:text-white hover:border-[#5C7350]",
   btnSm: "font-[var(--font-serif)] text-base px-5 py-2.5 bg-[#EAE4DC] text-[#3A3733] border border-[#D8CFC4] rounded-lg cursor-pointer transition-all duration-250 hover:bg-[#5C7350] hover:text-white hover:border-[#5C7350]",
-  sub: "font-[var(--font-sans)] text-[#6F6A64] font-light leading-relaxed",
-  subStrong: "font-[var(--font-sans)] text-[#5C5751] font-light leading-relaxed",
-  link: "font-[var(--font-sans)] text-[#6F6A64] font-light text-xs cursor-pointer underline decoration-[#D8CFC4] underline-offset-4 hover:text-[#5C7350] transition-colors bg-transparent border-none",
-  textarea: "w-full min-h-[120px] p-4 font-[var(--font-serif)] text-[1.2rem] leading-relaxed bg-transparent border border-[#D8CFC4] rounded-lg resize-y outline-none text-left",
-  textareaLg: "w-full min-h-[240px] p-5 font-[var(--font-serif)] text-xl leading-relaxed bg-transparent border border-[#D8CFC4] rounded-lg resize-y outline-none",
+  sub: "font-[var(--font-sans)] text-[#5C5751] font-light leading-relaxed",
+  subStrong: "font-[var(--font-sans)] text-[#4A4641] font-light leading-relaxed",
+  link: "font-[var(--font-sans)] text-[#5C5751] font-light text-[0.85rem] cursor-pointer underline decoration-[#D8CFC4] underline-offset-4 hover:text-[#5C7350] transition-colors bg-transparent border-none",
+  textarea: "w-full min-h-[120px] p-4 font-[var(--font-serif)] text-[1.25rem] leading-relaxed bg-transparent border border-[#D8CFC4] rounded-lg resize-y outline-none text-left",
+  textareaLg: "w-full min-h-[240px] p-5 font-[var(--font-serif)] text-[1.3rem] leading-relaxed bg-transparent border border-[#D8CFC4] rounded-lg resize-y outline-none",
   divider: "w-8 h-px bg-[#7A8B6F] mx-auto",
 };
 
@@ -401,14 +401,26 @@ export default function MePesaMucho() {
   const [dialogLoading, setDialogLoading] = useState(false);
   const [dialogCerrado, setDialogCerrado] = useState(false);
   const [allCitas, setAllCitas] = useState<{ source: string; text: string }[]>([]);
+  const [globalTextSize, setGlobalTextSize] = useState<"normal" | "large" | "xlarge">("normal");
   const dialogEndRef = useRef<HTMLDivElement>(null);
   const crisisShownOnce = useRef(false);
   const scrollCardRef = useRef<HTMLDivElement>(null);
+
+  // Accessibility: apply text size to html element
+  useEffect(() => {
+    document.documentElement.setAttribute("data-text-size", globalTextSize);
+    try { localStorage.setItem("mpm_textsize", globalTextSize); } catch {}
+  }, [globalTextSize]);
 
   // Init
   useEffect(() => {
     setUsosHoy(getUsosHoy());
     setDayPass(getDayPass());
+    // Restore text size preference
+    try {
+      const saved = localStorage.getItem("mpm_textsize") as "normal" | "large" | "xlarge" | null;
+      if (saved && ["normal", "large", "xlarge"].includes(saved)) setGlobalTextSize(saved);
+    } catch {}
 
     const params = new URLSearchParams(window.location.search);
     const sid = params.get("session_id");
@@ -722,8 +734,17 @@ export default function MePesaMucho() {
           <LogoIcon size={24} />
           <span className="text-lg font-light tracking-tight text-[#3A3733]">mepesamucho</span>
         </button>
-        <div className="flex items-center gap-4">
-          <button className={`${S.link} text-[0.7rem]`} onClick={() => setShowHowItWorks(!showHowItWorks)}>Cómo funciona</button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setGlobalTextSize(globalTextSize === "normal" ? "large" : globalTextSize === "large" ? "xlarge" : "normal")}
+            className="font-[var(--font-sans)] text-[0.85rem] text-[#5C5751] font-medium bg-transparent border border-[#D8CFC4] rounded-full px-2.5 py-1 cursor-pointer hover:bg-[#EAE4DC] transition-colors flex items-center gap-1"
+            aria-label={`Tamaño de texto: ${globalTextSize === "normal" ? "normal" : globalTextSize === "large" ? "grande" : "extra grande"}`}
+            title="Cambiar tamaño de texto"
+          >
+            <span className="text-[0.75rem]">Aa</span>
+            <span className="text-[0.7rem]">{globalTextSize === "normal" ? "" : globalTextSize === "large" ? "+" : "++"}</span>
+          </button>
+          <button className={`${S.link} text-[0.9rem]`} onClick={() => setShowHowItWorks(!showHowItWorks)}>Cómo funciona</button>
         </div>
       </div>
     </div>
@@ -795,14 +816,14 @@ export default function MePesaMucho() {
       <div className="text-left">
         {CRISIS_RESOURCES.lines.map((l, i) => (
           <div key={i} className={`p-3 mb-1 rounded ${i % 2 === 0 ? "bg-[#F5ECE3]" : ""}`}>
-            <p className={`${S.sub} text-[0.7rem] uppercase tracking-widest mb-0.5`} style={{ opacity: 0.7 }}>{l.country}</p>
+            <p className={`${S.sub} text-[0.9rem] uppercase tracking-widest mb-0.5`}>{l.country}</p>
             <p className="text-[1.05rem] font-medium">{l.name}</p>
             {l.isWeb ? (
               <a href={l.url} target="_blank" rel="noopener noreferrer" className={`${S.sub} text-sm text-[#6B7F5E] underline`}>{l.phone}</a>
             ) : (
               <p className="font-[var(--font-sans)] text-lg text-[#6B7F5E] font-medium tracking-wide">{l.phone}</p>
             )}
-            {l.note && <p className={`${S.sub} text-xs mt-0.5`} style={{ opacity: 0.6 }}>{l.note}</p>}
+            {l.note && <p className={`${S.sub} text-sm mt-0.5`}>{l.note}</p>}
           </div>
         ))}
       </div>
@@ -912,11 +933,11 @@ export default function MePesaMucho() {
   const Footer = ({ showDemo = false, showCounter = false }: { showDemo?: boolean; showCounter?: boolean }) => (
     <footer className="mt-14 text-center" role="contentinfo">
       <div className={`${S.divider} mb-5`} />
-      <p className="font-[var(--font-sans)] text-[0.65rem] text-[#857F78] leading-relaxed">mepesamucho.com · Un espacio de reflexión, no de consejería.</p>
-      <p className="font-[var(--font-sans)] text-[0.65rem] text-[#857F78] leading-relaxed mt-1">Lo que escribes no se almacena ni se comparte.</p>
-      <p className="font-[var(--font-sans)] text-[0.6rem] text-[#A09A93] leading-relaxed mt-2">Un proyecto independiente de bienestar emocional.</p>
+      <p className="font-[var(--font-sans)] text-[0.85rem] text-[#6B665F] leading-relaxed">mepesamucho.com · Un espacio de reflexión, no de consejería.</p>
+      <p className="font-[var(--font-sans)] text-[0.85rem] text-[#6B665F] leading-relaxed mt-1">Lo que escribes no se almacena ni se comparte.</p>
+      <p className="font-[var(--font-sans)] text-[0.8rem] text-[#7A756F] leading-relaxed mt-2">Un proyecto independiente de bienestar emocional.</p>
       {showCounter && (
-        <p className="font-[var(--font-sans)] text-[0.6rem] text-[#8A8580] mt-3">
+        <p className="font-[var(--font-sans)] text-[0.8rem] text-[#6B665F] mt-3">
           {dayPass.active
             ? `Acceso ampliado activo`
             : `${Math.max(0, 2 - usosHoy)} ${Math.max(0, 2 - usosHoy) === 1 ? "reflexión gratuita disponible" : "reflexiones gratuitas disponibles"} hoy`
@@ -924,10 +945,10 @@ export default function MePesaMucho() {
         </p>
       )}
       <div className="flex justify-center gap-4 mt-3 flex-wrap">
-        <button className={`${S.link} text-[0.65rem]`} onClick={() => setShowAbout(true)}>Acerca de</button>
-        <button className={`${S.link} text-[0.65rem]`} onClick={() => setShowDisclaimer(true)}>Aviso legal y privacidad</button>
+        <button className={`${S.link} text-[0.85rem]`} onClick={() => setShowAbout(true)}>Acerca de</button>
+        <button className={`${S.link} text-[0.85rem]`} onClick={() => setShowDisclaimer(true)}>Aviso legal y privacidad</button>
         {showDemo && (
-          <button className={`${S.link} text-[0.65rem]`} onClick={() => { setUsosHoy(0); saveUsosHoy(0); }}>(Demo: reiniciar)</button>
+          <button className={`${S.link} text-[0.85rem]`} onClick={() => { setUsosHoy(0); saveUsosHoy(0); }}>(Demo: reiniciar)</button>
         )}
       </div>
     </footer>
@@ -980,7 +1001,7 @@ export default function MePesaMucho() {
           {reflexion && (
             <div className="mb-8 relative">
               <div className="bg-white/40 border border-[#D8CFC4] rounded-2xl p-6 text-left" style={{ maxHeight: "180px", overflow: "hidden" }}>
-                <div className="leading-loose text-base" style={{ fontSize: "1rem" }}>
+                <div className="leading-loose text-base" style={{ fontSize: "1.1rem" }}>
                   {reflexion.split("\n\n").slice(0, 2).map((p, i) => {
                     const t = p.trim().replace(/\*\*(.*?)\*\*/g, "$1").replace(/\*(.*?)\*/g, "$1");
                     if (!t) return null;
@@ -1014,7 +1035,7 @@ export default function MePesaMucho() {
           <div className="card-hover-lift bg-white/40 border-2 border-[#7A8B6F] rounded-2xl p-6 mb-4">
             <p className="text-lg font-medium text-center mb-1">Continuar esta reflexión</p>
             <p className="text-center text-xl font-light mb-1">$0.99 <span className={`${S.sub} text-sm`}>USD</span></p>
-            <p className="font-[var(--font-sans)] text-[0.7rem] text-[#7A8B6F] font-light italic mb-2 text-center">Menos que un café. Más que un momento.</p>
+            <p className="font-[var(--font-sans)] text-[0.9rem] text-[#7A8B6F] font-light italic mb-2 text-center">Menos que un café. Más que un momento.</p>
             <p className={`${S.sub} text-sm mb-4 text-center`}>Desbloquea la reflexión completa, continúa la conversación e incluye descarga en PDF.</p>
             <div className="flex justify-center">
               <button className={`${S.btn} btn-primary-glow w-full`} style={{ maxWidth: "320px" }} onClick={() => { setCheckoutError(""); checkout("single", undefined, setCheckoutError); }} aria-label="Continuar esta reflexión por $0.99">Continuar esta reflexión — $0.99</button>
@@ -1029,7 +1050,7 @@ export default function MePesaMucho() {
             <div className="flex justify-center">
               <button className={S.btnSecondary + " w-full"} style={{ maxWidth: "320px" }} onClick={() => { setCheckoutError(""); checkout("subscription", undefined, setCheckoutError); }} aria-label="Suscribirme por $4.99 al mes">Suscribirme · $4.99/mes</button>
             </div>
-            <p className={`${S.sub} text-xs mt-2 text-center`}>Cancela cuando quieras.</p>
+            <p className={`${S.sub} text-sm mt-2 text-center`}>Cancela cuando quieras.</p>
           </div>
 
           {checkoutError && (
@@ -1041,14 +1062,14 @@ export default function MePesaMucho() {
               <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" stroke="#7A8B6F" strokeWidth="1.5"/>
               <path d="M9 12l2 2 4-4" stroke="#7A8B6F" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            <p className={`${S.sub} text-xs`}>Cobro seguro a través de Stripe · Precios en USD</p>
+            <p className={`${S.sub} text-sm`}>Cobro seguro a través de Stripe · Precios en USD</p>
           </div>
 
           {/* 3-button navigation bar */}
           <div className="grid grid-cols-3 gap-3 mt-8 w-full">
             {reflexion ? (
               <button
-                className="font-[var(--font-sans)] text-[0.75rem] text-[#5C5751] font-normal bg-transparent border border-[#D9CFBF] rounded-lg px-3 py-3 hover:bg-[#EBE3D8] transition-colors text-center"
+                className="font-[var(--font-sans)] text-[0.95rem] text-[#5C5751] font-normal bg-transparent border border-[#D9CFBF] rounded-lg px-4 py-3.5 hover:bg-[#EBE3D8] transition-colors text-center"
                 onClick={() => { setUsosHoy(Math.max(0, usosHoy - 1)); saveUsosHoy(Math.max(0, usosHoy - 1)); setStep("essay"); setCierreStep(0); }}
               >
                 ← Volver a mi reflexión
@@ -1057,13 +1078,13 @@ export default function MePesaMucho() {
               <div />
             )}
             <button
-              className="font-[var(--font-sans)] text-[0.75rem] text-[#5C5751] font-normal bg-transparent border border-[#D9CFBF] rounded-lg px-3 py-3 hover:bg-[#EBE3D8] transition-colors text-center"
+              className="font-[var(--font-sans)] text-[0.95rem] text-[#5C5751] font-normal bg-transparent border border-[#D9CFBF] rounded-lg px-4 py-3.5 hover:bg-[#EBE3D8] transition-colors text-center"
               onClick={() => setShowHeroCode(true)}
             >
               Ya tengo un código
             </button>
             <button
-              className="font-[var(--font-sans)] text-[0.75rem] text-[#5C5751] font-normal bg-transparent border border-[#D9CFBF] rounded-lg px-3 py-3 hover:bg-[#EBE3D8] transition-colors text-center"
+              className="font-[var(--font-sans)] text-[0.95rem] text-[#5C5751] font-normal bg-transparent border border-[#D9CFBF] rounded-lg px-4 py-3.5 hover:bg-[#EBE3D8] transition-colors text-center"
               onClick={reiniciar}
             >
               Volver al inicio
@@ -1117,7 +1138,7 @@ export default function MePesaMucho() {
                   animation: "stepTransition 0.6s cubic-bezier(0.25, 0.1, 0.25, 1) forwards",
                 }}
               >
-                <p className="font-[var(--font-sans)] text-sm text-[#6F6A64] font-light mb-3">
+                <p className="font-[var(--font-sans)] text-sm text-[#5C5751] font-light mb-3">
                   Ingresa tu código o email para continuar.
                 </p>
                 <input
@@ -1192,7 +1213,7 @@ export default function MePesaMucho() {
                       {heroCodeLoading ? "Verificando..." : "Acceder"}
                     </button>
                     <button
-                      className="font-[var(--font-sans)] text-sm px-4 py-3 text-[#857F78] hover:text-[#5C5751] transition-colors"
+                      className="font-[var(--font-sans)] text-sm px-4 py-3 text-[#6B665F] hover:text-[#5C5751] transition-colors"
                       onClick={() => { setShowHeroCode(false); setHeroCodeInput(""); setHeroCodeError(""); }}
                     >
                       Cancelar
@@ -1236,13 +1257,13 @@ export default function MePesaMucho() {
             className={S.textareaLg}
             aria-label="Escribe lo que necesitas soltar"
           />
-          <p className={`${S.sub} text-xs text-right mt-1`}>{texto.length > 0 ? `${texto.length} caracteres` : ""}</p>
+          <p className={`${S.sub} text-sm text-right mt-1`}>{texto.length > 0 ? `${texto.length} caracteres` : ""}</p>
           {texto.trim().length > 0 && (
             <div className="text-center mt-5 transition-opacity duration-500" style={{ opacity: texto.trim().length > 5 ? 1 : 0.5 }}>
               <button className={`${S.btn} text-lg px-10`} onClick={iniciarDisolucion} aria-label="Soltar lo que escribiste">
                 Soltar y dejar ir
               </button>
-              <p className={`${S.sub} text-xs mt-3`}>Tu texto se procesa en el momento y luego se elimina.</p>
+              <p className={`${S.sub} text-sm mt-3`}>Tu texto se procesa en el momento y luego se elimina.</p>
             </div>
           )}
         </div>
@@ -1282,7 +1303,7 @@ export default function MePesaMucho() {
             Ya no lo cargas solo.
           </p>
           <p
-            className="text-base text-[#6F6A64] font-light mb-10 leading-relaxed"
+            className="text-base text-[#5C5751] font-light mb-10 leading-relaxed"
             style={{ opacity: readyContinue ? 1 : 0, transform: readyContinue ? "translateY(0)" : "translateY(8px)", transition: "opacity 1.4s ease, transform 1.4s ease", transitionDelay: "0.3s", textAlign: "center" }}
           >
             Lo que acabas de soltar tiene valor. Ahora vamos a darle el espacio que merece.
@@ -1315,7 +1336,7 @@ export default function MePesaMucho() {
         {showHowItWorks && <HowItWorksModal />}
         {showAbout && <AboutModal />}
         <div className={`${S.boxWide} text-center`}>
-          <p className="font-[var(--font-sans)] text-xs uppercase tracking-[0.15em] text-[#857F78] font-light mb-2">Hay muchas formas de escuchar lo que necesitas oír</p>
+          <p className="font-[var(--font-sans)] text-sm uppercase tracking-[0.15em] text-[#6B665F] font-light mb-2">Hay muchas formas de escuchar lo que necesitas oír</p>
           <h2 className="text-xl sm:text-2xl font-normal italic leading-snug mb-16">¿Desde dónde quieres recibir tu reflexión?</h2>
           {apiError && <p className={`${S.sub} text-sm text-[#6B7F5E] mb-4`} role="alert">{apiError}</p>}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4" role="radiogroup" aria-label="Selecciona tradición">
@@ -1362,7 +1383,7 @@ export default function MePesaMucho() {
         {showAbout && <AboutModal />}
         <div className={`${S.box}`} style={{ textAlign: "center" }}>
           {/* Conversational tone — not a form */}
-          <p className="text-lg text-[#6F6A64] font-light italic leading-relaxed mb-2">Hay muchas formas de escuchar lo que necesitas oír.</p>
+          <p className="text-lg text-[#5C5751] font-light italic leading-relaxed mb-2">Hay muchas formas de escuchar lo que necesitas oír.</p>
           <h2 className="text-2xl font-light italic leading-relaxed mb-3">
             ¿Qué es lo que más necesitas en este momento?
           </h2>
@@ -1391,7 +1412,7 @@ export default function MePesaMucho() {
             </button>
           </div>
 
-          <p className="font-[var(--font-sans)] text-[0.65rem] text-[#A09A93] font-light mt-5">Puedes escribir tanto o tan poco como quieras. No hay respuestas incorrectas.</p>
+          <p className="font-[var(--font-sans)] text-[0.85rem] text-[#7A756F] font-light mt-5">Puedes escribir tanto o tan poco como quieras. No hay respuestas incorrectas.</p>
 
           <div className="mt-4">
             <PrivacyBadge onClick={() => setShowDisclaimer(true)} />
@@ -1417,7 +1438,7 @@ export default function MePesaMucho() {
           <p className={`${S.sub} italic text-base animate-gen-fade`} key={genMsgIndex} aria-live="polite">
             {GEN_MESSAGES[genMsgIndex]}
           </p>
-          <p className={`${S.sub} text-xs mt-4`}>
+          <p className={`${S.sub} text-sm mt-4`}>
             Esto puede tomar unos segundos
           </p>
         </div>
@@ -1434,7 +1455,7 @@ export default function MePesaMucho() {
       const t = p.trim();
       if (!t) return null;
       const headerMatch = t.match(/^#{1,3}\s+(.+)$/);
-      if (headerMatch) return <h2 key={i} className="text-center font-light italic mb-6 mt-2 text-[#6F6A64]" style={{ fontSize: fs.xl }}>{cleanMarkdown(headerMatch[1])}</h2>;
+      if (headerMatch) return <h2 key={i} className="text-center font-light italic mb-6 mt-2 text-[#5C5751]" style={{ fontSize: fs.xl }}>{cleanMarkdown(headerMatch[1])}</h2>;
       const cleaned = cleanMarkdown(t);
       const isCita = cleaned.startsWith("<<") || cleaned.startsWith("\u00AB") || cleaned.startsWith('"');
       const isAttrib = cleaned.startsWith("\u2014") || cleaned.startsWith("--");
@@ -1465,13 +1486,13 @@ export default function MePesaMucho() {
               <p className="text-lg sm:text-xl font-light tracking-tight mt-2 text-[#3A3733]/80">mepesamucho</p>
             </button>
             <div className="w-10 h-px bg-[#7A8B6F] mt-3 mb-2" />
-            <p className="font-[var(--font-sans)] text-xs uppercase tracking-[0.2em] text-[#6F6A64] font-light">{MARCOS[marco!]?.nombre}</p>
+            <p className="font-[var(--font-sans)] text-sm uppercase tracking-[0.2em] text-[#5C5751] font-light">{MARCOS[marco!]?.nombre}</p>
           </div>
         </div>
 
         <div className="text-center mb-4 px-5">
           <p className="font-[var(--font-sans)] text-sm sm:text-base italic text-[#6B7F5E] font-light tracking-wide">Lee despacio. Esto fue escrito para ti.</p>
-          <p className="font-[var(--font-sans)] text-[0.65rem] text-[#A09A93] font-light mt-2 tracking-wide">Cada cita incluye referencia verificable de su fuente original.</p>
+          <p className="font-[var(--font-sans)] text-[0.85rem] text-[#7A756F] font-light mt-2 tracking-wide">Cada cita incluye referencia verificable de su fuente original.</p>
         </div>
 
         <div style={{ maxWidth: "680px", width: "100%", margin: "0 auto", paddingLeft: "1.5rem", paddingRight: "1.5rem", paddingBottom: "3rem" }}>
@@ -1500,7 +1521,7 @@ export default function MePesaMucho() {
             ) : (
               <span className="font-[var(--font-sans)] text-sm text-[#B8B0A4] font-light cursor-default" title="Disponible con suscripción" aria-label="Descarga de PDF disponible con suscripción">
                 <span style={{ opacity: 0.5 }}>Descargar reflexión (PDF)</span>
-                <span className="block text-[0.7rem] text-[#A09A93] mt-0.5 italic">Disponible con suscripción</span>
+                <span className="block text-[0.9rem] text-[#7A756F] mt-0.5 italic">Disponible con suscripción</span>
               </span>
             )}
           </div>
@@ -1549,7 +1570,7 @@ export default function MePesaMucho() {
             </div>
           </div>
           <p className={`${S.sub} italic text-base`}>Preparando algo más para ti...</p>
-          <p className={`${S.sub} text-xs mt-4`}>Esto puede tomar unos segundos</p>
+          <p className={`${S.sub} text-sm mt-4`}>Esto puede tomar unos segundos</p>
         </div>
       </div>
     );
@@ -1625,7 +1646,7 @@ export default function MePesaMucho() {
               <div className="w-8 h-px bg-[#7A8B6F] mx-auto mb-6" />
               <p className="text-xl italic leading-relaxed mb-2" style={{ textAlign: "center" }}>Lo que compartiste merece más espacio.</p>
               <p className={`${S.sub} text-sm mb-2`} style={{ textAlign: "center" }}>Tu reflexión puede ir más profundo. Continúa cuando estés listo.</p>
-              <p className="font-[var(--font-sans)] text-[0.7rem] text-[#A09A93] font-light italic mb-6" style={{ textAlign: "center" }}>Menos que un café. Más que un momento.</p>
+              <p className="font-[var(--font-sans)] text-[0.9rem] text-[#7A756F] font-light italic mb-6" style={{ textAlign: "center" }}>Menos que un café. Más que un momento.</p>
               <div className="flex flex-col gap-3 items-center" style={{ maxWidth: "320px", margin: "0 auto" }}>
                 <button className={`${S.btn} btn-primary-glow`} style={{ width: "100%", maxWidth: "320px" }} onClick={() => { setCheckoutError(""); checkout("single", undefined, setCheckoutError); }} aria-label="Continuar esta reflexión por $0.99">Continuar esta reflexión — $0.99</button>
                 <button className={`${S.btnSecondary} text-sm`} style={{ width: "100%", maxWidth: "320px" }} onClick={() => { setCheckoutError(""); checkout("subscription", undefined, setCheckoutError); }} aria-label="Suscripción mensual $4.99">Reflexiones ilimitadas · $4.99/mes</button>
@@ -1635,26 +1656,26 @@ export default function MePesaMucho() {
                     <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" stroke="#A09A93" strokeWidth="1.5"/>
                     <path d="M9 12l2 2 4-4" stroke="#A09A93" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
-                  <p className="font-[var(--font-sans)] text-[0.6rem] text-[#A09A93] font-light">Cobro seguro vía Stripe</p>
+                  <p className="font-[var(--font-sans)] text-[0.8rem] text-[#7A756F] font-light">Cobro seguro vía Stripe</p>
                 </div>
               </div>
 
               {/* 3-button navigation bar */}
               <div className="grid grid-cols-3 gap-3 mt-8 mx-auto" style={{ maxWidth: "480px" }}>
                 <button
-                  className="font-[var(--font-sans)] text-[0.75rem] text-[#5C5751] font-normal bg-transparent border border-[#D9CFBF] rounded-lg px-3 py-3 hover:bg-[#EBE3D8] transition-colors text-center"
+                  className="font-[var(--font-sans)] text-[0.95rem] text-[#5C5751] font-normal bg-transparent border border-[#D9CFBF] rounded-lg px-4 py-3.5 hover:bg-[#EBE3D8] transition-colors text-center"
                   onClick={() => setCierreStep(0)}
                 >
                   ← Volver a mi reflexión
                 </button>
                 <button
-                  className="font-[var(--font-sans)] text-[0.75rem] text-[#5C5751] font-normal bg-transparent border border-[#D9CFBF] rounded-lg px-3 py-3 hover:bg-[#EBE3D8] transition-colors text-center"
+                  className="font-[var(--font-sans)] text-[0.95rem] text-[#5C5751] font-normal bg-transparent border border-[#D9CFBF] rounded-lg px-4 py-3.5 hover:bg-[#EBE3D8] transition-colors text-center"
                   onClick={() => setShowPaywallCode(true)}
                 >
                   Ya tengo un código
                 </button>
                 <button
-                  className="font-[var(--font-sans)] text-[0.75rem] text-[#5C5751] font-normal bg-transparent border border-[#D9CFBF] rounded-lg px-3 py-3 hover:bg-[#EBE3D8] transition-colors text-center"
+                  className="font-[var(--font-sans)] text-[0.95rem] text-[#5C5751] font-normal bg-transparent border border-[#D9CFBF] rounded-lg px-4 py-3.5 hover:bg-[#EBE3D8] transition-colors text-center"
                   onClick={reiniciar}
                 >
                   Volver al inicio
@@ -1723,7 +1744,7 @@ export default function MePesaMucho() {
                       {paywallCodeLoading ? "Verificando..." : "Desbloquear"}
                     </button>
                     <button
-                      className="font-[var(--font-sans)] text-sm px-4 py-3 text-[#857F78] hover:text-[#5C5751] transition-colors"
+                      className="font-[var(--font-sans)] text-sm px-4 py-3 text-[#6B665F] hover:text-[#5C5751] transition-colors"
                       onClick={() => { setShowPaywallCode(false); setPaywallCodeInput(""); setPaywallCodeError(""); }}
                     >
                       Cancelar
@@ -1751,7 +1772,7 @@ export default function MePesaMucho() {
                         const isCita = t.startsWith("<<") || t.startsWith("\u00AB") || t.startsWith('"');
                         const isAttrib = t.startsWith("\u2014") || t.startsWith("--");
                         if (isCita) return <blockquote key={j} className="my-4 py-3 px-4 bg-[#EAE4DC]/40 rounded-r-md italic text-[0.95rem] leading-relaxed" style={{ borderLeftWidth: "2px", borderLeftStyle: "solid", borderLeftColor: "#7A8B6F" }}>{t}</blockquote>;
-                        if (isAttrib) return <p key={j} className={`${S.sub} text-xs pl-4 mb-3 font-medium`}>{t}</p>;
+                        if (isAttrib) return <p key={j} className={`${S.sub} text-sm pl-4 mb-3 font-medium`}>{t}</p>;
                         return <p key={j} className="mb-3 text-[0.95rem] leading-relaxed">{t}</p>;
                       })}
                     </div>
@@ -1913,7 +1934,7 @@ export default function MePesaMucho() {
                 >
                   {accessSaving ? "Guardando..." : "Guardar con email"}
                 </button>
-                <p className={`${S.sub} text-xs mt-2`}>Tu email se almacena como hash encriptado. Nunca lo veremos.</p>
+                <p className={`${S.sub} text-sm mt-2`}>Tu email se almacena como hash encriptado. Nunca lo veremos.</p>
               </div>
 
               {/* Divider */}

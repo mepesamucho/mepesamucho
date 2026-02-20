@@ -12,7 +12,6 @@ function getStripe() {
   if (!process.env.STRIPE_SECRET_KEY) throw new Error("STRIPE_SECRET_KEY not set");
   return new Stripe(process.env.STRIPE_SECRET_KEY);
 }
-const stripe = getStripe();
 
 export async function POST(req: NextRequest) {
   try {
@@ -41,6 +40,7 @@ export async function POST(req: NextRequest) {
       customerId = kvSession.customerId;
     } else {
       // Fallback: verify directly with Stripe
+      const stripe = getStripe();
       const session = await stripe.checkout.sessions.retrieve(sessionId);
       if (session.payment_status !== "paid") {
         return NextResponse.json({ error: "Pago no verificado" }, { status: 403 });
