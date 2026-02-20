@@ -8,7 +8,11 @@ import {
   type AccessType,
 } from "@/lib/access";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+function getStripe() {
+  if (!process.env.STRIPE_SECRET_KEY) throw new Error("STRIPE_SECRET_KEY not set");
+  return new Stripe(process.env.STRIPE_SECRET_KEY);
+}
+const stripe = getStripe();
 
 export async function POST(req: NextRequest) {
   try {

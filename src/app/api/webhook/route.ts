@@ -4,7 +4,7 @@ import { savePaymentSession, markSubscriptionCancelled, type AccessType } from "
 
 function getStripe() {
   if (!process.env.STRIPE_SECRET_KEY) throw new Error("STRIPE_SECRET_KEY not set");
-  return new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2026-01-28.clover" });
+  return new Stripe(process.env.STRIPE_SECRET_KEY);
 }
 
 // ── Idempotency: track processed events (in-memory per instance) ──

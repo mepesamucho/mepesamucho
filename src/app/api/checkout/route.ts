@@ -3,16 +3,19 @@ import Stripe from "stripe";
 
 function getStripe() {
   if (!process.env.STRIPE_SECRET_KEY) throw new Error("STRIPE_SECRET_KEY not set");
-  return new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2026-01-28.clover" });
+  return new Stripe(process.env.STRIPE_SECRET_KEY);
 }
 
 type ProductType = "subscription" | "daypass" | "single";
 
-const PRICE_MAP: Record<ProductType, string | undefined> = {
-  subscription: process.env.STRIPE_PRICE_SUBSCRIPTION,
-  daypass: process.env.STRIPE_PRICE_DAYPASS,
-  single: process.env.STRIPE_PRICE_SINGLE,
-};
+function getPriceId(type: ProductType): string | undefined {
+  const map: Record<ProductType, string | undefined> = {
+    subscription: process.env.STRIPE_PRICE_SUBSCRIPTION,
+    daypass: process.env.STRIPE_PRICE_DAYPASS,
+    single: process.env.STRIPE_PRICE_SINGLE,
+  };
+  return map[type];
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -28,9 +31,9 @@ export async function POST(req: NextRequest) {
     const stripe = getStripe();
     const { type } = (await req.json()) as { type: ProductType };
 
-    const priceId = PRICE_MAP[type];
+    const priceId = getPriceId(type);
     if (!priceId) {
-      console.error(`Price ID not configured for type: ${type}`);
+      console.error(`Price ID not configured for type: ${type}. Env vars: SUBSCRIPTION=${process.env.STRIPE_PRICE_SUBSCRIPTION ? "set" : "missing"}, SINGLE=${process.env.STRIPE_PRICE_SINGLE ? "set" : "missing"}, DAYPASS=${process.env.STRIPE_PRICE_DAYPASS ? "set" : "missing"}`);
       return NextResponse.json(
         { error: "Este tipo de pago no está disponible en este momento." },
         { status: 400 }
@@ -38,7 +41,9 @@ export async function POST(req: NextRequest) {
     }
 
     const isSubscription = type === "subscription";
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.mepesamucho.com";
+
+    console.log(`Creating checkout: type=${type}, priceId=${priceId.substring(0, 20)}..., mode=${isSubscription ? "subscription" : "payment"}`);
 
     const session = await stripe.checkout.sessions.create({
       mode: isSubscription ? "subscription" : "payment",
@@ -52,7 +57,14 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ url: session.url });
   } catch (error) {
-    console.error("Error creando checkout session:", error);
-    return NextResponse.json({ error: "Error procesando el pago" }, { status: 500 });
+    const stripeError = error instanceof Stripe.errors.StripeError ? error : null;
+    const errorMsg = stripeError
+      ? `Stripe error [${stripeError.type}]: ${stripeError.message}`
+      : `Unknown error: ${error}`;
+    console.error("Error creando checkout session:", errorMsg);
+    return NextResponse.json(
+      { error: "Error procesando el pago. Verifica la configuración de Stripe." },
+      { status: 500 }
+    );
   }
 }
