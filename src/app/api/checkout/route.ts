@@ -41,9 +41,10 @@ export async function POST(req: NextRequest) {
     }
 
     const isSubscription = type === "subscription";
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.mepesamucho.com";
+    // Always use www to avoid 307 redirect that strips query params on some mobile browsers
+    const appUrl = "https://www.mepesamucho.com";
 
-    console.log(`Creating checkout: type=${type}, priceId=${priceId.substring(0, 20)}..., mode=${isSubscription ? "subscription" : "payment"}`);
+    console.log(`Creating checkout: type=${type}, priceId=${priceId.substring(0, 20)}..., mode=${isSubscription ? "subscription" : "payment"}, successUrl=${appUrl}`);
 
     const session = await stripe.checkout.sessions.create({
       mode: isSubscription ? "subscription" : "payment",

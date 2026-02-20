@@ -433,13 +433,17 @@ export default function MePesaMucho() {
     if (sid && type) {
       setVerifyingPayment(true);
       window.history.replaceState({}, "", "/");
-      fetch("/api/verify-session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId: sid }),
-      })
-        .then((r) => r.json())
-        .then((d) => {
+
+      // Verify payment with retry (Stripe webhook might be delayed)
+      const verifyWithRetry = async (retries = 0): Promise<void> => {
+        try {
+          const res = await fetch("/api/verify-session", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ sessionId: sid }),
+          });
+          const d = await res.json();
+
           if (d.success) {
             if (type === "daypass") { activateDayPass(); setDayPass({ active: true, hoursLeft: 24 }); }
             if (type === "single") activateSinglePass();
@@ -463,7 +467,7 @@ export default function MePesaMucho() {
                   setLastSessionId(sid);
                   setLastPaymentType(type);
                   setVerifyingPayment(false);
-                  return; // Skip access_choice, go directly to essay
+                  return;
                 }
               }
             } catch {}
@@ -472,18 +476,27 @@ export default function MePesaMucho() {
             setLastPaymentType(type);
             setVerifyingPayment(false);
             setStep("access_choice");
+          } else if (retries < 5) {
+            // Payment might not be confirmed yet, retry after a delay
+            await new Promise((r) => setTimeout(r, 2000));
+            return verifyWithRetry(retries + 1);
           } else {
-            // Payment verification failed — show error and go to landing
-            console.error("Payment verification failed:", d);
+            console.error("Payment verification failed after retries:", d);
             setVerifyingPayment(false);
             setCheckoutError("No pudimos verificar tu pago. Si completaste el pago, espera unos segundos y recarga la página.");
           }
-        })
-        .catch((err) => {
+        } catch (err) {
+          if (retries < 3) {
+            await new Promise((r) => setTimeout(r, 2000));
+            return verifyWithRetry(retries + 1);
+          }
           console.error("Error verifying payment:", err);
           setVerifyingPayment(false);
           setCheckoutError("Error de conexión al verificar tu pago. Recarga la página para intentar de nuevo.");
-        });
+        }
+      };
+
+      verifyWithRetry();
     }
   }, []);
 
