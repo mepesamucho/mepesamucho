@@ -559,8 +559,10 @@ function MePesaMuchoInner() {
       } catch {}
 
       // Check if there's a saved continuación to restore
+      // Check both sessionStorage and localStorage (sessionStorage is lost during
+      // cross-domain navigation to Stripe, so localStorage is the reliable fallback)
       try {
-        const saved = sessionStorage.getItem("mpm_continuacion");
+        const saved = sessionStorage.getItem("mpm_continuacion") || localStorage.getItem("mpm_continuacion");
         if (saved) {
           const data = JSON.parse(saved);
           if (data.continuacion) {
@@ -572,7 +574,8 @@ function MePesaMuchoInner() {
             setMarco(data.marco || null);
             setCierreStep(2);
             setStep("essay");
-            sessionStorage.removeItem("mpm_continuacion");
+            try { sessionStorage.removeItem("mpm_continuacion"); } catch {}
+            try { localStorage.removeItem("mpm_continuacion"); } catch {}
             setLastSessionId(paymentSid);
             setLastPaymentType(paymentType);
             setVerifyingPayment(false);
@@ -771,14 +774,16 @@ function MePesaMuchoInner() {
       const data = await res.json();
       setContinuacion(data.continuacion);
       setContinuacionCitas(data.citasUsadas || []);
-      // Save to sessionStorage for post-payment recovery
-      try {
-        sessionStorage.setItem("mpm_continuacion", JSON.stringify({
-          continuacion: data.continuacion,
-          continuacionCitas: data.citasUsadas || [],
-          reflexion, citasUsadas, marco, cierreStep: 2,
-        }));
-      } catch {}
+      // Save to both sessionStorage AND localStorage for post-payment recovery
+      // sessionStorage is lost during cross-domain navigation (Stripe checkout),
+      // so localStorage is needed as fallback
+      const continuacionData = JSON.stringify({
+        continuacion: data.continuacion,
+        continuacionCitas: data.citasUsadas || [],
+        reflexion, citasUsadas, marco, cierreStep: 2,
+      });
+      try { sessionStorage.setItem("mpm_continuacion", continuacionData); } catch {}
+      try { localStorage.setItem("mpm_continuacion", continuacionData); } catch {}
     } catch {
       setContinuacion("");
     }
@@ -852,6 +857,7 @@ function MePesaMuchoInner() {
     setDialogCerrado(false); setAllCitas([]);
     setDayPass(getDayPass()); setUsosHoy(getUsosHoy());
     try { sessionStorage.removeItem("mpm_continuacion"); } catch {}
+    try { localStorage.removeItem("mpm_continuacion"); } catch {}
   };
 
   const fs = FONT_SIZES[fontSize];
