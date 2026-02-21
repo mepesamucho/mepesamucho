@@ -437,7 +437,8 @@ export default function MePesaMucho() {
     let type = params.get("type");
     const wasCanceled = params.get("canceled");
     if (wasCanceled) {
-      window.history.replaceState({}, "", "/");
+      // Don't use replaceState — it causes Next.js App Router to re-mount the component
+      // Just proceed normally; the query params in the URL are harmless
     }
 
     // Fallback 1: check sessionStorage (survives re-mounts)
@@ -493,7 +494,7 @@ export default function MePesaMucho() {
             await new Promise((r) => setTimeout(r, 2000));
             return verifyWithRetry(retries + 1);
           } else {
-            cleanupPaymentState();
+            cleanupPaymentStorage();
             setCheckoutError("No pudimos verificar tu pago. Si completaste el pago, espera unos segundos y recarga la página.");
           }
         } catch (err) {
@@ -501,7 +502,7 @@ export default function MePesaMucho() {
             await new Promise((r) => setTimeout(r, 2000));
             return verifyWithRetry(retries + 1);
           }
-          cleanupPaymentState();
+          cleanupPaymentStorage();
           setCheckoutError("Error de conexión al verificar tu pago. Recarga la página para intentar de nuevo.");
         }
       };
@@ -527,7 +528,7 @@ export default function MePesaMucho() {
             await new Promise((r) => setTimeout(r, 2500));
             return fallbackVerify(retries + 1);
           } else {
-            cleanupPaymentState();
+            cleanupPaymentStorage();
             setCheckoutError("No pudimos verificar tu pago. Si completaste el pago, espera unos segundos y recarga la página.");
           }
         } catch (err) {
@@ -535,7 +536,7 @@ export default function MePesaMucho() {
             await new Promise((r) => setTimeout(r, 2500));
             return fallbackVerify(retries + 1);
           }
-          cleanupPaymentState();
+          cleanupPaymentStorage();
           setCheckoutError("Error de conexión al verificar tu pago. Recarga la página para intentar de nuevo.");
         }
       };
@@ -594,18 +595,9 @@ export default function MePesaMucho() {
     }
   }, []);
 
-  // Safe URL cleanup: only clean URL after step has changed to avoid Next.js re-mount race
-  useEffect(() => {
-    if (step === "access_choice" || step === "essay") {
-      // Wait for React to fully commit the render, then clean URL
-      const timeout = setTimeout(() => {
-        if (window.location.search) {
-          try { window.history.replaceState({}, "", "/"); } catch {}
-        }
-      }, 500);
-      return () => clearTimeout(timeout);
-    }
-  }, [step]);
+  // URL cleanup removed: replaceState in Next.js App Router causes component re-mounts
+  // that race with React state updates, resulting in blank screens. The query params
+  // in the URL bar are harmless and far preferable to a broken payment flow.
 
   // Recovery: if component re-mounts after payment was already confirmed,
   // recover from localStorage safety net
