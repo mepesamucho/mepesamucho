@@ -6,6 +6,10 @@ import { jsPDF } from "jspdf";
 import { detectarCrisis, CRISIS_RESOURCES } from "@/data/crisis";
 import { MARCOS, type Marco } from "@/data/citas";
 
+// Module-level guard: survives Suspense re-mounts within the same page load
+// but resets on new navigations (which is exactly what we want)
+let _hasProcessedPayment = false;
+
 // ── TYPES ──────────────────────────────────────
 
 type Step =
@@ -420,8 +424,7 @@ function MePesaMuchoInner() {
     try { localStorage.setItem("mpm_textsize", globalTextSize); } catch {}
   }, [globalTextSize]);
 
-  // Init — guard with ref to prevent re-processing on re-renders
-  const hasProcessedPaymentRef = useRef(false);
+  // Init — guard with module-level var to prevent re-processing on re-renders/re-mounts
   useEffect(() => {
     console.log("[MPM] Init useEffect running. searchParams:", searchParams.toString(), "window.location.href:", window.location.href);
     console.log("[MPM] localStorage mpm_checkout_pending:", localStorage.getItem("mpm_checkout_pending"));
@@ -477,8 +480,8 @@ function MePesaMuchoInner() {
 
     if (sid && type) {
       // Guard: only process payment once (useSearchParams may cause re-renders)
-      if (hasProcessedPaymentRef.current) return;
-      hasProcessedPaymentRef.current = true;
+      if (_hasProcessedPayment) return;
+      _hasProcessedPayment = true;
       // Primary path: we have session_id from URL or sessionStorage
       paymentDataRef.current = { sid, type };
       try { sessionStorage.setItem("mpm_payment_pending", JSON.stringify({ sid, type })); } catch {}
@@ -517,8 +520,8 @@ function MePesaMuchoInner() {
       verifyWithRetry();
     } else if (checkoutPendingType) {
       // Guard: only process payment once
-      if (hasProcessedPaymentRef.current) return;
-      hasProcessedPaymentRef.current = true;
+      if (_hasProcessedPayment) return;
+      _hasProcessedPayment = true;
       // Fallback path: no session_id but we know a checkout was started (Safari param stripping)
       setVerifyingPayment(true);
 
@@ -616,7 +619,7 @@ function MePesaMuchoInner() {
   useEffect(() => {
     if (step !== "landing" || verifyingPayment) return;
     // Don't run recovery if the init useEffect already claimed payment processing
-    if (hasProcessedPaymentRef.current) return;
+    if (_hasProcessedPayment) return;
     try {
       const success = localStorage.getItem("mpm_payment_success");
       if (success) {
@@ -624,7 +627,7 @@ function MePesaMuchoInner() {
         // Only use if within last 2 minutes (prevents stale recovery)
         if (data.type && data.ts && Date.now() - data.ts < 120000) {
           console.log("[MPM] Recovering payment success from localStorage:", data.type);
-          hasProcessedPaymentRef.current = true;
+          _hasProcessedPayment = true;
           setLastSessionId(data.sid || "");
           setLastPaymentType(data.type);
           if (data.type === "daypass") setDayPass({ active: true, hoursLeft: 24 });
