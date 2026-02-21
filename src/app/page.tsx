@@ -245,6 +245,10 @@ async function checkout(
     });
     const data = await res.json();
     if (data.url) {
+      // Save checkout type BEFORE redirecting to Stripe
+      // This survives even if Safari strips query params on redirect back
+      try { localStorage.setItem("mpm_checkout_pending", JSON.stringify({ type, ts: Date.now() })); } catch {}
+      try { sessionStorage.setItem("mpm_checkout_pending", JSON.stringify({ type, ts: Date.now() })); } catch {}
       window.location.href = data.url;
     } else {
       const msg = data.error || "No pudimos iniciar el pago. Intenta de nuevo.";
@@ -432,27 +436,43 @@ export default function MePesaMucho() {
       window.history.replaceState({}, "", "/");
     }
 
-    // If URL params are missing, check sessionStorage (survives re-mounts caused by Next.js router)
+    // Fallback 1: check sessionStorage (survives re-mounts)
     if (!sid || !type) {
       try {
         const pending = sessionStorage.getItem("mpm_payment_pending");
         if (pending) {
           const data = JSON.parse(pending);
-          sid = data.sid;
-          type = data.type;
+          sid = data.sid || sid;
+          type = data.type || type;
+        }
+      } catch {}
+    }
+
+    // Fallback 2: check localStorage for checkout type saved BEFORE going to Stripe
+    // This is the Safari safety net — even if query params AND sessionStorage are lost,
+    // we know a checkout was initiated and can look it up server-side
+    let checkoutPendingType: string | null = null;
+    if (!sid && !type) {
+      try {
+        const checkoutPending = localStorage.getItem("mpm_checkout_pending") || sessionStorage.getItem("mpm_checkout_pending");
+        if (checkoutPending) {
+          const data = JSON.parse(checkoutPending);
+          // Only use if checkout was initiated within the last 10 minutes
+          if (data.type && data.ts && Date.now() - data.ts < 600000) {
+            checkoutPendingType = data.type;
+            type = data.type;
+          }
         }
       } catch {}
     }
 
     if (sid && type) {
-      // Persist payment data BEFORE doing anything else — survives re-renders and re-mounts
+      // Primary path: we have session_id from URL or sessionStorage
       paymentDataRef.current = { sid, type };
       try { sessionStorage.setItem("mpm_payment_pending", JSON.stringify({ sid, type })); } catch {}
       setVerifyingPayment(true);
 
-      // Verify payment with retry (Stripe webhook might be delayed)
       const verifyWithRetry = async (retries = 0): Promise<void> => {
-        // Use ref as source of truth (survives re-renders)
         const paymentSid = paymentDataRef.current?.sid || sid;
         const paymentType = paymentDataRef.current?.type || type;
         try {
@@ -464,52 +484,12 @@ export default function MePesaMucho() {
           const d = await res.json();
 
           if (d.success) {
-            if (paymentType === "daypass") { activateDayPass(); setDayPass({ active: true, hoursLeft: 24 }); }
-            if (paymentType === "single") activateSinglePass();
-            if (paymentType === "subscription") { activateDayPass(); setDayPass({ active: true, hoursLeft: 720 }); }
-
-            // Check if there's a saved continuación to restore (post-payment from essay)
-            try {
-              const saved = sessionStorage.getItem("mpm_continuacion");
-              if (saved) {
-                const data = JSON.parse(saved);
-                if (data.continuacion) {
-                  setContinuacion(data.continuacion);
-                  setContinuacionCitas(data.continuacionCitas || []);
-                  setContinuacionDesbloqueada(true);
-                  setReflexion(data.reflexion || "");
-                  setCitasUsadas(data.citasUsadas || []);
-                  setMarco(data.marco || null);
-                  setCierreStep(2);
-                  setStep("essay");
-                  sessionStorage.removeItem("mpm_continuacion");
-                  setLastSessionId(paymentSid);
-                  setLastPaymentType(paymentType);
-                  setVerifyingPayment(false);
-                  // NOW safe to clean up URL and sessionStorage
-                  try { sessionStorage.removeItem("mpm_payment_pending"); } catch {}
-                  try { window.history.replaceState({}, "", "/"); } catch {}
-                  return;
-                }
-              }
-            } catch {}
-
-            setLastSessionId(paymentSid);
-            setLastPaymentType(paymentType);
-            setVerifyingPayment(false);
-            setStep("access_choice");
-            // NOW safe to clean up URL and sessionStorage
-            try { sessionStorage.removeItem("mpm_payment_pending"); } catch {}
-            try { window.history.replaceState({}, "", "/"); } catch {}
+            handlePaymentSuccess(d.type || paymentType, d.sessionId || paymentSid);
           } else if (retries < 5) {
-            // Payment might not be confirmed yet, retry after a delay
             await new Promise((r) => setTimeout(r, 2000));
             return verifyWithRetry(retries + 1);
           } else {
-            console.error("Payment verification failed after retries:", d);
-            setVerifyingPayment(false);
-            try { sessionStorage.removeItem("mpm_payment_pending"); } catch {}
-            try { window.history.replaceState({}, "", "/"); } catch {}
+            cleanupPaymentState();
             setCheckoutError("No pudimos verificar tu pago. Si completaste el pago, espera unos segundos y recarga la página.");
           }
         } catch (err) {
@@ -517,15 +497,89 @@ export default function MePesaMucho() {
             await new Promise((r) => setTimeout(r, 2000));
             return verifyWithRetry(retries + 1);
           }
-          console.error("Error verifying payment:", err);
-          setVerifyingPayment(false);
-          try { sessionStorage.removeItem("mpm_payment_pending"); } catch {}
-          try { window.history.replaceState({}, "", "/"); } catch {}
+          cleanupPaymentState();
           setCheckoutError("Error de conexión al verificar tu pago. Recarga la página para intentar de nuevo.");
         }
       };
 
       verifyWithRetry();
+    } else if (checkoutPendingType) {
+      // Fallback path: no session_id but we know a checkout was started (Safari param stripping)
+      setVerifyingPayment(true);
+
+      const fallbackVerify = async (retries = 0): Promise<void> => {
+        try {
+          const res = await fetch("/api/verify-session", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ lookupType: checkoutPendingType }),
+          });
+          const d = await res.json();
+
+          if (d.success) {
+            handlePaymentSuccess(d.type || checkoutPendingType!, d.sessionId || "");
+          } else if (retries < 8) {
+            // More retries for fallback since webhook might be delayed
+            await new Promise((r) => setTimeout(r, 2500));
+            return fallbackVerify(retries + 1);
+          } else {
+            cleanupPaymentState();
+            setCheckoutError("No pudimos verificar tu pago. Si completaste el pago, espera unos segundos y recarga la página.");
+          }
+        } catch (err) {
+          if (retries < 5) {
+            await new Promise((r) => setTimeout(r, 2500));
+            return fallbackVerify(retries + 1);
+          }
+          cleanupPaymentState();
+          setCheckoutError("Error de conexión al verificar tu pago. Recarga la página para intentar de nuevo.");
+        }
+      };
+
+      fallbackVerify();
+    }
+
+    function handlePaymentSuccess(paymentType: string, paymentSid: string) {
+      if (paymentType === "daypass") { activateDayPass(); setDayPass({ active: true, hoursLeft: 24 }); }
+      if (paymentType === "single") activateSinglePass();
+      if (paymentType === "subscription") { activateDayPass(); setDayPass({ active: true, hoursLeft: 720 }); }
+
+      // Check if there's a saved continuación to restore
+      try {
+        const saved = sessionStorage.getItem("mpm_continuacion");
+        if (saved) {
+          const data = JSON.parse(saved);
+          if (data.continuacion) {
+            setContinuacion(data.continuacion);
+            setContinuacionCitas(data.continuacionCitas || []);
+            setContinuacionDesbloqueada(true);
+            setReflexion(data.reflexion || "");
+            setCitasUsadas(data.citasUsadas || []);
+            setMarco(data.marco || null);
+            setCierreStep(2);
+            setStep("essay");
+            sessionStorage.removeItem("mpm_continuacion");
+            setLastSessionId(paymentSid);
+            setLastPaymentType(paymentType);
+            setVerifyingPayment(false);
+            cleanupPaymentState();
+            return;
+          }
+        }
+      } catch {}
+
+      setLastSessionId(paymentSid);
+      setLastPaymentType(paymentType);
+      setVerifyingPayment(false);
+      setStep("access_choice");
+      cleanupPaymentState();
+    }
+
+    function cleanupPaymentState() {
+      try { sessionStorage.removeItem("mpm_payment_pending"); } catch {}
+      try { localStorage.removeItem("mpm_checkout_pending"); } catch {}
+      try { sessionStorage.removeItem("mpm_checkout_pending"); } catch {}
+      try { window.history.replaceState({}, "", "/"); } catch {}
     }
   }, []);
 

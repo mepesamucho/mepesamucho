@@ -9,19 +9,45 @@ function getStripe() {
 export async function POST(req: NextRequest) {
   try {
     const stripe = getStripe();
-    const { sessionId } = (await req.json()) as { sessionId: string };
+    const { sessionId, lookupType } = (await req.json()) as { sessionId?: string; lookupType?: string };
 
-    if (!sessionId) {
-      return NextResponse.json({ error: "Session ID requerido" }, { status: 400 });
+    // Primary path: verify by session ID
+    if (sessionId) {
+      const session = await stripe.checkout.sessions.retrieve(sessionId);
+      if (session.payment_status === "paid") {
+        return NextResponse.json({ success: true, type: session.metadata?.type || "unknown", sessionId });
+      }
+      return NextResponse.json({ success: false });
     }
 
-    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    // Fallback path: look up most recent paid session (for Safari query param stripping)
+    if (lookupType) {
+      console.log(`Fallback verify: looking up recent ${lookupType} sessions`);
+      const mode = lookupType === "subscription" ? "subscription" : "payment";
+      const sessions = await stripe.checkout.sessions.list({
+        limit: 5,
+        status: "complete",
+      });
 
-    if (session.payment_status === "paid") {
-      return NextResponse.json({ success: true, type: session.metadata?.type || "unknown" });
+      // Find the most recent paid session of this type (within last 5 minutes)
+      const fiveMinAgo = Math.floor(Date.now() / 1000) - 300;
+      const match = sessions.data.find(
+        (s) =>
+          s.metadata?.type === lookupType &&
+          s.payment_status === "paid" &&
+          s.created >= fiveMinAgo
+      );
+
+      if (match) {
+        console.log(`Fallback verify: found matching session ${match.id}`);
+        return NextResponse.json({ success: true, type: match.metadata?.type || lookupType, sessionId: match.id });
+      }
+
+      console.log(`Fallback verify: no matching session found for type ${lookupType}`);
+      return NextResponse.json({ success: false });
     }
 
-    return NextResponse.json({ success: false });
+    return NextResponse.json({ error: "Session ID o tipo requerido" }, { status: 400 });
   } catch (error) {
     console.error("Error verificando session:", error);
     return NextResponse.json({ success: false }, { status: 500 });
