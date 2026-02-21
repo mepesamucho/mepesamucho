@@ -5,6 +5,8 @@ import { useSearchParams } from "next/navigation";
 import { jsPDF } from "jspdf";
 import { detectarCrisis, CRISIS_RESOURCES } from "@/data/crisis";
 import { MARCOS, type Marco } from "@/data/citas";
+import { resetSession, resetUnpaidSession, hasActivePaidAccess } from "@/lib/sessionManager";
+import { canUseFree, recordFreeUse, freeRemaining, msUntilNextFree, formatCountdown } from "@/lib/freeUsageManager";
 
 // Module-level guard: survives Suspense re-mounts within the same page load
 // but resets on new navigations (which is exactly what we want)
@@ -392,6 +394,7 @@ function MePesaMuchoInner() {
   const [showScrollHint, setShowScrollHint] = useState(true);
   const [readyContinue, setReadyContinue] = useState(false);
   const [showHowItWorks, setShowHowItWorks] = useState(false);
+  const [showResetModal, setShowResetModal] = useState(false);
   const [showHeroCode, setShowHeroCode] = useState(false);
   const [heroCodeInput, setHeroCodeInput] = useState("");
   const [heroCodeLoading, setHeroCodeLoading] = useState(false);
@@ -424,12 +427,67 @@ function MePesaMuchoInner() {
     try { localStorage.setItem("mpm_textsize", globalTextSize); } catch {}
   }, [globalTextSize]);
 
+  // ── Safe Back navigation: close overlays instead of leaving the page ──
+  const anyOverlayOpen = showDisclaimer || showAbout || showHowItWorks || showFuentes
+    || showContinuacionFuentes || showCrisis || showResetModal;
+  const overlayOpenRef = useRef(false);
+
+  useEffect(() => {
+    if (anyOverlayOpen && !overlayOpenRef.current) {
+      // Overlay just opened — push a history entry so Back closes it
+      history.pushState({ mpmOverlay: true }, "");
+      overlayOpenRef.current = true;
+    } else if (!anyOverlayOpen && overlayOpenRef.current) {
+      overlayOpenRef.current = false;
+    }
+  }, [anyOverlayOpen]);
+
+  useEffect(() => {
+    const handlePopState = (e: PopStateEvent) => {
+      // If an overlay is open, close it instead of navigating
+      if (showResetModal) { setShowResetModal(false); return; }
+      if (showCrisis) { setShowCrisis(false); return; }
+      if (showDisclaimer) { setShowDisclaimer(false); return; }
+      if (showAbout) { setShowAbout(false); return; }
+      if (showHowItWorks) { setShowHowItWorks(false); return; }
+      if (showFuentes) { setShowFuentes(false); return; }
+      if (showContinuacionFuentes) { setShowContinuacionFuentes(false); return; }
+      // No overlay open — if user is mid-flow, show reset modal instead of leaving
+      if (step !== "landing" && step !== "limit") {
+        e.preventDefault();
+        history.pushState(null, "");
+        setShowResetModal(true);
+      }
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [showDisclaimer, showAbout, showHowItWorks, showFuentes, showContinuacionFuentes, showCrisis, showResetModal, step]);
+
   // Init — guard with module-level var to prevent re-processing on re-renders/re-mounts
   useEffect(() => {
     console.log("[MPM] Init useEffect running. searchParams:", searchParams.toString(), "window.location.href:", window.location.href);
     console.log("[MPM] localStorage mpm_checkout_pending:", localStorage.getItem("mpm_checkout_pending"));
     console.log("[MPM] localStorage mpm_payment_success:", localStorage.getItem("mpm_payment_success"));
     console.log("[MPM] sessionStorage mpm_payment_pending:", sessionStorage.getItem("mpm_payment_pending"));
+
+    // PASO 5: Auto-reset stale unpaid sessions on return
+    // If no payment params in URL + no active paid access + stale checkout, clean up
+    const hasPaymentParams = searchParams.has("session_id") || searchParams.has("type");
+    const hasPaymentRecovery = !!localStorage.getItem("mpm_payment_success");
+    if (!hasPaymentParams && !hasPaymentRecovery && !hasActivePaidAccess()) {
+      const pendingCheckout = localStorage.getItem("mpm_checkout_pending");
+      if (pendingCheckout) {
+        try {
+          const parsed = JSON.parse(pendingCheckout);
+          // If checkout is older than 30 minutes, consider it abandoned
+          if (parsed.ts && Date.now() - parsed.ts > 30 * 60 * 1000) {
+            console.log("[MPM] Clearing stale unpaid session data");
+            resetUnpaidSession();
+          }
+        } catch { resetUnpaidSession(); }
+      }
+    }
+
     setUsosHoy(getUsosHoy());
     setDayPass(getDayPass());
     // Restore text size preference
@@ -757,6 +815,7 @@ function MePesaMuchoInner() {
       const n = usosHoy + 1;
       setUsosHoy(n);
       saveUsosHoy(n);
+      recordFreeUse(); // rolling 24h usage tracker
       if (getSinglePass()) useSinglePass();
     } catch {
       setApiError("Hubo un error generando tu reflexión. Intenta de nuevo.");
@@ -858,6 +917,7 @@ function MePesaMuchoInner() {
   }, [dialogTurnos, citasUsadas, continuacionCitas]);
 
   const reiniciar = () => {
+    resetSession(); // clear storage via sessionManager
     setStep("landing");
     setTexto(""); setMarco(null); setReflexion(""); setCitasUsadas([]);
     setShowCrisis(false); setCrisisAck(false); setShowDisclaimer(false);
@@ -866,13 +926,12 @@ function MePesaMuchoInner() {
     setMsgOpacity(0); setApiError(""); setShowCrisisBanner(false);
     setCrisisDetectedInText(false); crisisShownOnce.current = false;
     setShowFuentes(false); setShowAbout(false); setShowHowItWorks(false);
+    setShowResetModal(false);
     setContinuacion(""); setContinuacionCitas([]); setContinuacionLoading(false);
     setContinuacionDesbloqueada(false); setShowContinuacionFuentes(false);
     setDialogTurnos([]); setDialogInput(""); setDialogLoading(false);
     setDialogCerrado(false); setAllCitas([]);
     setDayPass(getDayPass()); setUsosHoy(getUsosHoy());
-    try { sessionStorage.removeItem("mpm_continuacion"); } catch {}
-    try { localStorage.removeItem("mpm_continuacion"); } catch {}
   };
 
   const fs = FONT_SIZES[fontSize];
@@ -904,28 +963,40 @@ function MePesaMuchoInner() {
 
   // ── HEADER COMPONENT ─────────────────────────
 
-  const SiteHeader = () => (
-    <div className="fixed top-0 left-0 right-0 z-30 bg-[#F4F0E8]/90 backdrop-blur-sm" style={{ borderBottom: "1px solid rgba(216,207,196,0.5)" }}>
-      <div className="max-w-[680px] mx-auto px-5 py-3 flex items-center justify-between">
-        <button onClick={reiniciar} className="flex items-center gap-2 bg-transparent border-none cursor-pointer" aria-label="Ir al inicio">
-          <LogoIcon size={24} />
-          <span className="text-lg font-light tracking-tight text-[#3A3733]">mepesamucho</span>
-        </button>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setGlobalTextSize(globalTextSize === "normal" ? "large" : globalTextSize === "large" ? "xlarge" : "normal")}
-            className="font-[var(--font-sans)] text-[0.85rem] text-[#5C5751] font-medium bg-transparent border border-[#D8CFC4] rounded-full px-2.5 py-1 cursor-pointer hover:bg-[#EAE4DC] transition-colors flex items-center gap-1"
-            aria-label={`Tamaño de texto: ${globalTextSize === "normal" ? "normal" : globalTextSize === "large" ? "grande" : "extra grande"}`}
-            title="Cambiar tamaño de texto"
-          >
-            <span className="text-[0.75rem]">Aa</span>
-            <span className="text-[0.7rem]">{globalTextSize === "normal" ? "" : globalTextSize === "large" ? "+" : "++"}</span>
+  const SiteHeader = () => {
+    const notOnLanding = step !== "landing" && step !== "limit";
+    return (
+      <div className="fixed top-0 left-0 right-0 z-30 bg-[#F4F0E8]/90 backdrop-blur-sm" style={{ borderBottom: "1px solid rgba(216,207,196,0.5)" }}>
+        <div className="max-w-[680px] mx-auto px-5 py-3 flex items-center justify-between">
+          <button onClick={notOnLanding ? () => setShowResetModal(true) : undefined} className="flex items-center gap-2 bg-transparent border-none cursor-pointer" aria-label="Ir al inicio">
+            <LogoIcon size={24} />
+            <span className="text-lg font-light tracking-tight text-[#3A3733]">mepesamucho</span>
           </button>
-          <button className={`${S.link} text-[0.9rem]`} onClick={() => setShowHowItWorks(!showHowItWorks)}>Cómo funciona</button>
+          <div className="flex items-center gap-3">
+            {notOnLanding && (
+              <button
+                onClick={() => setShowResetModal(true)}
+                className="font-[var(--font-sans)] text-[0.8rem] text-[#8C8580] bg-transparent border border-[#D8CFC4] rounded-full px-3 py-1 cursor-pointer hover:bg-[#EAE4DC] hover:text-[#5C5751] transition-colors"
+                aria-label="Empezar de nuevo"
+              >
+                Empezar de nuevo
+              </button>
+            )}
+            <button
+              onClick={() => setGlobalTextSize(globalTextSize === "normal" ? "large" : globalTextSize === "large" ? "xlarge" : "normal")}
+              className="font-[var(--font-sans)] text-[0.85rem] text-[#5C5751] font-medium bg-transparent border border-[#D8CFC4] rounded-full px-2.5 py-1 cursor-pointer hover:bg-[#EAE4DC] transition-colors flex items-center gap-1"
+              aria-label={`Tamaño de texto: ${globalTextSize === "normal" ? "normal" : globalTextSize === "large" ? "grande" : "extra grande"}`}
+              title="Cambiar tamaño de texto"
+            >
+              <span className="text-[0.75rem]">Aa</span>
+              <span className="text-[0.7rem]">{globalTextSize === "normal" ? "" : globalTextSize === "large" ? "+" : "++"}</span>
+            </button>
+            <button className={`${S.link} text-[0.9rem]`} onClick={() => setShowHowItWorks(!showHowItWorks)}>Cómo funciona</button>
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // ── MODALS ───────────────────────────────────
 
@@ -936,6 +1007,41 @@ function MePesaMuchoInner() {
       </div>
     </div>
   );
+
+  const ResetModal = () => {
+    const confirmRef = useRef<HTMLButtonElement>(null);
+    useEffect(() => { confirmRef.current?.focus(); }, []);
+    useEffect(() => {
+      const handler = (e: KeyboardEvent) => {
+        if (e.key === "Escape") setShowResetModal(false);
+      };
+      window.addEventListener("keydown", handler);
+      return () => window.removeEventListener("keydown", handler);
+    }, []);
+    return (
+      <Overlay>
+        <h2 className="text-xl font-medium text-center mb-3">¿Empezar de nuevo?</h2>
+        <p className="text-[0.95rem] text-[#5C5751] text-center mb-6 leading-relaxed">
+          Tu reflexión actual se perderá.<br />Tus pases y preferencias se conservan.
+        </p>
+        <div className="flex gap-3 justify-center">
+          <button
+            onClick={() => setShowResetModal(false)}
+            className="font-[var(--font-sans)] text-[0.9rem] text-[#5C5751] bg-transparent border border-[#D8CFC4] rounded-lg px-5 py-2.5 cursor-pointer hover:bg-[#EAE4DC] transition-colors"
+          >
+            Cancelar
+          </button>
+          <button
+            ref={confirmRef}
+            onClick={reiniciar}
+            className="font-[var(--font-sans)] text-[0.9rem] text-white bg-[#3A3733] border-none rounded-lg px-5 py-2.5 cursor-pointer hover:bg-[#5C5751] transition-colors"
+          >
+            Sí, empezar de nuevo
+          </button>
+        </div>
+      </Overlay>
+    );
+  };
 
   const DisclaimerModal = () => (
     <Overlay>
@@ -1184,13 +1290,18 @@ function MePesaMuchoInner() {
 
   // ── LIMIT (paywall) ────────────────────────────
 
-  if (usosHoy >= 2 && !dayPass.active && !getSinglePass() && step === "landing") {
+  const atFreeLimit = (usosHoy >= 2 || !canUseFree()) && !dayPass.active && !getSinglePass();
+
+  if (atFreeLimit && step === "landing") {
+    const waitMs = msUntilNextFree();
+    const countdownText = formatCountdown(waitMs);
     return (
       <div className={`${S.pageTop} animate-step-in`} key={fadeKey}>
         <SiteHeader />
         {showDisclaimer && <DisclaimerModal />}
         {showHowItWorks && <HowItWorksModal />}
         {showAbout && <AboutModal />}
+        {showResetModal && <ResetModal />}
         <div className={`${S.box} text-center mx-auto`} style={{ maxWidth: "480px" }}>
 
           {/* Truncated reflection preview — teaser */}
@@ -1223,9 +1334,16 @@ function MePesaMuchoInner() {
           <p className="text-xl font-light italic leading-relaxed mb-2">
             Lo que estás tocando merece más espacio.
           </p>
-          <p className={`${S.sub} text-base mb-8`}>
+          <p className={`${S.sub} text-base mb-3`}>
             Puedes seguir profundizando ahora mismo.
           </p>
+
+          {/* Countdown timer — when free slot becomes available */}
+          {countdownText && (
+            <p className="text-[0.85rem] text-[#8C8580] mb-6">
+              Tu próxima reflexión gratuita estará disponible en <span className="font-medium text-[#5C5751]">{countdownText}</span>
+            </p>
+          )}
 
           {/* Single reflection — featured card */}
           <div className="card-hover-lift bg-white/40 border-2 border-[#7A8B6F] rounded-2xl p-6 mb-4">
@@ -1300,6 +1418,7 @@ function MePesaMuchoInner() {
         {showDisclaimer && <DisclaimerModal />}
         {showHowItWorks && <HowItWorksModal />}
         {showAbout && <AboutModal />}
+        {showResetModal && <ResetModal />}
 
         {/* Capa ambiental — silencio digital con textura */}
         <div className="ambient-layer" />
@@ -1447,6 +1566,7 @@ function MePesaMuchoInner() {
         {showDisclaimer && <DisclaimerModal />}
         {showHowItWorks && <HowItWorksModal />}
         {showAbout && <AboutModal />}
+        {showResetModal && <ResetModal />}
         <div className={`${S.box}`}>
           <PrivacyBadge onClick={() => setShowDisclaimer(true)} />
           <div className="h-4" />
@@ -1538,6 +1658,7 @@ function MePesaMuchoInner() {
         {showDisclaimer && <DisclaimerModal />}
         {showHowItWorks && <HowItWorksModal />}
         {showAbout && <AboutModal />}
+        {showResetModal && <ResetModal />}
         <div className={`${S.boxWide} text-center`}>
           <p className="font-[var(--font-sans)] text-sm uppercase tracking-[0.15em] text-[#6B665F] font-light mb-2">Hay muchas formas de escuchar lo que necesitas oír</p>
           <h2 className="text-xl sm:text-2xl font-normal italic leading-snug mb-16">¿Desde dónde quieres recibir tu reflexión?</h2>
@@ -1584,6 +1705,7 @@ function MePesaMuchoInner() {
         {showDisclaimer && <DisclaimerModal />}
         {showHowItWorks && <HowItWorksModal />}
         {showAbout && <AboutModal />}
+        {showResetModal && <ResetModal />}
         <div className={`${S.box}`} style={{ textAlign: "center" }}>
           {/* Conversational tone — not a form */}
           <p className="text-lg text-[#5C5751] font-light italic leading-relaxed mb-2">Hay muchas formas de escuchar lo que necesitas oír.</p>
@@ -1677,6 +1799,7 @@ function MePesaMuchoInner() {
         {showDisclaimer && <DisclaimerModal />}
         {showHowItWorks && <HowItWorksModal />}
         {showAbout && <AboutModal />}
+        {showResetModal && <ResetModal />}
         {showCrisis && <CrisisModal />}
         {showCrisisBanner && <CrisisBanner />}
         {showFuentes && <FuentesModal />}
@@ -1823,6 +1946,7 @@ function MePesaMuchoInner() {
         <SiteHeader />
         {showDisclaimer && <DisclaimerModal />}
         {showHowItWorks && <HowItWorksModal />}
+        {showResetModal && <ResetModal />}
         {showCrisis && <CrisisModal />}
         {showCrisisBanner && <CrisisBanner />}
 
