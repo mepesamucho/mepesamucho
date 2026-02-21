@@ -420,7 +420,8 @@ function MePesaMuchoInner() {
     try { localStorage.setItem("mpm_textsize", globalTextSize); } catch {}
   }, [globalTextSize]);
 
-  // Init
+  // Init — guard with ref to prevent re-processing on re-renders
+  const hasProcessedPaymentRef = useRef(false);
   useEffect(() => {
     console.log("[MPM] Init useEffect running. searchParams:", searchParams.toString(), "window.location.href:", window.location.href);
     console.log("[MPM] localStorage mpm_checkout_pending:", localStorage.getItem("mpm_checkout_pending"));
@@ -475,6 +476,9 @@ function MePesaMuchoInner() {
     }
 
     if (sid && type) {
+      // Guard: only process payment once (useSearchParams may cause re-renders)
+      if (hasProcessedPaymentRef.current) return;
+      hasProcessedPaymentRef.current = true;
       // Primary path: we have session_id from URL or sessionStorage
       paymentDataRef.current = { sid, type };
       try { sessionStorage.setItem("mpm_payment_pending", JSON.stringify({ sid, type })); } catch {}
@@ -512,6 +516,9 @@ function MePesaMuchoInner() {
 
       verifyWithRetry();
     } else if (checkoutPendingType) {
+      // Guard: only process payment once
+      if (hasProcessedPaymentRef.current) return;
+      hasProcessedPaymentRef.current = true;
       // Fallback path: no session_id but we know a checkout was started (Safari param stripping)
       setVerifyingPayment(true);
 
@@ -597,16 +604,19 @@ function MePesaMuchoInner() {
       try { localStorage.removeItem("mpm_checkout_pending"); } catch {}
       try { sessionStorage.removeItem("mpm_checkout_pending"); } catch {}
     }
-  }, [searchParams]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams.toString()]);
 
   // URL cleanup removed: replaceState in Next.js App Router causes component re-mounts
   // that race with React state updates, resulting in blank screens. The query params
   // in the URL bar are harmless and far preferable to a broken payment flow.
 
   // Recovery: if component re-mounts after payment was already confirmed,
-  // recover from localStorage safety net
+  // recover from localStorage safety net. Skip if init useEffect is handling payment.
   useEffect(() => {
     if (step !== "landing" || verifyingPayment) return;
+    // Don't run recovery if the init useEffect already claimed payment processing
+    if (hasProcessedPaymentRef.current) return;
     try {
       const success = localStorage.getItem("mpm_payment_success");
       if (success) {
@@ -614,6 +624,7 @@ function MePesaMuchoInner() {
         // Only use if within last 2 minutes (prevents stale recovery)
         if (data.type && data.ts && Date.now() - data.ts < 120000) {
           console.log("[MPM] Recovering payment success from localStorage:", data.type);
+          hasProcessedPaymentRef.current = true;
           setLastSessionId(data.sid || "");
           setLastPaymentType(data.type);
           if (data.type === "daypass") setDayPass({ active: true, hoursLeft: 24 });
