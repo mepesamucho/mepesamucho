@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { jsPDF } from "jspdf";
 import { detectarCrisis, CRISIS_RESOURCES } from "@/data/crisis";
 import { MARCOS, type Marco } from "@/data/citas";
@@ -344,7 +345,8 @@ const S = {
 
 // ── MAIN COMPONENT ─────────────────────────────
 
-export default function MePesaMucho() {
+function MePesaMuchoInner() {
+  const searchParams = useSearchParams();
   const [step, setStep] = useState<Step>("landing");
   const [texto, setTexto] = useState("");
   const [marco, setMarco] = useState<Marco | null>(null);
@@ -420,7 +422,7 @@ export default function MePesaMucho() {
 
   // Init
   useEffect(() => {
-    console.log("[MPM] Init useEffect running. URL:", window.location.href);
+    console.log("[MPM] Init useEffect running. searchParams:", searchParams.toString(), "window.location.href:", window.location.href);
     console.log("[MPM] localStorage mpm_checkout_pending:", localStorage.getItem("mpm_checkout_pending"));
     console.log("[MPM] localStorage mpm_payment_success:", localStorage.getItem("mpm_payment_success"));
     console.log("[MPM] sessionStorage mpm_payment_pending:", sessionStorage.getItem("mpm_payment_pending"));
@@ -432,10 +434,11 @@ export default function MePesaMucho() {
       if (saved && ["normal", "large", "xlarge"].includes(saved)) setGlobalTextSize(saved);
     } catch {}
 
-    const params = new URLSearchParams(window.location.search);
-    let sid = params.get("session_id");
-    let type = params.get("type");
-    const wasCanceled = params.get("canceled");
+    // Use Next.js useSearchParams() instead of window.location.search
+    // window.location.search can be empty during App Router hydration
+    let sid = searchParams.get("session_id");
+    let type = searchParams.get("type");
+    const wasCanceled = searchParams.get("canceled");
     if (wasCanceled) {
       // Don't use replaceState — it causes Next.js App Router to re-mount the component
       // Just proceed normally; the query params in the URL are harmless
@@ -587,13 +590,11 @@ export default function MePesaMucho() {
     }
 
     function cleanupPaymentStorage() {
-      // Clean storage but NOT the URL — replaceState is done in a separate useEffect
-      // to avoid Next.js re-mounting the component before React commits state
       try { sessionStorage.removeItem("mpm_payment_pending"); } catch {}
       try { localStorage.removeItem("mpm_checkout_pending"); } catch {}
       try { sessionStorage.removeItem("mpm_checkout_pending"); } catch {}
     }
-  }, []);
+  }, [searchParams]);
 
   // URL cleanup removed: replaceState in Next.js App Router causes component re-mounts
   // that race with React state updates, resulting in blank screens. The query params
@@ -2180,4 +2181,16 @@ export default function MePesaMucho() {
   }
 
   return null;
+}
+
+export default function MePesaMucho() {
+  return (
+    <Suspense fallback={
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#F4F0E8" }}>
+        <p style={{ fontFamily: "Cormorant Garamond, serif", fontSize: "1.2rem", color: "#6F6A64" }}>Cargando...</p>
+      </div>
+    }>
+      <MePesaMuchoInner />
+    </Suspense>
+  );
 }
