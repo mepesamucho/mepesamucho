@@ -478,10 +478,14 @@ function MePesaMuchoInner() {
       } catch {}
     }
 
-    if (sid && type) {
-      // Guard: only process payment once (useSearchParams may cause re-renders)
+    // Master guard: prevent ANY payment processing if already handled
+    // Must be checked before branching to prevent Suspense re-mount races
+    if ((sid && type) || checkoutPendingType) {
       if (_hasProcessedPayment) return;
       _hasProcessedPayment = true;
+    }
+
+    if (sid && type) {
       // Primary path: we have session_id from URL or sessionStorage
       paymentDataRef.current = { sid, type };
       try { sessionStorage.setItem("mpm_payment_pending", JSON.stringify({ sid, type })); } catch {}
@@ -519,9 +523,6 @@ function MePesaMuchoInner() {
 
       verifyWithRetry();
     } else if (checkoutPendingType) {
-      // Guard: only process payment once
-      if (_hasProcessedPayment) return;
-      _hasProcessedPayment = true;
       // Fallback path: no session_id but we know a checkout was started (Safari param stripping)
       setVerifyingPayment(true);
 
@@ -582,7 +583,7 @@ function MePesaMuchoInner() {
             setReflexion(data.reflexion || "");
             setCitasUsadas(data.citasUsadas || []);
             setMarco(data.marco || null);
-            setCierreStep(2);
+            setCierreStep(3);
             setStep("essay");
             try { sessionStorage.removeItem("mpm_continuacion"); } catch {}
             try { localStorage.removeItem("mpm_continuacion"); } catch {}
@@ -1759,6 +1760,20 @@ function MePesaMuchoInner() {
     );
   }
 
+  // Safety net: cierreStep === 2 should not happen (handlePaymentSuccess now sets 3),
+  // but if it does, treat it as cierreStep === 3 to prevent blank screen
+  if (step === "essay" && cierreStep === 2) {
+    setCierreStep(3);
+    // Return a brief loading state while the state update processes
+    return (
+      <div className={`${S.page} animate-fade-in`} style={{ display: "flex", flexDirection: "column", minHeight: "100vh", justifyContent: "center", alignItems: "center" }}>
+        <div className={`${S.box} text-center`}>
+          <h2 className="text-xl font-light mb-2">Preparando tu reflexión...</h2>
+        </div>
+      </div>
+    );
+  }
+
   // Cierre step 3 — generating continuation (clean centered, like "generating")
   if (step === "essay" && cierreStep === 3 && continuacionLoading) {
     return (
@@ -2200,7 +2215,20 @@ function MePesaMuchoInner() {
     );
   }
 
-  return null;
+  // Safety net: if no render branch matched, show landing instead of blank screen
+  // This prevents any state combination from causing a blank screen
+  console.warn("[MPM] No render branch matched! step:", step, "cierreStep:", cierreStep, "verifyingPayment:", verifyingPayment);
+  return (
+    <div className={`${S.page} animate-fade-in`} style={{ display: "flex", flexDirection: "column", minHeight: "100vh", justifyContent: "center", alignItems: "center" }}>
+      <div className={`${S.box} text-center`}>
+        <p className="text-xl italic leading-relaxed mb-4">mepesamucho</p>
+        <p className={`${S.sub} text-base mb-4`}>Algo no salió como esperábamos.</p>
+        <button className={S.btn} onClick={() => { setStep("landing"); setCierreStep(0); }}>
+          Volver al inicio
+        </button>
+      </div>
+    </div>
+  );
 }
 
 export default function MePesaMucho() {
