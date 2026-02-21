@@ -420,6 +420,10 @@ export default function MePesaMucho() {
 
   // Init
   useEffect(() => {
+    console.log("[MPM] Init useEffect running. URL:", window.location.href);
+    console.log("[MPM] localStorage mpm_checkout_pending:", localStorage.getItem("mpm_checkout_pending"));
+    console.log("[MPM] localStorage mpm_payment_success:", localStorage.getItem("mpm_payment_success"));
+    console.log("[MPM] sessionStorage mpm_payment_pending:", sessionStorage.getItem("mpm_payment_pending"));
     setUsosHoy(getUsosHoy());
     setDayPass(getDayPass());
     // Restore text size preference
@@ -540,9 +544,15 @@ export default function MePesaMucho() {
     }
 
     function handlePaymentSuccess(paymentType: string, paymentSid: string) {
+      console.log("[MPM] handlePaymentSuccess:", paymentType, paymentSid);
       if (paymentType === "daypass") { activateDayPass(); setDayPass({ active: true, hoursLeft: 24 }); }
       if (paymentType === "single") activateSinglePass();
       if (paymentType === "subscription") { activateDayPass(); setDayPass({ active: true, hoursLeft: 720 }); }
+
+      // Save payment success to localStorage so it survives any re-mounts
+      try {
+        localStorage.setItem("mpm_payment_success", JSON.stringify({ type: paymentType, sid: paymentSid, ts: Date.now() }));
+      } catch {}
 
       // Check if there's a saved continuación to restore
       try {
@@ -562,7 +572,7 @@ export default function MePesaMucho() {
             setLastSessionId(paymentSid);
             setLastPaymentType(paymentType);
             setVerifyingPayment(false);
-            cleanupPaymentState();
+            cleanupPaymentStorage();
             return;
           }
         }
@@ -572,16 +582,56 @@ export default function MePesaMucho() {
       setLastPaymentType(paymentType);
       setVerifyingPayment(false);
       setStep("access_choice");
-      cleanupPaymentState();
+      cleanupPaymentStorage();
     }
 
-    function cleanupPaymentState() {
+    function cleanupPaymentStorage() {
+      // Clean storage but NOT the URL — replaceState is done in a separate useEffect
+      // to avoid Next.js re-mounting the component before React commits state
       try { sessionStorage.removeItem("mpm_payment_pending"); } catch {}
       try { localStorage.removeItem("mpm_checkout_pending"); } catch {}
       try { sessionStorage.removeItem("mpm_checkout_pending"); } catch {}
-      try { window.history.replaceState({}, "", "/"); } catch {}
     }
   }, []);
+
+  // Safe URL cleanup: only clean URL after step has changed to avoid Next.js re-mount race
+  useEffect(() => {
+    if (step === "access_choice" || step === "essay") {
+      // Wait for React to fully commit the render, then clean URL
+      const timeout = setTimeout(() => {
+        if (window.location.search) {
+          try { window.history.replaceState({}, "", "/"); } catch {}
+        }
+      }, 500);
+      return () => clearTimeout(timeout);
+    }
+  }, [step]);
+
+  // Recovery: if component re-mounts after payment was already confirmed,
+  // recover from localStorage safety net
+  useEffect(() => {
+    if (step !== "landing" || verifyingPayment) return;
+    try {
+      const success = localStorage.getItem("mpm_payment_success");
+      if (success) {
+        const data = JSON.parse(success);
+        // Only use if within last 2 minutes (prevents stale recovery)
+        if (data.type && data.ts && Date.now() - data.ts < 120000) {
+          console.log("[MPM] Recovering payment success from localStorage:", data.type);
+          setLastSessionId(data.sid || "");
+          setLastPaymentType(data.type);
+          if (data.type === "daypass") setDayPass({ active: true, hoursLeft: 24 });
+          if (data.type === "subscription") setDayPass({ active: true, hoursLeft: 720 });
+          setStep("access_choice");
+          // Clean up after recovery
+          localStorage.removeItem("mpm_payment_success");
+          return;
+        }
+        // Expired, clean up
+        localStorage.removeItem("mpm_payment_success");
+      }
+    } catch {}
+  }, [step, verifyingPayment]);
 
   useEffect(() => { setFadeKey((k) => k + 1); }, [step, preguntaStep, cierreStep]);
 
