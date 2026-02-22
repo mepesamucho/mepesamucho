@@ -6,6 +6,7 @@ import {
   isSubscriptionCancelled,
   isRedisConfigured,
 } from "@/lib/access";
+import { getGrantByEmail, getGrantByCode } from "@/lib/db";
 
 function getStripe() {
   if (!process.env.STRIPE_SECRET_KEY) return null;
@@ -39,14 +40,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check Redis is configured
-    if (!isRedisConfigured()) {
-      return NextResponse.json(
-        { success: false, error: "El servicio de acceso no está disponible en este momento. Intenta más tarde." },
-        { status: 503 }
-      );
-    }
-
     const { email, code } = await req.json();
 
     if (!email && !code) {
@@ -56,9 +49,38 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const record = email
-      ? await verifyEmailAccess(email)
-      : await verifyCodeAccess(code);
+    // ── 1. Try Redis first (backward compat with old payments) ──
+    let record = null;
+    if (isRedisConfigured()) {
+      try {
+        record = email
+          ? await verifyEmailAccess(email)
+          : await verifyCodeAccess(code);
+      } catch {
+        // Redis failed, try Postgres
+      }
+    }
+
+    // ── 2. Fallback to Postgres (ETAPA 3 payments) ──
+    if (!record) {
+      try {
+        const grant = email
+          ? await getGrantByEmail(email)
+          : code ? await getGrantByCode(code) : null;
+
+        if (grant) {
+          // Map Postgres grant to recover-access response format
+          const grantType = grant.type === "monthly" ? "subscription" : "single";
+          record = {
+            type: grantType,
+            expiresAt: grant.expires_at ? new Date(grant.expires_at).getTime() : undefined,
+            stripeSessionId: grant.stripe_session_id,
+          };
+        }
+      } catch (err) {
+        console.error("Postgres lookup failed:", err);
+      }
+    }
 
     if (!record) {
       return NextResponse.json({
@@ -69,43 +91,52 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // For subscriptions, verify it's still active
-    if (record.type === "subscription" && record.stripeCustomerId) {
-      const cancelled = await isSubscriptionCancelled(record.stripeCustomerId);
-      if (cancelled) {
-        return NextResponse.json({
-          success: false,
-          error: "Tu suscripción fue cancelada. Puedes suscribirte de nuevo cuando quieras.",
-        });
-      }
-
-      // Double-check with Stripe
+    // ── 3. For subscriptions, verify still active via Stripe ──
+    if (record.type === "subscription") {
+      // Try to get customer ID from Stripe session
       const stripe = getStripe();
-      if (stripe) {
+      if (stripe && record.stripeSessionId) {
         try {
-          const subs = await stripe.subscriptions.list({
-            customer: record.stripeCustomerId,
-            status: "active",
-            limit: 1,
-          });
-          if (subs.data.length === 0) {
-            return NextResponse.json({
-              success: false,
-              error: "Tu suscripción ya no está activa. Puedes suscribirte de nuevo.",
+          const session = await stripe.checkout.sessions.retrieve(record.stripeSessionId);
+          const customerId = typeof session.customer === "string"
+            ? session.customer
+            : session.customer?.id;
+
+          if (customerId) {
+            // Check KV cancellation flag
+            const cancelled = isRedisConfigured() ? await isSubscriptionCancelled(customerId) : false;
+            if (cancelled) {
+              return NextResponse.json({
+                success: false,
+                error: "Tu suscripción fue cancelada. Puedes suscribirte de nuevo cuando quieras.",
+              });
+            }
+
+            // Verify active subscription with Stripe
+            const subs = await stripe.subscriptions.list({
+              customer: customerId,
+              status: "active",
+              limit: 1,
             });
+            if (subs.data.length === 0) {
+              return NextResponse.json({
+                success: false,
+                error: "Tu suscripción ya no está activa. Puedes suscribirte de nuevo.",
+              });
+            }
           }
         } catch {
-          // If Stripe check fails, trust KV record
+          // If Stripe check fails, trust the record
         }
       }
     }
 
-    // Calculate what to restore in localStorage
+    // ── 4. Calculate restore info ──
     const restore: { type: string; expiresAt?: number; hoursLeft?: number } = {
       type: record.type,
     };
 
-    if (record.type === "daypass" && record.expiresAt) {
+    if ((record.type === "daypass" || record.type === "single") && record.expiresAt) {
       const remaining = record.expiresAt - Date.now();
       if (remaining <= 0) {
         return NextResponse.json({

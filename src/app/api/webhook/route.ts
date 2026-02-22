@@ -51,30 +51,31 @@ export async function POST(req: NextRequest) {
   switch (event.type) {
     case "checkout.session.completed": {
       const session = event.data.object as Stripe.Checkout.Session;
-      const type = (session.metadata?.type as AccessType) || "single";
+      const metaType = session.metadata?.type || "single"; // "monthly" | "single"
       const customerId = typeof session.customer === "string"
         ? session.customer
         : session.customer?.id;
 
-      console.log(`Pago completado: ${type}, session: ${session.id}`);
+      // Map to grant type and legacy AccessType
+      const grantType: "single" | "monthly" = metaType === "monthly" ? "monthly" : "single";
+      const legacyType: AccessType = metaType === "monthly" ? "subscription" : "single";
+
+      console.log(`Pago completado: ${metaType} (grant: ${grantType}, legacy: ${legacyType}), session: ${session.id}`);
 
       // Save to KV so /api/save-access can verify it (backward compat)
       try {
-        await savePaymentSession(session.id, type, customerId);
+        await savePaymentSession(session.id, legacyType, customerId);
       } catch (err) {
         console.error("Error saving payment session to KV:", err);
-        // Non-fatal — save-access will fallback to Stripe verification
       }
 
       // Save to Postgres (permanent record)
       try {
         const email = session.customer_details?.email || null;
-        const grantType: "single" | "monthly" = type === "subscription" ? "monthly" : "single";
         await createAccessGrant(session.id, email, grantType);
         console.log(`Access grant creado en Postgres: ${session.id}, tipo: ${grantType}`);
       } catch (err) {
         console.error("Error saving access grant to Postgres:", err);
-        // Non-fatal — /api/stripe/confirm will create it as fallback
       }
       break;
     }

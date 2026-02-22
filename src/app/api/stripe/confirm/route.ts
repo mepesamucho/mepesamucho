@@ -12,6 +12,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createAccessGrant, getGrantByStripeSession } from "@/lib/db";
+import { saveEmailAccess, saveCodeAccess, isRedisConfigured, type AccessType } from "@/lib/access";
 
 function getStripe() {
   if (!process.env.STRIPE_SECRET_KEY) throw new Error("STRIPE_SECRET_KEY not set");
@@ -51,7 +52,23 @@ export async function POST(req: NextRequest) {
       grant = await createAccessGrant(session_id, email, grantType);
     }
 
-    // 4. Return grant info
+    // 4. Also save to Redis for backward-compat email/code recovery
+    if (isRedisConfigured()) {
+      const legacyType: AccessType = grant.type === "monthly" ? "subscription" : "single";
+      const customerId = typeof session.customer === "string"
+        ? session.customer
+        : session.customer?.id;
+      try {
+        if (grant.email) {
+          await saveEmailAccess(grant.email, legacyType, session_id, customerId);
+        }
+        await saveCodeAccess(grant.code, legacyType, session_id, customerId);
+      } catch (err) {
+        console.error("Error saving to Redis (non-fatal):", err);
+      }
+    }
+
+    // 5. Return grant info
     return NextResponse.json({
       ok: true,
       code: grant.code,

@@ -1217,6 +1217,35 @@ function MePesaMuchoInner() {
         <div className="flex justify-center gap-4 mt-3 flex-wrap">
           <button className={`${S.link} text-[0.85rem]`} onClick={() => setShowAbout(true)}>Acerca de</button>
           <button className={`${S.link} text-[0.85rem]`} onClick={() => setShowDisclaimer(true)}>Aviso legal y privacidad</button>
+          {dayPass.active && dayPass.hoursLeft > 25 && (
+            <button
+              className={`${S.link} text-[0.85rem]`}
+              onClick={async () => {
+                const email = localStorage.getItem("mpm_email");
+                if (!email) {
+                  alert("Para gestionar tu suscripción, ingresa el email que usaste al pagar.");
+                  return;
+                }
+                try {
+                  const res = await fetch("/api/billing-portal", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email }),
+                  });
+                  const data = await res.json();
+                  if (data.ok && data.url) {
+                    window.location.href = data.url;
+                  } else {
+                    alert(data.error || "No pudimos abrir el portal de facturación.");
+                  }
+                } catch {
+                  alert("Error de conexión. Intenta de nuevo.");
+                }
+              }}
+            >
+              Gestionar suscripción
+            </button>
+          )}
         </div>
       </footer>
     );

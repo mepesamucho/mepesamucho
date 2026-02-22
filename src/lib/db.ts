@@ -93,3 +93,19 @@ export async function getGrantByCode(code: string): Promise<AccessGrant | null> 
   `;
   return (rows[0] as AccessGrant) || null;
 }
+
+/**
+ * Look up the most recent active grant by email.
+ * For "single" type, checks that it hasn't expired.
+ * For "monthly" type, returns it (Stripe subscription status checked separately).
+ */
+export async function getGrantByEmail(email: string): Promise<AccessGrant | null> {
+  const { rows } = await sql`
+    SELECT * FROM access_grants
+    WHERE LOWER(email) = LOWER(${email})
+    AND (type = 'monthly' OR expires_at > NOW())
+    ORDER BY created_at DESC
+    LIMIT 1
+  `;
+  return (rows[0] as AccessGrant) || null;
+}
