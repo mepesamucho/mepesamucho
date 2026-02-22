@@ -1289,7 +1289,7 @@ function MePesaMuchoInner() {
           )}
 
           {/* Single reflection — featured card */}
-          <div className="card-hover-lift bg-[var(--color-surface)] border-2 border-[var(--color-accent)] rounded-2xl p-6 mb-4" style={{ boxShadow: "0 4px 20px rgba(0,0,0,0.04)" }}>
+          <div className="card-hover-lift bg-[var(--color-surface)] border-2 border-[var(--color-accent)] rounded-2xl p-6 mb-4" style={{ boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>
             <p className="font-[var(--font-heading)] text-lg font-medium text-center mb-1">Continuar esta reflexión</p>
             <p className="text-center text-xl font-light mb-1">$0.99 <span className={`${S.sub} text-sm`}>USD</span></p>
             <p className="font-[var(--font-sans)] text-[0.9rem] text-[var(--color-accent)] font-light italic mb-2 text-center">Menos que un café. Más que un momento.</p>
@@ -1300,7 +1300,7 @@ function MePesaMuchoInner() {
           </div>
 
           {/* Subscription — best value card */}
-          <div className="card-hover-lift bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-5 mb-6" style={{ boxShadow: "0 4px 20px rgba(0,0,0,0.04)" }}>
+          <div className="card-hover-lift bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-5 mb-6" style={{ boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>
             <p className="font-[var(--font-heading)] text-base font-medium text-center mb-1">Reflexiones ilimitadas</p>
             <p className="text-center text-lg font-light mb-1">$4.99 <span className={`${S.sub} text-sm`}>USD / mes</span></p>
             <p className={`${S.sub} text-sm mb-3 text-center`}>Puedes seguir profundizando sin límite. Todo incluye reflexiones, conversaciones guiadas, descarga PDF y acceso desde cualquier dispositivo.</p>
@@ -1464,7 +1464,7 @@ function MePesaMuchoInner() {
         <div className={`${S.box} text-center`} style={{ position: "relative", zIndex: 1, flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", paddingTop: "60px" }}>
           <div className="flex justify-center mb-12 hero-stagger-1 icon-breathe"><LogoIcon size={44} /></div>
 
-          <h1 className="font-[var(--font-heading)] text-[30px] sm:text-[40px] text-[var(--color-text)] italic leading-tight font-medium mb-14 hero-stagger-2" style={{ letterSpacing: "-0.02em" }}>
+          <h1 className="font-[var(--font-heading)] text-[30px] sm:text-[40px] text-[var(--color-text)] italic font-normal mb-14 hero-stagger-2" style={{ letterSpacing: "-0.02em", lineHeight: "1.3" }}>
             A veces las cosas pesan menos cuando las sueltas.
           </h1>
 
@@ -1863,7 +1863,7 @@ function MePesaMuchoInner() {
         <div style={{ maxWidth: "680px", width: "100%", margin: "0 auto", paddingLeft: "1.5rem", paddingRight: "1.5rem", paddingBottom: "3rem" }}>
           <div className={`relative ${showScrollHint ? "scroll-hint-bottom" : ""}`}>
             <div ref={scrollCardRef} className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-6 sm:p-8" style={{ maxHeight: "60vh", overflowY: "auto" }} role="article" aria-label="Tu reflexión personalizada">
-              <div className="font-[var(--font-sans)] text-lg leading-relaxed" style={{ maxWidth: "65ch", margin: "0 auto", lineHeight: "1.6" }}>{renderParagraphs(reflexion)}</div>
+              <div className="font-[var(--font-sans)] text-lg leading-relaxed" style={{ maxWidth: "52ch", margin: "0 auto", lineHeight: "1.6" }}>{renderParagraphs(reflexion)}</div>
             </div>
           </div>
 
@@ -2387,7 +2387,7 @@ function MePesaMuchoInner() {
       <div className={`${S.box} text-center`}>
         <p className="text-xl italic leading-relaxed mb-4">mepesamucho</p>
         <p className={`${S.sub} text-base mb-4`}>Algo no salió como esperábamos.</p>
-        <button className={S.btn} onClick={() => { setStep("landing"); setCierreStep(0); }}>
+        <button className={S.btn} onClick={reiniciar}>
           Volver al inicio
         </button>
       </div>

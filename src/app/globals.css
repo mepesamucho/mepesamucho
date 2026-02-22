@@ -6,22 +6,22 @@
    ═══════════════════════════════════════════ */
 
 @theme inline {
-  /* ── Light mode palette ── */
-  --color-bg: #F5F1EA;
+  /* ── Light mode palette (papel natural) ── */
+  --color-bg: #F3EFE8;
   --color-surface: #FFFFFF;
-  --color-text: #1C1C1C;
+  --color-text: #1A1A1A;
   --color-text-secondary: #5E5E5E;
   --color-text-tertiary: #8A8A8A;
 
-  --color-primary: #2E4E3F;
-  --color-primary-hover: #3F6B58;
+  --color-primary: #355E4F;
+  --color-primary-hover: #3F6F5D;
 
-  --color-secondary-bg: #F0EDE6;
-  --color-secondary-text: #1C1C1C;
-  --color-secondary-hover: #2E4E3F;
+  --color-secondary-bg: #EDEAE3;
+  --color-secondary-text: #1A1A1A;
+  --color-secondary-hover: #355E4F;
 
-  --color-border: #E4DED6;
-  --color-border-light: #EEE9E0;
+  --color-border: #E0DAD1;
+  --color-border-light: #EBE6DD;
 
   --color-accent: #8A9F8F;
   --color-accent-muted: #C4B5A0;
@@ -31,9 +31,9 @@
   --color-crisis-bg: #F5ECE3;
 
   /* RGB forms for rgba() in animations */
-  --glow-primary-rgb: 46, 78, 63;
+  --glow-primary-rgb: 53, 94, 79;
   --glow-accent-rgb: 138, 159, 143;
-  --color-bg-rgb: 245, 241, 234;
+  --color-bg-rgb: 243, 239, 232;
 
   /* Typography */
   --font-heading: 'Fraunces', Georgia, serif;
@@ -41,34 +41,34 @@
   --font-sans: 'Inter', 'Helvetica Neue', sans-serif;
 }
 
-/* ── Dark mode palette ── */
+/* ── Dark mode palette (verde orgánico, introspectivo) ── */
 .dark {
-  --color-bg: #121212;
-  --color-surface: #1B1B1B;
-  --color-text: #EAEAEA;
-  --color-text-secondary: #A3A3A3;
-  --color-text-tertiary: #757575;
+  --color-bg: #161B18;
+  --color-surface: #1E2421;
+  --color-text: #DDD8D2;
+  --color-text-secondary: #A9A49E;
+  --color-text-tertiary: #6E6A65;
 
-  --color-primary: #3E7A63;
-  --color-primary-hover: #4E9278;
+  --color-primary: #355E4F;
+  --color-primary-hover: #3F6F5D;
 
-  --color-secondary-bg: #2A2A2A;
-  --color-secondary-text: #EAEAEA;
-  --color-secondary-hover: #3E7A63;
+  --color-secondary-bg: #232A26;
+  --color-secondary-text: #DDD8D2;
+  --color-secondary-hover: #355E4F;
 
-  --color-border: #333333;
-  --color-border-light: #2A2A2A;
+  --color-border: #2E3531;
+  --color-border-light: #252C28;
 
   --color-accent: #5FA68F;
-  --color-accent-muted: #4A5A50;
+  --color-accent-muted: #3A4D44;
   --color-focus: #5FA68F;
 
   --color-crisis: #9D8B7E;
-  --color-crisis-bg: #2A2220;
+  --color-crisis-bg: #2A2420;
 
-  --glow-primary-rgb: 62, 122, 99;
+  --glow-primary-rgb: 53, 94, 79;
   --glow-accent-rgb: 95, 166, 143;
-  --color-bg-rgb: 18, 18, 18;
+  --color-bg-rgb: 22, 27, 24;
 }
 
 * {
@@ -380,16 +380,16 @@ textarea:focus-visible {
    ═══════════════════════════════════════════ */
 
 .btn-primary-glow {
-  box-shadow: 0 2px 12px rgba(var(--glow-primary-rgb), 0.25);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   transition: all 0.15s ease-out;
 }
 .btn-primary-glow:hover {
-  box-shadow: 0 4px 20px rgba(var(--glow-primary-rgb), 0.35);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
   transform: translateY(-1px);
 }
 .btn-primary-glow:active {
   transform: translateY(0);
-  box-shadow: 0 1px 6px rgba(var(--glow-primary-rgb), 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 /* Micro-interactions */
