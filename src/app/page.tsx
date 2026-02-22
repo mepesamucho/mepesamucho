@@ -1217,35 +1217,6 @@ function MePesaMuchoInner() {
         <div className="flex justify-center gap-4 mt-3 flex-wrap">
           <button className={`${S.link} text-[0.85rem]`} onClick={() => setShowAbout(true)}>Acerca de</button>
           <button className={`${S.link} text-[0.85rem]`} onClick={() => setShowDisclaimer(true)}>Aviso legal y privacidad</button>
-          {dayPass.active && dayPass.hoursLeft > 25 && (
-            <button
-              className={`${S.link} text-[0.85rem]`}
-              onClick={async () => {
-                const email = localStorage.getItem("mpm_email");
-                if (!email) {
-                  alert("Para gestionar tu suscripción, ingresa el email que usaste al pagar.");
-                  return;
-                }
-                try {
-                  const res = await fetch("/api/billing-portal", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ email }),
-                  });
-                  const data = await res.json();
-                  if (data.ok && data.url) {
-                    window.location.href = data.url;
-                  } else {
-                    alert(data.error || "No pudimos abrir el portal de facturación.");
-                  }
-                } catch {
-                  alert("Error de conexión. Intenta de nuevo.");
-                }
-              }}
-            >
-              Gestionar suscripción
-            </button>
-          )}
         </div>
       </footer>
     );
@@ -1550,13 +1521,43 @@ function MePesaMuchoInner() {
             Quiero soltar lo que cargo
           </button>
 
-          <p className="font-[var(--font-sans)] text-sm text-[var(--color-text-tertiary)] font-normal hero-stagger-3" style={{ marginTop: "20px", opacity: 0.75 }}>
-            2 reflexiones gratuitas cada 24 horas.
-          </p>
+          {!dayPass.active && (
+            <p className="font-[var(--font-sans)] text-sm text-[var(--color-text-tertiary)] font-normal hero-stagger-3" style={{ marginTop: "20px", opacity: 0.75 }}>
+              2 reflexiones gratuitas cada 24 horas.
+            </p>
+          )}
 
           {/* ── Acceso suscriptores ── */}
           <div className="mt-8 hero-stagger-5">
-            {!showHeroCode ? (
+            {dayPass.active && dayPass.hoursLeft > 25 ? (
+              <button
+                className="font-[var(--font-sans)] text-sm text-[var(--color-text-secondary)] font-normal cursor-pointer bg-transparent border border-[var(--color-border)] rounded-xl px-5 py-2.5 hover:bg-[var(--color-secondary-bg)] transition-colors"
+                onClick={async () => {
+                  const email = localStorage.getItem("mpm_email");
+                  if (!email) {
+                    alert("Para gestionar tu suscripción, ingresa el email que usaste al pagar.");
+                    return;
+                  }
+                  try {
+                    const res = await fetch("/api/billing-portal", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ email }),
+                    });
+                    const data = await res.json();
+                    if (data.ok && data.url) {
+                      window.location.href = data.url;
+                    } else {
+                      alert(data.error || "No pudimos abrir el portal de facturación.");
+                    }
+                  } catch {
+                    alert("Error de conexión. Intenta de nuevo.");
+                  }
+                }}
+              >
+                Gestionar mi suscripción
+              </button>
+            ) : !showHeroCode ? (
               <button
                 className="font-[var(--font-sans)] text-sm text-[var(--color-text-secondary)] font-normal cursor-pointer bg-transparent border border-[var(--color-border)] rounded-xl px-5 py-2.5 hover:bg-[var(--color-secondary-bg)] transition-colors"
                 onClick={() => setShowHeroCode(true)}
