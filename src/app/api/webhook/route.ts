@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { savePaymentSession, markSubscriptionCancelled, type AccessType } from "@/lib/access";
+import { createAccessGrant } from "@/lib/db";
 
 function getStripe() {
   if (!process.env.STRIPE_SECRET_KEY) throw new Error("STRIPE_SECRET_KEY not set");
@@ -57,12 +58,23 @@ export async function POST(req: NextRequest) {
 
       console.log(`Pago completado: ${type}, session: ${session.id}`);
 
-      // Save to KV so /api/save-access can verify it
+      // Save to KV so /api/save-access can verify it (backward compat)
       try {
         await savePaymentSession(session.id, type, customerId);
       } catch (err) {
         console.error("Error saving payment session to KV:", err);
         // Non-fatal — save-access will fallback to Stripe verification
+      }
+
+      // Save to Postgres (permanent record)
+      try {
+        const email = session.customer_details?.email || null;
+        const grantType: "single" | "monthly" = type === "subscription" ? "monthly" : "single";
+        await createAccessGrant(session.id, email, grantType);
+        console.log(`Access grant creado en Postgres: ${session.id}, tipo: ${grantType}`);
+      } catch (err) {
+        console.error("Error saving access grant to Postgres:", err);
+        // Non-fatal — /api/stripe/confirm will create it as fallback
       }
       break;
     }

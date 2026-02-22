@@ -427,9 +427,10 @@ function MePesaMuchoInner() {
     // so the app feels "first time" (text, checkout, continuation all gone).
     // Preserves: mpm_textsize, mpm_code, mpm_email, mpm_free_usage.
     const hasPaymentParams = searchParams.has("session_id") || searchParams.has("type");
+    const hasConfirmed = searchParams.has("confirmed");
     const hasPaymentRecovery = !!localStorage.getItem("mpm_payment_success");
     const hasPendingCheckout = !!localStorage.getItem("mpm_checkout_pending");
-    if (!hasPaymentParams && !hasPaymentRecovery && !hasPendingCheckout) {
+    if (!hasPaymentParams && !hasConfirmed && !hasPaymentRecovery && !hasPendingCheckout) {
       console.log("[MPM] Auto-reset: clean slate on return");
       autoReset();
     }
@@ -440,6 +441,47 @@ function MePesaMuchoInner() {
       const saved = localStorage.getItem("mpm_textsize") as "normal" | "large" | "xlarge" | null;
       if (saved && ["normal", "large", "xlarge"].includes(saved)) setGlobalTextSize(saved);
     } catch {}
+
+    // ── ETAPA 3: Auto-resume after /confirm page ──
+    if (searchParams.get("confirmed") === "1") {
+      try {
+        const confirmData = sessionStorage.getItem("mpm_payment_confirmed");
+        if (confirmData) {
+          const { type: confirmedType } = JSON.parse(confirmData);
+          console.log("[MPM] Auto-resume from /confirm, type:", confirmedType);
+
+          // dayPass already activated by /confirm page — just refresh state
+          setDayPass(getDayPass());
+
+          // Check for saved continuation
+          const savedCont = sessionStorage.getItem("mpm_continuacion") || localStorage.getItem("mpm_continuacion");
+          if (savedCont && confirmedType === "single") {
+            try {
+              const data = JSON.parse(savedCont);
+              if (data.continuacion) {
+                setContinuacion(data.continuacion);
+                setContinuacionCitas(data.continuacionCitas || []);
+                setContinuacionDesbloqueada(true);
+                setReflexion(data.reflexion || "");
+                setCitasUsadas(data.citasUsadas || []);
+                setMarco(data.marco || null);
+                setCierreStep(3);
+                setStep("essay");
+                try { sessionStorage.removeItem("mpm_continuacion"); } catch {}
+                try { localStorage.removeItem("mpm_continuacion"); } catch {}
+                sessionStorage.removeItem("mpm_payment_confirmed");
+                return;
+              }
+            } catch {}
+          }
+
+          // No continuation to restore — go to landing (dayPass active, free to use)
+          sessionStorage.removeItem("mpm_payment_confirmed");
+          // Step is already "landing" by default — dayPass is active so user can proceed
+          return;
+        }
+      } catch {}
+    }
 
     // Use Next.js useSearchParams() instead of window.location.search
     // window.location.search can be empty during App Router hydration

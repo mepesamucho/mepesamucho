@@ -50,10 +50,10 @@ export async function POST(req: NextRequest) {
       mode: isSubscription ? "subscription" : "payment",
       payment_method_types: ["card"],
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${appUrl}?session_id={CHECKOUT_SESSION_ID}&type=${type}`,
+      success_url: `${appUrl}/confirm?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${appUrl}?canceled=true`,
       locale: "es",
-      metadata: { type },
+      metadata: { type: isSubscription ? "monthly" : "single" },
     });
 
     return NextResponse.json({ url: session.url });
