@@ -1235,7 +1235,7 @@ function MePesaMuchoInner() {
 
   const atFreeLimit = !canUseFreeInitialReflection() && !dayPass.active;
 
-  if (atFreeLimit && step === "landing") {
+  if (step === "limit") {
     const waitMs = msUntilNextFree();
     const countdownText = formatCountdown(waitMs);
     return (
@@ -1475,7 +1475,7 @@ function MePesaMuchoInner() {
             </div>
           )}
 
-          <button className={`${S.btn} text-lg px-10 py-4 hero-stagger-3`} onClick={() => setStep("writing")} aria-label="Quiero soltar lo que cargo">
+          <button className={`${S.btn} text-lg px-10 py-4 hero-stagger-3`} onClick={() => { if (!canUseFreeInitialReflection() && !dayPass.active) { setStep("limit"); } else { setStep("writing"); } }} aria-label="Quiero soltar lo que cargo">
             Quiero soltar lo que cargo
           </button>
 
