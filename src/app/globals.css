@@ -13,12 +13,12 @@
   --color-text-secondary: #5E5E5E;
   --color-text-tertiary: #8A8A8A;
 
-  --color-primary: #355E4F;
-  --color-primary-hover: #3F6F5D;
+  --color-primary: #335A4C;
+  --color-primary-hover: #3B6858;
 
   --color-secondary-bg: #EDEAE3;
   --color-secondary-text: #1A1A1A;
-  --color-secondary-hover: #355E4F;
+  --color-secondary-hover: #335A4C;
 
   --color-border: #E0DAD1;
   --color-border-light: #EBE6DD;
@@ -31,7 +31,7 @@
   --color-crisis-bg: #F5ECE3;
 
   /* RGB forms for rgba() in animations */
-  --glow-primary-rgb: 53, 94, 79;
+  --glow-primary-rgb: 51, 90, 76;
   --glow-accent-rgb: 138, 159, 143;
   --color-bg-rgb: 243, 239, 232;
 
@@ -43,18 +43,19 @@
 
 /* ── Dark mode palette (verde orgánico, introspectivo) ── */
 .dark {
+  background: radial-gradient(circle at center, #1A221F 0%, #161B18 55%, #131715 100%);
   --color-bg: #161B18;
   --color-surface: #1E2421;
   --color-text: #DDD8D2;
   --color-text-secondary: #A9A49E;
   --color-text-tertiary: #6E6A65;
 
-  --color-primary: #355E4F;
-  --color-primary-hover: #3F6F5D;
+  --color-primary: #335A4C;
+  --color-primary-hover: #3B6858;
 
   --color-secondary-bg: #232A26;
   --color-secondary-text: #DDD8D2;
-  --color-secondary-hover: #355E4F;
+  --color-secondary-hover: #335A4C;
 
   --color-border: #2E3531;
   --color-border-light: #252C28;
@@ -66,7 +67,7 @@
   --color-crisis: #9D8B7E;
   --color-crisis-bg: #2A2420;
 
-  --glow-primary-rgb: 53, 94, 79;
+  --glow-primary-rgb: 51, 90, 76;
   --glow-accent-rgb: 95, 166, 143;
   --color-bg-rgb: 22, 27, 24;
 }

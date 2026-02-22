@@ -1461,10 +1461,10 @@ function MePesaMuchoInner() {
         {/* Línea de anclaje lateral */}
         <div className="accent-line" />
 
-        <div className={`${S.box} text-center`} style={{ position: "relative", zIndex: 1, flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", paddingTop: "60px" }}>
-          <div className="flex justify-center mb-12 hero-stagger-1 icon-breathe"><LogoIcon size={44} /></div>
+        <div className={`${S.box} text-center`} style={{ position: "relative", zIndex: 1, flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-start", paddingTop: "18vh", paddingLeft: "24px", paddingRight: "24px" }}>
+          <div className="flex justify-center hero-stagger-1 icon-breathe" style={{ marginBottom: "28px", opacity: 0.7 }}><LogoIcon size={50} /></div>
 
-          <h1 className="font-[var(--font-heading)] text-[30px] sm:text-[40px] text-[var(--color-text)] italic font-normal mb-14 hero-stagger-2" style={{ letterSpacing: "-0.02em", lineHeight: "1.3" }}>
+          <h1 className="font-[var(--font-heading)] text-[30px] sm:text-[40px] text-[var(--color-text)] italic font-normal hero-stagger-2" style={{ letterSpacing: "-0.02em", lineHeight: "1.3", marginBottom: "48px" }}>
             A veces las cosas pesan menos cuando las sueltas.
           </h1>
 
@@ -1479,7 +1479,7 @@ function MePesaMuchoInner() {
             Quiero soltar lo que cargo
           </button>
 
-          <p className="font-[var(--font-sans)] text-sm text-[var(--color-text-tertiary)] font-normal mt-4 hero-stagger-3">
+          <p className="font-[var(--font-sans)] text-sm text-[var(--color-text-tertiary)] font-normal hero-stagger-3" style={{ marginTop: "20px", opacity: 0.75 }}>
             2 reflexiones gratuitas cada 24 horas.
           </p>
 
