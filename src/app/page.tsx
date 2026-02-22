@@ -5,8 +5,8 @@ import { useSearchParams } from "next/navigation";
 import { jsPDF } from "jspdf";
 import { detectarCrisis, CRISIS_RESOURCES } from "@/data/crisis";
 import { MARCOS, type Marco } from "@/data/citas";
-import { resetSession, resetUnpaidSession, hasActivePaidAccess } from "@/lib/sessionManager";
-import { canUseFree, recordFreeUse, freeRemaining, msUntilNextFree, formatCountdown } from "@/lib/freeUsageManager";
+import { softReset, autoReset } from "@/lib/sessionManager";
+import { canUseFreeInitialReflection, registerInitialReflectionUse, getFreeRemaining, msUntilNextFree, formatCountdown } from "@/lib/freeUsageManager";
 
 // Module-level guard: survives Suspense re-mounts within the same page load
 // but resets on new navigations (which is exactly what we want)
@@ -28,23 +28,6 @@ type Step =
 
 // ── LOCAL STORAGE HELPERS ──────────────────────
 
-function getUsosHoy(): number {
-  try {
-    const saved = localStorage.getItem("mpm_usos");
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      if (parsed.date === new Date().toDateString()) return parsed.count;
-    }
-  } catch {}
-  return 0;
-}
-
-function saveUsosHoy(count: number) {
-  try {
-    localStorage.setItem("mpm_usos", JSON.stringify({ date: new Date().toDateString(), count }));
-  } catch {}
-}
-
 function getDayPass(): { active: boolean; hoursLeft: number } {
   try {
     const saved = localStorage.getItem("mpm_daypass");
@@ -63,33 +46,8 @@ function activateDayPass() {
   } catch {}
 }
 
-function activateSinglePass() {
-  try {
-    localStorage.setItem("mpm_single", JSON.stringify({ date: new Date().toDateString(), available: 1 }));
-  } catch {}
-}
-
-function getSinglePass(): boolean {
-  try {
-    const saved = localStorage.getItem("mpm_single");
-    if (saved) {
-      const p = JSON.parse(saved);
-      if (p.date === new Date().toDateString() && p.available > 0) return true;
-    }
-  } catch {}
-  return false;
-}
-
-function useSinglePass() {
-  try {
-    const saved = localStorage.getItem("mpm_single");
-    if (saved) {
-      const p = JSON.parse(saved);
-      p.available = Math.max(0, (p.available || 1) - 1);
-      localStorage.setItem("mpm_single", JSON.stringify(p));
-    }
-  } catch {}
-}
+// activateSinglePass/getSinglePass/useSinglePass removed in FASE 1
+// Free usage gating is now handled exclusively by freeUsageManager.ts
 
 // ── DOWNLOAD REFLECTION AS PDF ─────────────────
 
@@ -370,7 +328,6 @@ function MePesaMuchoInner() {
   const [cierreTexto2, setCierreTexto2] = useState("");
   const [showCierreInput, setShowCierreInput] = useState(false);
   const [msgOpacity, setMsgOpacity] = useState(0);
-  const [usosHoy, setUsosHoy] = useState(0);
   const [dayPass, setDayPass] = useState({ active: false, hoursLeft: 0 });
   const [fadeKey, setFadeKey] = useState(0);
   const [apiError, setApiError] = useState("");
@@ -417,6 +374,7 @@ function MePesaMuchoInner() {
   const [globalTextSize, setGlobalTextSize] = useState<"normal" | "large" | "xlarge">("normal");
   const [verifyingPayment, setVerifyingPayment] = useState(false);
   const paymentDataRef = useRef<{ sid: string; type: string } | null>(null);
+  const textoOriginalRef = useRef(""); // in-memory only — never persisted to storage
   const dialogEndRef = useRef<HTMLDivElement>(null);
   const crisisShownOnce = useRef(false);
   const scrollCardRef = useRef<HTMLDivElement>(null);
@@ -470,25 +428,17 @@ function MePesaMuchoInner() {
     console.log("[MPM] localStorage mpm_payment_success:", localStorage.getItem("mpm_payment_success"));
     console.log("[MPM] sessionStorage mpm_payment_pending:", sessionStorage.getItem("mpm_payment_pending"));
 
-    // PASO 5: Auto-reset stale unpaid sessions on return
-    // If no payment params in URL + no active paid access + stale checkout, clean up
+    // Auto-reset on return: if no payment flow in progress, clear session artifacts
+    // so the app feels "first time" (text, checkout, continuation all gone).
+    // Preserves: mpm_textsize, mpm_code, mpm_email, mpm_free_usage.
     const hasPaymentParams = searchParams.has("session_id") || searchParams.has("type");
     const hasPaymentRecovery = !!localStorage.getItem("mpm_payment_success");
-    if (!hasPaymentParams && !hasPaymentRecovery && !hasActivePaidAccess()) {
-      const pendingCheckout = localStorage.getItem("mpm_checkout_pending");
-      if (pendingCheckout) {
-        try {
-          const parsed = JSON.parse(pendingCheckout);
-          // If checkout is older than 30 minutes, consider it abandoned
-          if (parsed.ts && Date.now() - parsed.ts > 30 * 60 * 1000) {
-            console.log("[MPM] Clearing stale unpaid session data");
-            resetUnpaidSession();
-          }
-        } catch { resetUnpaidSession(); }
-      }
+    const hasPendingCheckout = !!localStorage.getItem("mpm_checkout_pending");
+    if (!hasPaymentParams && !hasPaymentRecovery && !hasPendingCheckout) {
+      console.log("[MPM] Auto-reset: clean slate on return");
+      autoReset();
     }
 
-    setUsosHoy(getUsosHoy());
     setDayPass(getDayPass());
     // Restore text size preference
     try {
@@ -619,7 +569,7 @@ function MePesaMuchoInner() {
     function handlePaymentSuccess(paymentType: string, paymentSid: string) {
       console.log("[MPM] handlePaymentSuccess:", paymentType, paymentSid);
       if (paymentType === "daypass") { activateDayPass(); setDayPass({ active: true, hoursLeft: 24 }); }
-      if (paymentType === "single") activateSinglePass();
+      if (paymentType === "single") { activateDayPass(); setDayPass({ active: true, hoursLeft: 1 }); }
       if (paymentType === "subscription") { activateDayPass(); setDayPass({ active: true, hoursLeft: 720 }); }
 
       // Save payment success to localStorage so it survives any re-mounts
@@ -812,18 +762,14 @@ function MePesaMuchoInner() {
       setCitasUsadas(data.citasUsadas || []);
       setStep("essay");
       setShowScrollHint(true);
-      const n = usosHoy + 1;
-      setUsosHoy(n);
-      saveUsosHoy(n);
-      recordFreeUse(); // rolling 24h usage tracker
-      if (getSinglePass()) useSinglePass();
+      registerInitialReflectionUse(); // rolling 24h — sole gating source
     } catch {
       setApiError("Hubo un error generando tu reflexión. Intenta de nuevo.");
       setStep("framework");
     }
-    try { sessionStorage.setItem("mpm_texto", texto.slice(0, 2000)); } catch {}
+    textoOriginalRef.current = texto.slice(0, 2000); // in-memory only, never persisted
     setTexto("");
-  }, [texto, marco, resp1, resp2, usosHoy, crisisDetectedInText]);
+  }, [texto, marco, resp1, resp2, crisisDetectedInText]);
 
   // Generate continuation reflection
   const generarContinuacion = useCallback(async () => {
@@ -835,7 +781,7 @@ function MePesaMuchoInner() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          textoOriginal: texto || sessionStorage.getItem("mpm_texto") || "",
+          textoOriginal: texto || textoOriginalRef.current || "",
           marco,
           reflexionOriginal: reflexion.slice(0, 1500),
           respuestaCierre1: cierreTexto,
@@ -917,7 +863,7 @@ function MePesaMuchoInner() {
   }, [dialogTurnos, citasUsadas, continuacionCitas]);
 
   const reiniciar = () => {
-    resetSession(); // clear storage via sessionManager
+    softReset(); // clears storage, preserves textsize + code/email + free_usage
     setStep("landing");
     setTexto(""); setMarco(null); setReflexion(""); setCitasUsadas([]);
     setShowCrisis(false); setCrisisAck(false); setShowDisclaimer(false);
@@ -931,7 +877,8 @@ function MePesaMuchoInner() {
     setContinuacionDesbloqueada(false); setShowContinuacionFuentes(false);
     setDialogTurnos([]); setDialogInput(""); setDialogLoading(false);
     setDialogCerrado(false); setAllCitas([]);
-    setDayPass(getDayPass()); setUsosHoy(getUsosHoy());
+    textoOriginalRef.current = "";
+    setDayPass(getDayPass());
   };
 
   const fs = FONT_SIZES[fontSize];
@@ -1213,29 +1160,29 @@ function MePesaMuchoInner() {
 
   // ── FOOTER COMPONENT ─────────────────────────
 
-  const Footer = ({ showDemo = false, showCounter = false }: { showDemo?: boolean; showCounter?: boolean }) => (
-    <footer className="mt-14 text-center" role="contentinfo">
-      <div className={`${S.divider} mb-5`} />
-      <p className="font-[var(--font-sans)] text-[0.85rem] text-[#6B665F] leading-relaxed">mepesamucho.com · Un espacio de reflexión, no de consejería.</p>
-      <p className="font-[var(--font-sans)] text-[0.85rem] text-[#6B665F] leading-relaxed mt-1">Lo que escribes no se almacena ni se comparte.</p>
-      <p className="font-[var(--font-sans)] text-[0.8rem] text-[#7A756F] leading-relaxed mt-2">Un proyecto independiente de bienestar emocional.</p>
-      {showCounter && (
-        <p className="font-[var(--font-sans)] text-[0.8rem] text-[#6B665F] mt-3">
-          {dayPass.active
-            ? `Acceso ampliado activo`
-            : `${Math.max(0, 2 - usosHoy)} ${Math.max(0, 2 - usosHoy) === 1 ? "reflexión gratuita disponible" : "reflexiones gratuitas disponibles"} hoy`
-          }
-        </p>
-      )}
-      <div className="flex justify-center gap-4 mt-3 flex-wrap">
-        <button className={`${S.link} text-[0.85rem]`} onClick={() => setShowAbout(true)}>Acerca de</button>
-        <button className={`${S.link} text-[0.85rem]`} onClick={() => setShowDisclaimer(true)}>Aviso legal y privacidad</button>
-        {showDemo && (
-          <button className={`${S.link} text-[0.85rem]`} onClick={() => { setUsosHoy(0); saveUsosHoy(0); }}>(Demo: reiniciar)</button>
+  const Footer = () => {
+    const remaining = getFreeRemaining();
+    return (
+      <footer className="mt-14 text-center" role="contentinfo">
+        <div className={`${S.divider} mb-5`} />
+        <p className="font-[var(--font-sans)] text-[0.85rem] text-[#6B665F] leading-relaxed">mepesamucho.com · Un espacio de reflexión, no de consejería.</p>
+        <p className="font-[var(--font-sans)] text-[0.85rem] text-[#6B665F] leading-relaxed mt-1">Lo que escribes no se almacena ni se comparte.</p>
+        <p className="font-[var(--font-sans)] text-[0.8rem] text-[#7A756F] leading-relaxed mt-2">Un proyecto independiente de bienestar emocional.</p>
+        {step === "landing" && !dayPass.active && (
+          <p className="font-[var(--font-sans)] text-[0.8rem] text-[#6B665F] mt-3">
+            Te {remaining === 1 ? "queda" : "quedan"} {remaining} {remaining === 1 ? "reflexión gratuita" : "reflexiones gratuitas"} en las próximas 24 horas.
+          </p>
         )}
-      </div>
-    </footer>
-  );
+        {dayPass.active && (
+          <p className="font-[var(--font-sans)] text-[0.8rem] text-[#6B665F] mt-3">Acceso ampliado activo</p>
+        )}
+        <div className="flex justify-center gap-4 mt-3 flex-wrap">
+          <button className={`${S.link} text-[0.85rem]`} onClick={() => setShowAbout(true)}>Acerca de</button>
+          <button className={`${S.link} text-[0.85rem]`} onClick={() => setShowDisclaimer(true)}>Aviso legal y privacidad</button>
+        </div>
+      </footer>
+    );
+  };
 
   // ── TRADITION ICONS ─────────────────────────────
   const TraditionIcon = ({ type }: { type: Marco }) => {
@@ -1290,7 +1237,7 @@ function MePesaMuchoInner() {
 
   // ── LIMIT (paywall) ────────────────────────────
 
-  const atFreeLimit = (usosHoy >= 2 || !canUseFree()) && !dayPass.active && !getSinglePass();
+  const atFreeLimit = !canUseFreeInitialReflection() && !dayPass.active;
 
   if (atFreeLimit && step === "landing") {
     const waitMs = msUntilNextFree();
@@ -1384,7 +1331,7 @@ function MePesaMuchoInner() {
             {reflexion ? (
               <button
                 className="font-[var(--font-sans)] text-[0.95rem] text-[#5C5751] font-normal bg-transparent border border-[#D9CFBF] rounded-lg px-4 py-3.5 hover:bg-[#EBE3D8] transition-colors text-center"
-                onClick={() => { setUsosHoy(Math.max(0, usosHoy - 1)); saveUsosHoy(Math.max(0, usosHoy - 1)); setStep("essay"); setCierreStep(0); }}
+                onClick={() => { setStep("essay"); setCierreStep(0); }}
               >
                 ← Volver a mi reflexión
               </button>
@@ -1518,10 +1465,9 @@ function MePesaMuchoInner() {
                               localStorage.setItem("mpm_daypass", JSON.stringify({ expires: data.expiresAt }));
                               setDayPass({ active: true, hoursLeft: data.hoursLeft || 24 });
                             } else if (data.type === "single") {
-                              activateSinglePass();
+                              activateDayPass();
+                              setDayPass({ active: true, hoursLeft: 1 });
                             }
-                            setUsosHoy(0);
-                            saveUsosHoy(0);
                             setStep("writing");
                           } else {
                             setHeroCodeError(data.error || "Tu código no existe o ya venció. Puedes suscribirte para tener acceso ilimitado.");
@@ -2070,7 +2016,8 @@ function MePesaMuchoInner() {
                               localStorage.setItem("mpm_daypass", JSON.stringify({ expires: data.expiresAt }));
                               setDayPass({ active: true, hoursLeft: data.hoursLeft || 24 });
                             } else if (data.type === "single") {
-                              activateSinglePass();
+                              activateDayPass();
+                              setDayPass({ active: true, hoursLeft: 1 });
                             }
                             setContinuacionDesbloqueada(true);
                           } else {

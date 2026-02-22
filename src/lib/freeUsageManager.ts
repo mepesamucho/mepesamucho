@@ -2,9 +2,12 @@
  * freeUsageManager.ts — Rolling 24h free usage limit for mepesamucho.com
  * FASE 1: 2 free reflections per rolling 24-hour window.
  *
+ * This is the SOLE source of truth for free usage gating.
  * Uses localStorage key: mpm_free_usage
- * Stores an array of timestamps (up to last 2) of completed reflections.
  * Anonymous: no IP, no fingerprinting — just local timestamps.
+ *
+ * Important: Usage increments ONLY when the initial reflection is generated,
+ * NOT on conversation turns, paywall views, or page refresh.
  */
 
 const STORAGE_KEY = "mpm_free_usage";
@@ -12,7 +15,7 @@ const MAX_FREE = 2;
 const WINDOW_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 interface FreeUsageData {
-  timestamps: number[]; // epoch ms of each completed reflection
+  timestamps: number[]; // epoch ms of each completed initial reflection
 }
 
 function loadData(): FreeUsageData {
@@ -33,9 +36,9 @@ function saveData(data: FreeUsageData): void {
 }
 
 /**
- * Get timestamps of reflections within the current 24h window.
+ * Get timestamps of reflections within the current 24h window (public).
  */
-function getActiveTimestamps(): number[] {
+export function getTimestamps(): number[] {
   const data = loadData();
   const cutoff = Date.now() - WINDOW_MS;
   return data.timestamps.filter((ts) => ts > cutoff);
@@ -44,23 +47,25 @@ function getActiveTimestamps(): number[] {
 /**
  * How many free reflections remain in the current 24h window.
  */
-export function freeRemaining(): number {
-  return Math.max(0, MAX_FREE - getActiveTimestamps().length);
+export function getFreeRemaining(): number {
+  return Math.max(0, MAX_FREE - getTimestamps().length);
 }
 
 /**
- * Whether the user can start a new free reflection.
+ * Whether the user can start a new free initial reflection.
+ * This is the ONLY gating check for free users.
  */
-export function canUseFree(): boolean {
-  return freeRemaining() > 0;
+export function canUseFreeInitialReflection(): boolean {
+  return getFreeRemaining() > 0;
 }
 
 /**
- * Record a completed reflection. Call this when the user finishes writing
- * (at the point where the essay is generated, not at page load).
+ * Record a completed initial reflection.
+ * Call ONLY when the /api/reflect response succeeds (initial reflection).
+ * Do NOT call for conversation turns or continuation.
  */
-export function recordFreeUse(): void {
-  const active = getActiveTimestamps();
+export function registerInitialReflectionUse(): void {
+  const active = getTimestamps();
   active.push(Date.now());
   saveData({ timestamps: active.slice(-MAX_FREE) });
 }
@@ -70,9 +75,8 @@ export function recordFreeUse(): void {
  * Returns 0 if a free slot is already available.
  */
 export function msUntilNextFree(): number {
-  const active = getActiveTimestamps();
+  const active = getTimestamps();
   if (active.length < MAX_FREE) return 0;
-  // The oldest active timestamp + 24h = when it expires
   const oldest = Math.min(...active);
   const expiresAt = oldest + WINDOW_MS;
   return Math.max(0, expiresAt - Date.now());
