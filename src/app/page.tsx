@@ -976,6 +976,30 @@ function MePesaMuchoInner() {
               <span className="text-[0.7rem]">{globalTextSize === "normal" ? "" : globalTextSize === "large" ? "+" : "++"}</span>
             </button>
             <button className={`${S.link} text-[0.9rem]`} onClick={() => setShowHowItWorks(!showHowItWorks)}>Cómo funciona</button>
+            <button
+              className="font-[var(--font-sans)] text-[0.8rem] text-[var(--color-text-tertiary)] bg-transparent border border-[var(--color-border)] rounded-full px-3 py-1 cursor-pointer hover:bg-[var(--color-secondary-bg)] hover:text-[var(--color-text-secondary)] transition-colors"
+              onClick={async () => {
+                const email = localStorage.getItem("mpm_email") || prompt("Ingresa el email que usaste al pagar:");
+                if (!email) return;
+                try {
+                  const res = await fetch("/api/billing-portal", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email: email.trim() }),
+                  });
+                  const data = await res.json();
+                  if (data.ok && data.url) {
+                    window.location.href = data.url;
+                  } else {
+                    alert(data.error || "No se encontró una suscripción con ese email.");
+                  }
+                } catch {
+                  alert("Error de conexión. Intenta de nuevo.");
+                }
+              }}
+            >
+              Mi suscripción
+            </button>
             <ThemeToggle />
           </div>
         </div>
@@ -1217,30 +1241,6 @@ function MePesaMuchoInner() {
         <div className="flex justify-center gap-4 mt-3 flex-wrap">
           <button className={`${S.link} text-[0.85rem]`} onClick={() => setShowAbout(true)}>Acerca de</button>
           <button className={`${S.link} text-[0.85rem]`} onClick={() => setShowDisclaimer(true)}>Aviso legal y privacidad</button>
-          <button
-            className={`${S.link} text-[0.85rem]`}
-            onClick={async () => {
-              const email = localStorage.getItem("mpm_email") || prompt("Ingresa el email que usaste al pagar:");
-              if (!email) return;
-              try {
-                const res = await fetch("/api/billing-portal", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ email: email.trim() }),
-                });
-                const data = await res.json();
-                if (data.ok && data.url) {
-                  window.location.href = data.url;
-                } else {
-                  alert(data.error || "No se encontró una suscripción con ese email.");
-                }
-              } catch {
-                alert("Error de conexión. Intenta de nuevo.");
-              }
-            }}
-          >
-            Gestionar suscripción
-          </button>
         </div>
       </footer>
     );
