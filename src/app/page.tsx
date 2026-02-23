@@ -2248,7 +2248,7 @@ function MePesaMuchoInner() {
           <h2 className="font-[var(--font-heading)] text-2xl font-medium italic leading-relaxed mb-3">
             ¿Qué es lo que más necesitas en este momento?
           </h2>
-          <p className={`${S.sub} text-sm mb-12 leading-relaxed`}>Esto nos ayuda a centrar tu reflexión en lo que más importa ahora mismo.</p>
+          <p className={`${S.sub} text-sm mb-16 leading-relaxed`}>Esto nos ayuda a centrar tu reflexión en lo que más importa ahora mismo.</p>
 
           <label htmlFor="pregunta-1" className="sr-only">
             Qué necesitas en este momento
