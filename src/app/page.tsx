@@ -260,6 +260,245 @@ function descargarReflexionPDF(reflexion: string, citas: { source: string; text:
   doc.save(`reflexion-mepesamucho-${new Date().toISOString().slice(0, 10)}.pdf`);
 }
 
+// ── DOWNLOAD FULL CONVERSATION AS PDF ──────────
+
+function descargarConversacionPDF(
+  reflexion: string,
+  continuacion: string,
+  dialogTurnos: { role: "user" | "assistant"; content: string }[],
+  allCitas: { source: string; text: string }[],
+  marcoNombre: string,
+  fraseUsuario?: string
+) {
+  const fecha = new Date().toLocaleDateString("es-MX", { year: "numeric", month: "long", day: "numeric" });
+  const doc = new jsPDF({ unit: "mm", format: "a4" });
+  const pageW = doc.internal.pageSize.getWidth();
+  const marginL = 25;
+  const marginR = 25;
+  const maxW = pageW - marginL - marginR;
+  let y = 30;
+
+  const addPageIfNeeded = (neededSpace: number) => {
+    if (y + neededSpace > 270) {
+      doc.addPage();
+      y = 25;
+    }
+  };
+
+  // Helper to render a body of text (reflexion or continuacion)
+  const renderBody = (text: string) => {
+    const paragraphs = text.split("\n\n").filter((p) => p.trim());
+    paragraphs.forEach((p) => {
+      const t = p.trim().replace(/\*\*(.*?)\*\*/g, "$1").replace(/\*(.*?)\*/g, "$1");
+      if (!t) return;
+      const isCita = t.startsWith("<<") || t.startsWith("\u00AB") || t.startsWith('"');
+      const isAttrib = t.startsWith("\u2014") || t.startsWith("--");
+      const isQ = t.endsWith("?") && t.length < 200;
+
+      if (isCita) {
+        addPageIfNeeded(20);
+        doc.setDrawColor(122, 139, 111);
+        doc.setFillColor(232, 238, 228);
+        const lines = doc.splitTextToSize(t, maxW - 10);
+        const blockH = lines.length * 5 + 6;
+        doc.rect(marginL, y - 2, maxW, blockH, "F");
+        doc.line(marginL, y - 2, marginL, y - 2 + blockH);
+        doc.setFont("helvetica", "italic");
+        doc.setFontSize(10);
+        doc.setTextColor(58, 55, 51);
+        doc.text(lines, marginL + 5, y + 3);
+        y += blockH + 6;
+      } else if (isAttrib) {
+        addPageIfNeeded(8);
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8);
+        doc.setTextColor(111, 106, 100);
+        doc.text(t, marginL + 5, y);
+        y += 8;
+      } else if (isQ) {
+        addPageIfNeeded(12);
+        doc.setFont("helvetica", "italic");
+        doc.setFontSize(10.5);
+        doc.setTextColor(90, 110, 77);
+        const lines = doc.splitTextToSize(t, maxW);
+        doc.text(lines, pageW / 2, y, { align: "center" });
+        y += lines.length * 5 + 8;
+      } else {
+        addPageIfNeeded(12);
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(10);
+        doc.setTextColor(58, 55, 51);
+        const lines = doc.splitTextToSize(t, maxW);
+        doc.text(lines, marginL, y, { align: "justify", maxWidth: maxW });
+        y += lines.length * 4.5 + 6;
+      }
+    });
+  };
+
+  // ── Header ──
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(22);
+  doc.setTextColor(58, 55, 51);
+  doc.text("mepesamucho", pageW / 2, y, { align: "center" });
+  y += 8;
+  doc.setFontSize(9);
+  doc.setTextColor(111, 106, 100);
+  doc.text(fecha, pageW / 2, y, { align: "center" });
+  y += 6;
+  doc.setDrawColor(122, 139, 111);
+  doc.line(pageW / 2 - 15, y, pageW / 2 + 15, y);
+  y += 8;
+  doc.setFontSize(8);
+  doc.setTextColor(111, 106, 100);
+  doc.text(marcoNombre.toUpperCase(), pageW / 2, y, { align: "center" });
+  y += 10;
+
+  // User phrase
+  if (fraseUsuario && fraseUsuario.trim()) {
+    addPageIfNeeded(16);
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(9);
+    doc.setTextColor(111, 106, 100);
+    const fraseLines = doc.splitTextToSize(`"${fraseUsuario.trim()}"`, maxW - 20);
+    doc.text(fraseLines, pageW / 2, y, { align: "center" });
+    y += fraseLines.length * 4 + 10;
+  } else {
+    y += 2;
+  }
+
+  // ── PART 1: Reflexión ──
+  addPageIfNeeded(10);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(13);
+  doc.setTextColor(58, 55, 51);
+  doc.text("Reflexi\u00F3n", marginL, y);
+  y += 10;
+  renderBody(reflexion);
+
+  // ── PART 2: Continuación (if exists) ──
+  if (continuacion && continuacion.trim()) {
+    addPageIfNeeded(20);
+    y += 6;
+    doc.setDrawColor(216, 207, 196);
+    doc.line(marginL, y, pageW - marginR, y);
+    y += 10;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(13);
+    doc.setTextColor(58, 55, 51);
+    doc.text("Reflexi\u00F3n profunda", marginL, y);
+    y += 10;
+    renderBody(continuacion);
+  }
+
+  // ── PART 3: Conversación (dialog) ──
+  if (dialogTurnos.length > 0) {
+    addPageIfNeeded(20);
+    y += 6;
+    doc.setDrawColor(216, 207, 196);
+    doc.line(marginL, y, pageW - marginR, y);
+    y += 10;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(13);
+    doc.setTextColor(58, 55, 51);
+    doc.text("Conversaci\u00F3n", marginL, y);
+    y += 10;
+
+    dialogTurnos.forEach((turno) => {
+      addPageIfNeeded(15);
+      if (turno.role === "user") {
+        // User message — indented, with label
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(8);
+        doc.setTextColor(111, 106, 100);
+        doc.text("T\u00FA:", marginL, y);
+        y += 5;
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(10);
+        doc.setTextColor(80, 75, 70);
+        const lines = doc.splitTextToSize(turno.content, maxW - 6);
+        doc.text(lines, marginL + 3, y);
+        y += lines.length * 4.5 + 6;
+      } else {
+        // Assistant message — with accent bar
+        doc.setDrawColor(122, 139, 111);
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(10);
+        doc.setTextColor(58, 55, 51);
+        const paragraphs = turno.content.split("\n\n").filter((p) => p.trim());
+        const startY = y;
+        paragraphs.forEach((p) => {
+          const t = p.trim();
+          if (!t) return;
+          const isCita = t.startsWith("<<") || t.startsWith("\u00AB") || t.startsWith('"');
+          if (isCita) {
+            addPageIfNeeded(15);
+            doc.setFont("helvetica", "italic");
+            doc.setFontSize(9.5);
+            const lines = doc.splitTextToSize(t, maxW - 10);
+            doc.text(lines, marginL + 5, y);
+            y += lines.length * 4.5 + 4;
+          } else {
+            addPageIfNeeded(12);
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(10);
+            const lines = doc.splitTextToSize(t, maxW - 3);
+            doc.text(lines, marginL + 3, y);
+            y += lines.length * 4.5 + 4;
+          }
+        });
+        // Accent bar on left side
+        doc.line(marginL, startY - 2, marginL, y - 2);
+        y += 4;
+      }
+    });
+  }
+
+  // ── Fuentes citadas ──
+  if (allCitas.length > 0) {
+    addPageIfNeeded(20);
+    y += 6;
+    doc.setDrawColor(216, 207, 196);
+    doc.line(marginL, y, pageW - marginR, y);
+    y += 10;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(13);
+    doc.setTextColor(58, 55, 51);
+    doc.text("Fuentes citadas", marginL, y);
+    y += 10;
+
+    allCitas.forEach((c) => {
+      addPageIfNeeded(18);
+      doc.setDrawColor(216, 207, 196);
+      doc.line(marginL, y - 1, marginL, y + 10);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      doc.setTextColor(92, 87, 81);
+      doc.text(c.source, marginL + 4, y + 2);
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(8);
+      doc.setTextColor(111, 106, 100);
+      const citaLines = doc.splitTextToSize(c.text, maxW - 8);
+      doc.text(citaLines, marginL + 4, y + 7);
+      y += citaLines.length * 4 + 12;
+    });
+  }
+
+  // ── Footer ──
+  addPageIfNeeded(15);
+  y += 8;
+  doc.setDrawColor(216, 207, 196);
+  doc.line(marginL, y, pageW - marginR, y);
+  y += 8;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7);
+  doc.setTextColor(133, 127, 120);
+  doc.text("mepesamucho.com \u00B7 Un espacio de reflexi\u00F3n, no de consejer\u00EDa.", pageW / 2, y, { align: "center" });
+  y += 4;
+  doc.text("Lo que escribes no se almacena ni se comparte.", pageW / 2, y, { align: "center" });
+
+  doc.save(`conversacion-mepesamucho-${new Date().toISOString().slice(0, 10)}.pdf`);
+}
+
 // ── CHECKOUT HELPER ────────────────────────────
 
 async function checkout(
@@ -2443,6 +2682,14 @@ function MePesaMuchoInner() {
           {/* Dialog section (only when unlocked) */}
           {continuacionDesbloqueada && (
             <div className="mt-8 pt-6" style={{ borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "var(--color-border)" }}>
+              {/* Visual separator marking the start of the conversation */}
+              {dialogTurnos.length > 0 && (
+                <div className="flex items-center gap-4 mb-8 animate-fade-in">
+                  <div className="flex-1 h-px bg-[var(--color-border)]" />
+                  <span className="font-[var(--font-sans)] text-[0.7rem] text-[var(--color-text-tertiary)] uppercase tracking-[0.15em]">Conversación</span>
+                  <div className="flex-1 h-px bg-[var(--color-border)]" />
+                </div>
+              )}
               {dialogTurnos.map((turno, i) => (
                 <div key={i} className={`mb-5 animate-fade-in ${turno.role === "user" ? "text-right" : "text-left"}`}>
                   {turno.role === "user" ? (
@@ -2488,6 +2735,14 @@ function MePesaMuchoInner() {
                       </div>
                     ))}
                   </div>
+                  {/* Download full conversation as PDF */}
+                  <button
+                    className={`${S.link} text-sm mt-6`}
+                    onClick={() => descargarConversacionPDF(reflexion, continuacion, dialogTurnos, allCitas, MARCOS[marco!]?.nombre || "", resp1)}
+                    aria-label="Descargar conversación completa en formato PDF"
+                  >
+                    Descargar conversación (PDF)
+                  </button>
                 </div>
               ) : sessionBlocked ? (
                 /* ── Inline paywall: session expired + grace turn used ── */
