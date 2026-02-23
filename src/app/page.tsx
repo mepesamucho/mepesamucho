@@ -983,7 +983,7 @@ function MePesaMuchoInner() {
   }, [texto, marco, reflexion, cierreTexto, cierreTexto2, crisisDetectedInText, citasUsadas, dayPass.active]);
 
   // Dialog: send message
-  const DIALOG_ACTIVE_LIMIT = 6; // After this many user turns, switch to open mode
+  const DIALOG_ACTIVE_LIMIT = 3; // After this many user turns, suggest closure
   const enviarDialogo = useCallback(async (mensaje: string) => {
     if (!mensaje.trim() || dialogLoading) return;
     // ── Expiration guard (Regla B) ──
@@ -1033,6 +1033,10 @@ function MePesaMuchoInner() {
       const data = await res.json();
       setDialogTurnos((prev) => [...prev, { role: "assistant", content: data.respuesta, cita: data.cita }]);
       incrementTurns();
+      // If the API signaled conversation ended (farewell detected), auto-close after a pause
+      if (data.conversationEnded) {
+        setTimeout(() => cerrarDialogo(), 3000);
+      }
       // Scroll to bottom
       setTimeout(() => dialogEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
     } catch {
