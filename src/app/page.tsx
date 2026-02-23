@@ -1313,207 +1313,212 @@ function MePesaMuchoInner() {
     const waitMs = msUntilNextFreeSession();
     const countdownText = formatCountdown(waitMs);
     return (
-      <div className={`${S.pageTop} animate-step-in`} key={fadeKey}>
+      <div className={`${S.page}`} key={fadeKey} style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
         <SiteHeader />
         {showDisclaimer && <DisclaimerModal />}
         {showHowItWorks && <HowItWorksModal />}
         {showAbout && <AboutModal />}
         {showResetModal && <ResetModal />}
-        <div className={`${S.box} text-center mx-auto`} style={{ maxWidth: "480px" }}>
 
-          {/* Truncated reflection preview — teaser */}
-          {reflexion && (
-            <div className="mb-8 relative">
-              <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6 text-left" style={{ maxHeight: "180px", overflow: "hidden" }}>
-                <div className="leading-loose text-base" style={{ fontSize: "1.1rem" }}>
-                  {reflexion.split("\n\n").slice(0, 2).map((p, i) => {
-                    const t = p.trim().replace(/\*\*(.*?)\*\*/g, "$1").replace(/\*(.*?)\*/g, "$1");
-                    if (!t) return null;
-                    return <p key={i} className="mb-3 text-[var(--color-text)]">{t}</p>;
-                  })}
-                </div>
-              </div>
-              {/* Fade overlay */}
-              <div style={{
-                position: "absolute",
-                bottom: 0,
-                left: 0,
-                right: 0,
-                height: "80px",
-                background: "linear-gradient(to bottom, transparent, var(--color-bg))",
-                borderRadius: "0 0 16px 16px",
-                pointerEvents: "none",
-              }} />
-            </div>
-          )}
+        {/* Backdrop overlay */}
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            backgroundColor: "rgba(0,0,0,0.45)",
+            zIndex: 90,
+            backdropFilter: "blur(4px)",
+          }}
+          onClick={() => { setStep("landing"); }}
+        />
 
-          {/* Emotional header */}
-          <p className="font-[var(--font-heading)] text-xl font-medium italic leading-relaxed mb-2">
-            Ya usaste tu sesión gratuita de hoy.
-          </p>
-          <p className={`${S.sub} text-base mb-3`}>
-            Puedes volver mañana o continuar ahora.
-          </p>
+        {/* Paywall modal */}
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="paywall-title"
+          aria-describedby="paywall-desc"
+          className="animate-step-in"
+          style={{
+            position: "fixed",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            zIndex: 100,
+            width: "90vw",
+            maxWidth: "440px",
+            maxHeight: "90vh",
+            overflowY: "auto",
+          }}
+          onKeyDown={(e) => { if (e.key === "Escape") setStep("landing"); }}
+          ref={(el) => { if (el) el.focus(); }}
+          tabIndex={-1}
+        >
+          <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-8 sm:p-10" style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
 
-          {/* Countdown timer — when free slot becomes available */}
-          {countdownText && (
-            <p className="text-[0.85rem] text-[var(--color-text-tertiary)] mb-6">
-              Tu próxima reflexión gratuita estará disponible en <span className="font-medium text-[var(--color-text-secondary)]">{countdownText}</span>
+            {/* Title */}
+            <h2
+              id="paywall-title"
+              className="font-[var(--font-heading)] text-xl font-medium italic leading-relaxed mb-2 text-center"
+            >
+              Ya tuviste tu sesión de hoy
+            </h2>
+            <p
+              id="paywall-desc"
+              className={`${S.sub} text-base mb-2 text-center`}
+            >
+              Puedes volver mañana para otra sesión gratuita, o continuar hoy.
             </p>
-          )}
 
-          {/* Single reflection — featured card */}
-          <div className="card-hover-lift bg-[var(--color-surface)] border-2 border-[var(--color-accent)] rounded-2xl p-6 mb-4" style={{ boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>
-            <p className="font-[var(--font-heading)] text-lg font-medium text-center mb-1">Continuar esta reflexión</p>
-            <p className="text-center text-xl font-light mb-1">$0.99 <span className={`${S.sub} text-sm`}>USD</span></p>
-            <p className="font-[var(--font-sans)] text-[0.9rem] text-[var(--color-accent)] font-light italic mb-2 text-center">Menos que un café. Más que un momento.</p>
-            <p className={`${S.sub} text-sm mb-4 text-center`}>Desbloquea la reflexión completa, continúa la conversación e incluye descarga en PDF.</p>
-            <div className="flex justify-center">
-              <button className={`${S.btn} btn-primary-glow w-full`} style={{ maxWidth: "320px" }} onClick={() => { setCheckoutError(""); checkout("single", undefined, setCheckoutError); }} aria-label="Continuar esta reflexión por $0.99">Continuar esta reflexión — $0.99</button>
-            </div>
-          </div>
-
-          {/* Subscription — best value card */}
-          <div className="card-hover-lift bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-5 mb-6" style={{ boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>
-            <p className="font-[var(--font-heading)] text-base font-medium text-center mb-1">Reflexiones ilimitadas</p>
-            <p className="text-center text-lg font-light mb-1">$4.99 <span className={`${S.sub} text-sm`}>USD / mes</span></p>
-            <p className={`${S.sub} text-sm mb-3 text-center`}>Puedes seguir profundizando sin límite. Todo incluye reflexiones, conversaciones guiadas, descarga PDF y acceso desde cualquier dispositivo.</p>
-            <div className="flex justify-center">
-              <button className={S.btnSecondary + " w-full"} style={{ maxWidth: "320px" }} onClick={() => { setCheckoutError(""); checkout("subscription", undefined, setCheckoutError); }} aria-label="Suscribirme por $4.99 al mes">Suscribirme · $4.99/mes</button>
-            </div>
-            <p className={`${S.sub} text-sm mt-2 text-center`}>Cancela cuando quieras.</p>
-          </div>
-
-          {checkoutError && (
-            <p className="font-[var(--font-sans)] text-[0.8rem] text-red-700 text-center mb-4">{checkoutError}</p>
-          )}
-
-          <div className="flex items-center justify-center gap-2 mb-6">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" stroke="var(--color-accent)" strokeWidth="1.5"/>
-              <path d="M9 12l2 2 4-4" stroke="var(--color-accent)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            <p className={`${S.sub} text-sm`}>Cobro seguro a través de Stripe · Precios en USD</p>
-          </div>
-
-          {/* 3-button navigation bar */}
-          <div className="grid grid-cols-3 gap-3 mt-8 w-full">
-            {reflexion ? (
-              <button
-                className="font-[var(--font-sans)] text-[0.95rem] text-[var(--color-text-secondary)] font-normal bg-transparent border border-[var(--color-border)] rounded-xl px-4 py-3.5 hover:bg-[var(--color-secondary-bg)] transition-colors text-center"
-                onClick={() => { setStep("essay"); setCierreStep(0); }}
-              >
-                ← Volver a mi reflexión
-              </button>
-            ) : (
-              <div />
-            )}
-            <button
-              className="font-[var(--font-sans)] text-[0.95rem] text-[var(--color-text-secondary)] font-normal bg-transparent border border-[var(--color-border)] rounded-xl px-4 py-3.5 hover:bg-[var(--color-secondary-bg)] transition-colors text-center"
-              onClick={() => setShowHeroCode(true)}
-            >
-              Ya tengo un código
-            </button>
-            <button
-              className="font-[var(--font-sans)] text-[0.95rem] text-[var(--color-text-secondary)] font-normal bg-transparent border border-[var(--color-border)] rounded-xl px-4 py-3.5 hover:bg-[var(--color-secondary-bg)] transition-colors text-center"
-              onClick={reiniciar}
-            >
-              Volver al inicio
-            </button>
-          </div>
-
-          {/* ── Inline code input for paywall (mirrors landing hero code form) ── */}
-          {showHeroCode && (
-            <div
-              className="mt-4 mx-auto text-center"
-              style={{
-                maxWidth: "360px",
-                animation: "stepTransition 0.6s cubic-bezier(0.25, 0.1, 0.25, 1) forwards",
-              }}
-            >
-              <p className="font-[var(--font-sans)] text-sm text-[var(--color-text-secondary)] font-light mb-3">
-                Ingresa tu código o email para continuar.
+            {/* Countdown */}
+            {countdownText && (
+              <p className="text-[0.85rem] text-[var(--color-text-tertiary)] mb-6 text-center">
+                Tu próxima sesión gratuita en <span className="font-medium text-[var(--color-text-secondary)]">{countdownText}</span>
               </p>
-              <input
-                type="text"
-                value={heroCodeInput}
-                onChange={(e) => { setHeroCodeInput(e.target.value); setHeroCodeError(""); }}
-                placeholder="MPM-XXXX-XXXX o tu email"
-                className="w-full font-[var(--font-sans)] text-base px-4 py-3 border border-[var(--color-border)] rounded-xl bg-[var(--color-surface)] text-[var(--color-text)] focus:outline-none focus:border-[var(--color-accent)] transition-colors mb-3"
-                style={{ letterSpacing: "0.04em" }}
-                onKeyDown={(e) => { if (e.key === "Enter" && heroCodeInput.trim()) document.getElementById("paywall-hero-code-btn")?.click(); }}
-              />
-              {heroCodeError && (
-                <div className="mb-3 p-4 border border-[var(--color-border)] rounded-xl bg-[var(--color-surface)] text-left" style={{ animation: "stepTransition 0.4s ease forwards" }}>
-                  <p className="font-[var(--font-sans)] text-sm text-[var(--color-text-secondary)] mb-3">{heroCodeError}</p>
-                  <div className="flex gap-2 justify-center">
-                    <button
-                      className="font-[var(--font-sans)] text-sm px-4 py-2 bg-[var(--color-primary)] text-white rounded-xl hover:bg-[var(--color-primary-hover)] transition-colors"
-                      onClick={() => { setCheckoutError(""); checkout("subscription", undefined, (msg) => setHeroCodeError(msg)); }}
-                    >
-                      Suscribirme · $4.99/mes
-                    </button>
+            )}
+
+            {/* CTAs */}
+            <div className="flex flex-col gap-3 mt-6" style={{ maxWidth: "360px", margin: "0 auto" }}>
+              <button
+                className={`${S.btn} btn-primary-glow w-full text-base py-3.5`}
+                onClick={() => { setCheckoutError(""); checkout("single", undefined, setCheckoutError); }}
+                aria-label="Comprar 1 sesión extra hoy por $0.99 USD"
+              >
+                1 sesión extra hoy — $0.99
+              </button>
+              <button
+                className={`${S.btnSecondary} w-full text-base py-3.5`}
+                onClick={() => { setCheckoutError(""); checkout("subscription", undefined, setCheckoutError); }}
+                aria-label="Suscribirme por $4.99 USD al mes para sesiones ilimitadas"
+              >
+                Ilimitado este mes — $4.99/mes
+              </button>
+            </div>
+
+            {checkoutError && (
+              <p className="font-[var(--font-sans)] text-[0.8rem] text-red-700 text-center mt-3">{checkoutError}</p>
+            )}
+
+            {/* Stripe badge */}
+            <div className="flex items-center justify-center gap-1.5 mt-5">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" stroke="var(--color-text-tertiary)" strokeWidth="1.5"/>
+                <path d="M9 12l2 2 4-4" stroke="var(--color-text-tertiary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              <p className="font-[var(--font-sans)] text-[0.75rem] text-[var(--color-text-tertiary)]">Cobro seguro vía Stripe · Precios en USD</p>
+            </div>
+
+            {/* Divider */}
+            <div className="w-full h-px bg-[var(--color-border)] my-5" />
+
+            {/* Secondary actions */}
+            <div className="flex flex-col gap-2 items-center">
+              <button
+                className="font-[var(--font-sans)] text-[0.9rem] text-[var(--color-text-secondary)] font-normal bg-transparent border border-[var(--color-border)] rounded-xl px-6 py-3 w-full hover:bg-[var(--color-secondary-bg)] transition-colors text-center"
+                onClick={() => { setStep("landing"); }}
+                aria-label="Volver mañana para otra sesión gratuita"
+              >
+                Volver mañana
+              </button>
+              <button
+                className="font-[var(--font-sans)] text-[0.85rem] text-[var(--color-text-tertiary)] font-normal bg-transparent px-4 py-2 hover:text-[var(--color-text-secondary)] transition-colors cursor-pointer"
+                onClick={() => setShowHeroCode(true)}
+                aria-label="Ingresar código de acceso o email"
+              >
+                Ya tengo un código
+              </button>
+            </div>
+
+            {/* ── Inline code input ── */}
+            {showHeroCode && (
+              <div
+                className="mt-4 mx-auto text-center"
+                style={{
+                  maxWidth: "360px",
+                  animation: "stepTransition 0.6s cubic-bezier(0.25, 0.1, 0.25, 1) forwards",
+                }}
+              >
+                <p className="font-[var(--font-sans)] text-sm text-[var(--color-text-secondary)] font-light mb-3">
+                  Ingresa tu código o email para continuar.
+                </p>
+                <input
+                  type="text"
+                  value={heroCodeInput}
+                  onChange={(e) => { setHeroCodeInput(e.target.value); setHeroCodeError(""); }}
+                  placeholder="MPM-XXXX-XXXX o tu email"
+                  className="w-full font-[var(--font-sans)] text-base px-4 py-3 border border-[var(--color-border)] rounded-xl bg-[var(--color-bg)] text-[var(--color-text)] focus:outline-none focus:border-[var(--color-accent)] transition-colors mb-3"
+                  style={{ letterSpacing: "0.04em" }}
+                  aria-label="Código de acceso o email"
+                  onKeyDown={(e) => { if (e.key === "Enter" && heroCodeInput.trim()) document.getElementById("paywall-code-btn")?.click(); }}
+                  autoFocus
+                />
+                {heroCodeError && (
+                  <div className="mb-3 p-4 border border-[var(--color-border)] rounded-xl bg-[var(--color-bg)] text-left" style={{ animation: "stepTransition 0.4s ease forwards" }}>
+                    <p className="font-[var(--font-sans)] text-sm text-[var(--color-text-secondary)] mb-3">{heroCodeError}</p>
                     <button
                       className="font-[var(--font-sans)] text-sm px-4 py-2 bg-[var(--color-secondary-bg)] text-[var(--color-text)] border border-[var(--color-border)] rounded-xl hover:bg-[var(--color-border)] transition-colors"
                       onClick={() => { setShowHeroCode(false); setHeroCodeInput(""); setHeroCodeError(""); }}
                     >
-                      Volver
+                      Cerrar
                     </button>
                   </div>
-                </div>
-              )}
-              {!heroCodeError && (
-                <div className="flex gap-2 justify-center">
-                  <button
-                    id="paywall-hero-code-btn"
-                    className={`${S.btn} text-base px-6 py-3 ${heroCodeLoading ? "opacity-50" : ""}`}
-                    disabled={!heroCodeInput.trim() || heroCodeLoading}
-                    onClick={async () => {
-                      setHeroCodeLoading(true);
-                      setHeroCodeError("");
-                      try {
-                        const input = heroCodeInput.trim();
-                        const isEmail = input.includes("@");
-                        const body = isEmail ? { email: input } : { code: input.toUpperCase() };
-                        const res = await fetch("/api/recover-access", {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify(body),
-                        });
-                        const data = await res.json();
-                        if (data.success) {
-                          if (data.type === "subscription") {
-                            activateDayPass();
-                            setDayPass({ active: true, hoursLeft: 720 });
-                          } else if (data.type === "daypass" && data.expiresAt) {
-                            localStorage.setItem("mpm_daypass", JSON.stringify({ expires: data.expiresAt }));
-                            setDayPass({ active: true, hoursLeft: data.hoursLeft || 24 });
-                          } else if (data.type === "single") {
-                            activateDayPass();
-                            setDayPass({ active: true, hoursLeft: 1 });
+                )}
+                {!heroCodeError && (
+                  <div className="flex gap-2 justify-center">
+                    <button
+                      id="paywall-code-btn"
+                      className={`${S.btn} text-base px-6 py-3 ${heroCodeLoading ? "opacity-50" : ""}`}
+                      disabled={!heroCodeInput.trim() || heroCodeLoading}
+                      aria-label="Verificar código de acceso"
+                      onClick={async () => {
+                        setHeroCodeLoading(true);
+                        setHeroCodeError("");
+                        try {
+                          const input = heroCodeInput.trim();
+                          const isEmail = input.includes("@");
+                          const body = isEmail ? { email: input } : { code: input.toUpperCase() };
+                          const res = await fetch("/api/recover-access", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify(body),
+                          });
+                          const data = await res.json();
+                          if (data.success) {
+                            if (data.type === "subscription") {
+                              activateDayPass();
+                              setDayPass({ active: true, hoursLeft: 720 });
+                            } else if (data.type === "daypass" && data.expiresAt) {
+                              localStorage.setItem("mpm_daypass", JSON.stringify({ expires: data.expiresAt }));
+                              setDayPass({ active: true, hoursLeft: data.hoursLeft || 24 });
+                            } else if (data.type === "single") {
+                              activateDayPass();
+                              setDayPass({ active: true, hoursLeft: 1 });
+                            }
+                            setContinuacionDesbloqueada(true);
+                            setStep("writing");
+                          } else {
+                            setHeroCodeError(data.error || "No se encontró acceso. Verifica tu código o email.");
                           }
-                          setStep("writing");
-                        } else {
-                          setHeroCodeError(data.error || "Tu código no existe o ya venció. Puedes suscribirte para tener acceso ilimitado.");
+                        } catch {
+                          setHeroCodeError("Error de conexión. Intenta de nuevo.");
                         }
-                      } catch {
-                        setHeroCodeError("Error de conexión. Intenta de nuevo.");
-                      }
-                      setHeroCodeLoading(false);
-                    }}
-                  >
-                    {heroCodeLoading ? "Verificando..." : "Acceder"}
-                  </button>
-                  <button
-                    className="font-[var(--font-sans)] text-sm px-4 py-3 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] transition-colors"
-                    onClick={() => { setShowHeroCode(false); setHeroCodeInput(""); setHeroCodeError(""); }}
-                  >
-                    Cancelar
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
+                        setHeroCodeLoading(false);
+                      }}
+                    >
+                      {heroCodeLoading ? "Verificando..." : "Acceder"}
+                    </button>
+                    <button
+                      className="font-[var(--font-sans)] text-sm px-4 py-3 text-[var(--color-text-tertiary)] hover:text-[var(--color-text-secondary)] transition-colors"
+                      onClick={() => { setShowHeroCode(false); setHeroCodeInput(""); setHeroCodeError(""); }}
+                      aria-label="Cancelar ingreso de código"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     );
