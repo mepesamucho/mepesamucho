@@ -13,7 +13,7 @@
 
 const PERSIST_ALWAYS = ["mpm_textsize"];
 const PERSIST_ACCESS = ["mpm_code", "mpm_email"];
-const PERSIST_LIMIT  = ["mpm_free_usage"];
+const PERSIST_LIMIT  = ["mpm_daily_session"];
 
 // ─── All Known Keys ─────────────────────────────────────────────────────────
 
@@ -26,7 +26,7 @@ const ALL_LOCAL_KEYS = [
   "mpm_payment_success",
   "mpm_textsize",
   "mpm_continuacion",
-  "mpm_free_usage",
+  "mpm_daily_session",
   "mpm_code",
   "mpm_email",
 ];
@@ -45,7 +45,7 @@ const ALL_SESSION_KEYS = [
  * softReset — "Empezar de nuevo"
  *
  * Clears all session/content/checkout state.
- * Preserves: mpm_textsize, mpm_code, mpm_email, mpm_free_usage.
+ * Preserves: mpm_textsize, mpm_code, mpm_email, mpm_daily_session.
  *
  * Does NOT navigate — caller handles navigation.
  */
@@ -66,7 +66,7 @@ export function softReset(): void {
  * hardReset — Debug-only full wipe
  *
  * Clears everything except mpm_textsize.
- * Includes mpm_free_usage (resets free counter).
+ * Includes mpm_daily_session (resets free counter).
  */
 export function hardReset(): void {
   const preserve = new Set(PERSIST_ALWAYS);

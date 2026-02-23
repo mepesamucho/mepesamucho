@@ -1,85 +1,122 @@
 /**
- * freeUsageManager.ts — Rolling 24h free usage limit for mepesamucho.com
- * FASE 1: 2 free reflections per rolling 24-hour window.
+ * freeUsageManager.ts — Daily free session limit for mepesamucho.com
  *
- * This is the SOLE source of truth for free usage gating.
- * Uses localStorage key: mpm_free_usage
+ * NEW MODEL: 1 complete session per rolling 24-hour window.
+ * A "session" = initial reflection + continuation + dialog (unlimited interactions).
+ * The paywall only appears BEFORE starting a new session, never mid-session.
+ *
+ * Uses localStorage key: mpm_daily_session
+ * Migrates from legacy key: mpm_free_usage (old 2-reflection model)
+ *
  * Anonymous: no IP, no fingerprinting — just local timestamps.
- *
- * Important: Usage increments ONLY when the initial reflection is generated,
- * NOT on conversation turns, paywall views, or page refresh.
  */
 
-const STORAGE_KEY = "mpm_free_usage";
-const MAX_FREE = 2;
+const STORAGE_KEY = "mpm_daily_session";
+const LEGACY_KEY = "mpm_free_usage";
 const WINDOW_MS = 24 * 60 * 60 * 1000; // 24 hours
 
-interface FreeUsageData {
-  timestamps: number[]; // epoch ms of each completed initial reflection
+interface DailySessionData {
+  startedAt: number; // epoch ms when reflection was generated
+  expiresAt: number; // startedAt + 24h
 }
 
-function loadData(): FreeUsageData {
+// ── Internal helpers ──────────────────────────────────────────────────────────
+
+function loadData(): DailySessionData | null {
+  // Try new key first
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed.timestamps)) return parsed;
+      if (typeof parsed.startedAt === "number" && typeof parsed.expiresAt === "number") {
+        return parsed;
+      }
     }
   } catch {}
-  return { timestamps: [] };
+
+  // Migrate from legacy mpm_free_usage if present
+  try {
+    const legacyRaw = localStorage.getItem(LEGACY_KEY);
+    if (legacyRaw) {
+      const legacy = JSON.parse(legacyRaw);
+      if (Array.isArray(legacy.timestamps) && legacy.timestamps.length > 0) {
+        const now = Date.now();
+        const cutoff = now - WINDOW_MS;
+        // Find most recent non-expired timestamp
+        const active = legacy.timestamps
+          .filter((ts: number) => ts > cutoff)
+          .sort((a: number, b: number) => b - a);
+
+        if (active.length > 0) {
+          // User has an active session from old model — migrate it
+          const mostRecent = active[0];
+          const migrated: DailySessionData = {
+            startedAt: mostRecent,
+            expiresAt: mostRecent + WINDOW_MS,
+          };
+          saveData(migrated);
+          localStorage.removeItem(LEGACY_KEY);
+          return migrated;
+        }
+      }
+      // All timestamps expired or empty — just clean up
+      localStorage.removeItem(LEGACY_KEY);
+    }
+  } catch {}
+
+  return null;
 }
 
-function saveData(data: FreeUsageData): void {
+function saveData(data: DailySessionData): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   } catch {}
 }
 
+// ── Public API ────────────────────────────────────────────────────────────────
+
 /**
- * Get timestamps of reflections within the current 24h window (public).
+ * Can the user start a new free session?
+ * true if no session was started in the last 24h.
  */
-export function getTimestamps(): number[] {
+export function canStartFreeSession(): boolean {
   const data = loadData();
-  const cutoff = Date.now() - WINDOW_MS;
-  return data.timestamps.filter((ts) => ts > cutoff);
+  if (!data) return true;
+  return Date.now() > data.expiresAt;
 }
 
 /**
- * How many free reflections remain in the current 24h window.
+ * Is there an active free session in progress?
+ * true if a session was started within the last 24h.
+ * Use this to unlock continuation/dialog within the current session.
  */
-export function getFreeRemaining(): number {
-  return Math.max(0, MAX_FREE - getTimestamps().length);
+export function hasFreeSessionActive(): boolean {
+  const data = loadData();
+  if (!data) return false;
+  return Date.now() <= data.expiresAt;
 }
 
 /**
- * Whether the user can start a new free initial reflection.
- * This is the ONLY gating check for free users.
+ * Register that the user started their daily free session.
+ * Call ONLY when /api/reflect succeeds (initial reflection).
+ * Do NOT call if dayPass is active (paid users don't consume free quota).
  */
-export function canUseFreeInitialReflection(): boolean {
-  return getFreeRemaining() > 0;
+export function registerFreeSessionStart(): void {
+  const now = Date.now();
+  saveData({
+    startedAt: now,
+    expiresAt: now + WINDOW_MS,
+  });
 }
 
 /**
- * Record a completed initial reflection.
- * Call ONLY when the /api/reflect response succeeds (initial reflection).
- * Do NOT call for conversation turns or continuation.
+ * Milliseconds until the next free session becomes available.
+ * Returns 0 if a free session is already available.
  */
-export function registerInitialReflectionUse(): void {
-  const active = getTimestamps();
-  active.push(Date.now());
-  saveData({ timestamps: active.slice(-MAX_FREE) });
-}
-
-/**
- * Milliseconds until the next free reflection becomes available.
- * Returns 0 if a free slot is already available.
- */
-export function msUntilNextFree(): number {
-  const active = getTimestamps();
-  if (active.length < MAX_FREE) return 0;
-  const oldest = Math.min(...active);
-  const expiresAt = oldest + WINDOW_MS;
-  return Math.max(0, expiresAt - Date.now());
+export function msUntilNextFreeSession(): number {
+  const data = loadData();
+  if (!data) return 0;
+  return Math.max(0, data.expiresAt - Date.now());
 }
 
 /**

@@ -6,7 +6,7 @@ import { jsPDF } from "jspdf";
 import { detectarCrisis, CRISIS_RESOURCES } from "@/data/crisis";
 import { MARCOS, type Marco } from "@/data/citas";
 import { softReset, autoReset } from "@/lib/sessionManager";
-import { canUseFreeInitialReflection, registerInitialReflectionUse, getFreeRemaining, msUntilNextFree, formatCountdown } from "@/lib/freeUsageManager";
+import { canStartFreeSession, hasFreeSessionActive, registerFreeSessionStart, msUntilNextFreeSession, formatCountdown } from "@/lib/freeUsageManager";
 import ThemeToggle from "@/components/ThemeToggle";
 
 // Module-level guard: survives Suspense re-mounts within the same page load
@@ -425,7 +425,7 @@ function MePesaMuchoInner() {
 
     // Auto-reset on return: if no payment flow in progress, clear session artifacts
     // so the app feels "first time" (text, checkout, continuation all gone).
-    // Preserves: mpm_textsize, mpm_code, mpm_email, mpm_free_usage.
+    // Preserves: mpm_textsize, mpm_code, mpm_email, mpm_daily_session.
     const hasPaymentParams = searchParams.has("session_id") || searchParams.has("type");
     const hasConfirmed = searchParams.has("confirmed");
     const hasPaymentRecovery = !!localStorage.getItem("mpm_payment_success");
@@ -436,6 +436,10 @@ function MePesaMuchoInner() {
     }
 
     setDayPass(getDayPass());
+    // Unlock continuation if free session is active (user reloaded mid-session)
+    if (hasFreeSessionActive() || getDayPass().active) {
+      setContinuacionDesbloqueada(true);
+    }
     // Restore text size preference
     try {
       const saved = localStorage.getItem("mpm_textsize") as "normal" | "large" | "xlarge" | null;
@@ -799,7 +803,8 @@ function MePesaMuchoInner() {
       setCitasUsadas(data.citasUsadas || []);
       setStep("essay");
       setShowScrollHint(true);
-      registerInitialReflectionUse(); // rolling 24h — sole gating source
+      if (!dayPass.active) registerFreeSessionStart(); // 1 free session per 24h
+      setContinuacionDesbloqueada(true); // free session includes continuation
     } catch {
       setApiError("Hubo un error generando tu reflexión. Intenta de nuevo.");
       setStep("framework");
@@ -1223,7 +1228,8 @@ function MePesaMuchoInner() {
   // ── FOOTER COMPONENT ─────────────────────────
 
   const Footer = () => {
-    const remaining = getFreeRemaining();
+    const freeSessionActive = hasFreeSessionActive();
+    const canStartNew = canStartFreeSession();
     return (
       <footer className="mt-14 text-center" role="contentinfo">
         <div className={`${S.divider} mb-5`} />
@@ -1232,7 +1238,9 @@ function MePesaMuchoInner() {
         <p className="font-[var(--font-sans)] text-[0.8rem] text-[var(--color-text-tertiary)] leading-relaxed mt-2">Un proyecto independiente de bienestar emocional.</p>
         {step === "landing" && !dayPass.active && (
           <p className="font-[var(--font-sans)] text-[0.8rem] text-[var(--color-text-secondary)] mt-3">
-            Te {remaining === 1 ? "queda" : "quedan"} {remaining} {remaining === 1 ? "reflexión gratuita" : "reflexiones gratuitas"} en las próximas 24 horas.
+            {canStartNew
+              ? "Tienes 1 sesión gratuita disponible."
+              : `Tu próxima sesión estará disponible en ${formatCountdown(msUntilNextFreeSession())}.`}
           </p>
         )}
         {dayPass.active && (
@@ -1299,10 +1307,10 @@ function MePesaMuchoInner() {
 
   // ── LIMIT (paywall) ────────────────────────────
 
-  const atFreeLimit = !canUseFreeInitialReflection() && !dayPass.active;
+  const atFreeLimit = !canStartFreeSession() && !dayPass.active;
 
   if (step === "limit") {
-    const waitMs = msUntilNextFree();
+    const waitMs = msUntilNextFreeSession();
     const countdownText = formatCountdown(waitMs);
     return (
       <div className={`${S.pageTop} animate-step-in`} key={fadeKey}>
@@ -1341,7 +1349,7 @@ function MePesaMuchoInner() {
 
           {/* Emotional header */}
           <p className="font-[var(--font-heading)] text-xl font-medium italic leading-relaxed mb-2">
-            Por hoy ya utilizaste tus 2 reflexiones gratuitas.
+            Ya usaste tu sesión gratuita de hoy.
           </p>
           <p className={`${S.sub} text-base mb-3`}>
             Puedes volver mañana o continuar ahora.
@@ -1541,12 +1549,12 @@ function MePesaMuchoInner() {
             </div>
           )}
 
-          <button className={`${S.btn} text-lg px-10 py-4 hero-stagger-3`} onClick={() => { if (!canUseFreeInitialReflection() && !dayPass.active) { setStep("limit"); } else { setStep("writing"); } }} aria-label="Quiero soltar lo que cargo">
+          <button className={`${S.btn} text-lg px-10 py-4 hero-stagger-3`} onClick={() => { if (!canStartFreeSession() && !dayPass.active) { setStep("limit"); } else { setStep("writing"); } }} aria-label="Quiero soltar lo que cargo">
             Quiero soltar lo que cargo
           </button>
 
           <p className="font-[var(--font-sans)] text-sm text-[var(--color-text-tertiary)] font-normal hero-stagger-3" style={{ marginTop: "20px", opacity: 0.75 }}>
-            2 reflexiones gratuitas cada 24 horas.
+            1 sesión gratuita cada 24 horas.
           </p>
 
           {/* ── Acceso suscriptores ── */}
