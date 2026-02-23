@@ -32,7 +32,7 @@ type Step =
 // ── LOCAL STORAGE HELPERS ──────────────────────
 
 // ── DAYPASS HELPERS ───────────────────────────────
-// Daypass = 1 extra session purchasable for $0.99
+// Daypass = 1 extra session purchasable for $19
 // Schema: { sessionsRemaining: number, expiresAt: epoch_ms }
 // Subscription uses the same getDayPass() but with long expiresAt (30d/720h)
 
@@ -68,7 +68,7 @@ function getDayPass(): { active: boolean; hoursLeft: number } {
   return { active: true, hoursLeft: Math.ceil((data.expiresAt - Date.now()) / 3600000) };
 }
 
-/** Activate daypass for a single extra session ($0.99) */
+/** Activate daypass for a single extra session ($19) */
 function activateDayPassSingle() {
   try {
     // Expires at end of local day (23:59:59.999)
@@ -1528,16 +1528,16 @@ function MePesaMuchoInner() {
               <button
                 className={`${S.btn} btn-primary-glow w-full text-base py-3.5`}
                 onClick={() => { setCheckoutError(""); checkout("single", undefined, setCheckoutError); }}
-                aria-label="Comprar 1 sesión extra hoy por $0.99 USD"
+                aria-label="Comprar 1 sesión extra hoy por $19 MXN"
               >
-                1 sesión extra hoy — $0.99
+                1 sesión extra hoy — $19
               </button>
               <button
                 className={`${S.btnSecondary} w-full text-base py-3.5`}
                 onClick={() => { setCheckoutError(""); checkout("subscription", undefined, setCheckoutError); }}
-                aria-label="Suscribirme por $4.99 USD al mes para sesiones ilimitadas"
+                aria-label="Suscribirme por $99 MXN al mes para sesiones ilimitadas"
               >
-                Ilimitado este mes — $4.99/mes
+                Ilimitado este mes — $99/mes
               </button>
             </div>
 
@@ -1551,7 +1551,7 @@ function MePesaMuchoInner() {
                 <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" stroke="var(--color-text-tertiary)" strokeWidth="1.5"/>
                 <path d="M9 12l2 2 4-4" stroke="var(--color-text-tertiary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-              <p className="font-[var(--font-sans)] text-[0.75rem] text-[var(--color-text-tertiary)]">Cobro seguro vía Stripe · Precios en USD</p>
+              <p className="font-[var(--font-sans)] text-[0.75rem] text-[var(--color-text-tertiary)]">Cobro seguro vía Stripe · Precios en MXN</p>
             </div>
 
             {/* Divider */}
@@ -1759,7 +1759,7 @@ function MePesaMuchoInner() {
                         className="font-[var(--font-sans)] text-sm px-4 py-2 bg-[var(--color-primary)] text-white rounded-xl hover:bg-[var(--color-primary-hover)] transition-colors"
                         onClick={() => { setCheckoutError(""); checkout("subscription", undefined, (msg) => setHeroCodeError(msg)); }}
                       >
-                        Suscribirme · $4.99/mes
+                        Suscribirme · $99/mes
                       </button>
                       <button
                         className="font-[var(--font-sans)] text-sm px-4 py-2 bg-[var(--color-secondary-bg)] text-[var(--color-text)] border border-[var(--color-border)] rounded-xl hover:bg-[var(--color-border)] transition-colors"
@@ -2164,16 +2164,16 @@ function MePesaMuchoInner() {
                 <button
                   className={`${S.btn} btn-primary-glow w-full text-base py-3`}
                   onClick={() => { setCheckoutError(""); checkout("single", undefined, setCheckoutError); }}
-                  aria-label="Comprar 1 sesión extra hoy por $0.99 USD"
+                  aria-label="Comprar 1 sesión extra hoy por $19 MXN"
                 >
-                  1 sesión extra hoy — $0.99
+                  1 sesión extra hoy — $19
                 </button>
                 <button
                   className={`${S.btnSecondary} w-full text-base py-3`}
                   onClick={() => { setCheckoutError(""); checkout("subscription", undefined, setCheckoutError); }}
-                  aria-label="Suscribirme por $4.99 USD al mes para sesiones ilimitadas"
+                  aria-label="Suscribirme por $99 MXN al mes para sesiones ilimitadas"
                 >
-                  Ilimitado este mes — $4.99/mes
+                  Ilimitado este mes — $99/mes
                 </button>
                 {checkoutError && (
                   <p className="font-[var(--font-sans)] text-[0.8rem] text-red-700 mt-1">{checkoutError}</p>
@@ -2253,8 +2253,8 @@ function MePesaMuchoInner() {
             <p className="text-xl italic leading-relaxed mb-2">Lo que estás tocando merece más espacio.</p>
             <p className={`${S.sub} text-base mb-6`}>Puedes seguir profundizando ahora mismo.</p>
             <div className="flex flex-col gap-3 items-center max-w-[380px] mx-auto">
-              <button className={`${S.btn} btn-primary-glow w-full`} onClick={() => { setCheckoutError(""); checkout("single", undefined, setCheckoutError); }} aria-label="Continuar conversación por $0.99">Continuar conversación — $0.99</button>
-              <button className={`${S.btnSecondary} w-full text-sm`} onClick={() => { setCheckoutError(""); checkout("subscription", undefined, setCheckoutError); }} aria-label="Suscripción mensual $4.99">Reflexiones ilimitadas · $4.99/mes</button>
+              <button className={`${S.btn} btn-primary-glow w-full`} onClick={() => { setCheckoutError(""); checkout("single", undefined, setCheckoutError); }} aria-label="Continuar conversación por $19">Continuar conversación — $19</button>
+              <button className={`${S.btnSecondary} w-full text-sm`} onClick={() => { setCheckoutError(""); checkout("subscription", undefined, setCheckoutError); }} aria-label="Suscripción mensual $99">Reflexiones ilimitadas · $99/mes</button>
               {checkoutError && <p className="font-[var(--font-sans)] text-[0.8rem] text-red-700 mt-2">{checkoutError}</p>}
             </div>
             <div className="mt-6"><button className={`${S.link} text-sm`} onClick={() => setCierreStep(0)}>Volver a mi reflexión</button></div>
@@ -2311,8 +2311,8 @@ function MePesaMuchoInner() {
               <p className={`${S.sub} text-sm mb-2`} style={{ textAlign: "center" }}>Tu reflexión puede ir más profundo. Continúa cuando estés listo.</p>
               <p className="font-[var(--font-sans)] text-[0.9rem] text-[var(--color-text-tertiary)] font-light italic mb-6" style={{ textAlign: "center" }}>Menos que un café. Más que un momento.</p>
               <div className="flex flex-col gap-3 items-center" style={{ maxWidth: "320px", margin: "0 auto" }}>
-                <button className={`${S.btn} btn-primary-glow`} style={{ width: "100%", maxWidth: "320px" }} onClick={() => { setCheckoutError(""); checkout("single", undefined, setCheckoutError); }} aria-label="Continuar esta reflexión por $0.99">Continuar esta reflexión — $0.99</button>
-                <button className={`${S.btnSecondary} text-sm`} style={{ width: "100%", maxWidth: "320px" }} onClick={() => { setCheckoutError(""); checkout("subscription", undefined, setCheckoutError); }} aria-label="Suscripción mensual $4.99">Reflexiones ilimitadas · $4.99/mes</button>
+                <button className={`${S.btn} btn-primary-glow`} style={{ width: "100%", maxWidth: "320px" }} onClick={() => { setCheckoutError(""); checkout("single", undefined, setCheckoutError); }} aria-label="Continuar esta reflexión por $19">Continuar esta reflexión — $19</button>
+                <button className={`${S.btnSecondary} text-sm`} style={{ width: "100%", maxWidth: "320px" }} onClick={() => { setCheckoutError(""); checkout("subscription", undefined, setCheckoutError); }} aria-label="Suscripción mensual $99">Reflexiones ilimitadas · $99/mes</button>
                 {checkoutError && <p className="font-[var(--font-sans)] text-[0.8rem] text-red-700 mt-2">{checkoutError}</p>}
                 <div className="flex items-center justify-center gap-1.5 mt-3">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -2483,16 +2483,16 @@ function MePesaMuchoInner() {
                     <button
                       className={`${S.btn} btn-primary-glow w-full text-base py-3`}
                       onClick={() => { setCheckoutError(""); checkout("single", undefined, setCheckoutError); }}
-                      aria-label="Comprar 1 sesión extra hoy por $0.99 USD"
+                      aria-label="Comprar 1 sesión extra hoy por $19 MXN"
                     >
-                      1 sesión extra hoy — $0.99
+                      1 sesión extra hoy — $19
                     </button>
                     <button
                       className={`${S.btnSecondary} w-full text-base py-3`}
                       onClick={() => { setCheckoutError(""); checkout("subscription", undefined, setCheckoutError); }}
-                      aria-label="Suscribirme por $4.99 USD al mes para sesiones ilimitadas"
+                      aria-label="Suscribirme por $99 MXN al mes para sesiones ilimitadas"
                     >
-                      Ilimitado este mes — $4.99/mes
+                      Ilimitado este mes — $99/mes
                     </button>
                     {checkoutError && (
                       <p className="font-[var(--font-sans)] text-[0.8rem] text-red-700 mt-1">{checkoutError}</p>
