@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { track } from "@/lib/analytics";
 
 // ── Types ──────────────────────────────────────────
 
@@ -83,6 +84,8 @@ function ConfirmInner() {
           );
 
           setStatus("success");
+          // ── Analytics: purchase_success ──
+          track("purchase_success", { plan: data.type === "monthly" ? "monthly" : "single" });
 
           // Redirect after brief pause for visual feedback
           setTimeout(() => {

@@ -8,6 +8,7 @@ import { MARCOS, type Marco } from "@/data/citas";
 import { softReset, autoReset } from "@/lib/sessionManager";
 import { canStartFreeSession, hasFreeSessionActive, registerFreeSessionStart, msUntilNextFreeSession, formatCountdown, checkExpirationGuard, isSessionFullyExpired } from "@/lib/freeUsageManager";
 import ThemeToggle from "@/components/ThemeToggle";
+import { track, flushQueue, startSession, getSessionId, getSessionMeta, incrementTurns } from "@/lib/analytics";
 
 // Module-level guard: survives Suspense re-mounts within the same page load
 // but resets on new navigations (which is exactly what we want)
@@ -104,6 +105,14 @@ function consumeDaypassSession(): boolean {
 
 // activateSinglePass/getSinglePass/useSinglePass removed in FASE 1
 // Free usage gating is now handled exclusively by freeUsageManager.ts
+
+// ── ANALYTICS HELPERS ─────────────────────────────
+function getAccessProps(): { hasDaypass: boolean; hasSub: boolean } {
+  const dp = getDayPassRaw();
+  if (!dp) return { hasDaypass: false, hasSub: false };
+  const isSub = typeof dp.sessionsRemaining !== "number"; // subs have no sessionsRemaining
+  return { hasDaypass: !isSub && (dp.sessionsRemaining ?? 0) > 0, hasSub: isSub };
+}
 
 // ── DOWNLOAD REFLECTION AS PDF ─────────────────
 
@@ -258,6 +267,8 @@ async function checkout(
   onError?: (msg: string) => void
 ) {
   try {
+    // ── Analytics: checkout_start ──
+    track("checkout_start", { plan: type === "subscription" ? "monthly" : "single" });
     if (beforeRedirect) beforeRedirect();
     const res = await fetch("/api/checkout", {
       method: "POST",
@@ -492,14 +503,21 @@ function MePesaMuchoInner() {
       autoReset();
     }
 
+    flushQueue(); // Send any queued analytics events from previous sessions
     setDayPass(getDayPass());
     // Unlock continuation if free session is active (user reloaded mid-session)
     if (hasFreeSessionActive() || getDayPass().active) {
       setContinuacionDesbloqueada(true);
+      // Analytics: resumed session (user reloaded page mid-session)
+      if (!getSessionId()) {
+        startSession();
+        track("session_start", { sessionId: getSessionId(), source: "resume", ...getAccessProps() });
+      }
     }
     // Expiration guard: if user refreshed after grace turn was used, block immediately
     if (!getDayPass().active && isSessionFullyExpired()) {
       setSessionBlocked(true);
+      track("paywall_view", { trigger: "session_expired_refresh", ...getAccessProps() });
     }
     // Restore text size preference
     try {
@@ -558,6 +576,7 @@ function MePesaMuchoInner() {
     if (wasCanceled) {
       // Don't use replaceState — it causes Next.js App Router to re-mount the component
       // Just proceed normally; the query params in the URL are harmless
+      track("purchase_cancel", {});
     }
 
     // Fallback 1: check sessionStorage (survives re-mounts)
@@ -883,6 +902,9 @@ function MePesaMuchoInner() {
         registerFreeSessionStart();
       }
       setContinuacionDesbloqueada(true); // all sessions include continuation
+      // ── Analytics: session_start ──
+      startSession();
+      track("session_start", { sessionId: getSessionId(), source: "new", ...getAccessProps() });
     } catch {
       setApiError("Hubo un error generando tu reflexión. Intenta de nuevo.");
       setStep("framework");
@@ -899,6 +921,7 @@ function MePesaMuchoInner() {
       const guard = checkExpirationGuard();
       if (guard === "block") {
         setSessionBlocked(true);
+        track("paywall_view", { trigger: "continuacion_expired", ...getAccessProps() });
         return;
       }
       // "grace" or "allow" → proceed normally
@@ -950,6 +973,7 @@ function MePesaMuchoInner() {
       const guard = checkExpirationGuard();
       if (guard === "block") {
         setSessionBlocked(true);
+        track("paywall_view", { trigger: "dialog_expired", ...getAccessProps() });
         // Do NOT clear dialogInput — preserve user's text
         return;
       }
@@ -989,6 +1013,7 @@ function MePesaMuchoInner() {
       if (!res.ok) throw new Error("Server error");
       const data = await res.json();
       setDialogTurnos((prev) => [...prev, { role: "assistant", content: data.respuesta, cita: data.cita }]);
+      incrementTurns();
       // Scroll to bottom
       setTimeout(() => dialogEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
     } catch {
@@ -1002,6 +1027,9 @@ function MePesaMuchoInner() {
     const dialogCitasArr = dialogTurnos.filter((t) => t.cita).map((t) => t.cita!);
     setAllCitas([...citasUsadas, ...continuacionCitas, ...dialogCitasArr]);
     setDialogCerrado(true);
+    // ── Analytics: session_end ──
+    const meta = getSessionMeta();
+    track("session_end", { ...meta, ...getAccessProps() });
   }, [dialogTurnos, citasUsadas, continuacionCitas]);
 
   const reiniciar = () => {
@@ -1573,9 +1601,10 @@ function MePesaMuchoInner() {
                       onClick={async () => {
                         setHeroCodeLoading(true);
                         setHeroCodeError("");
+                        const input = heroCodeInput.trim();
+                        const isEmail = input.includes("@");
+                        track("recover_access_attempt", { method: isEmail ? "email" : "code", location: "limit_paywall" });
                         try {
-                          const input = heroCodeInput.trim();
-                          const isEmail = input.includes("@");
                           const body = isEmail ? { email: input } : { code: input.toUpperCase() };
                           const res = await fetch("/api/recover-access", {
                             method: "POST",
@@ -1584,6 +1613,7 @@ function MePesaMuchoInner() {
                           });
                           const data = await res.json();
                           if (data.success) {
+                            track("recover_access_result", { success: true, type: data.type, location: "limit_paywall" });
                             if (data.type === "subscription") {
                               activateDayPassSubscription();
                               setDayPass({ active: true, hoursLeft: 720 });
@@ -1594,9 +1624,11 @@ function MePesaMuchoInner() {
                             setContinuacionDesbloqueada(true);
                             setStep("writing");
                           } else {
+                            track("recover_access_result", { success: false, location: "limit_paywall" });
                             setHeroCodeError(data.error || "No se encontró acceso. Verifica tu código o email.");
                           }
                         } catch {
+                          track("recover_access_result", { success: false, location: "limit_paywall" });
                           setHeroCodeError("Error de conexión. Intenta de nuevo.");
                         }
                         setHeroCodeLoading(false);
@@ -1661,6 +1693,7 @@ function MePesaMuchoInner() {
               return;
             }
             // 3) No access → paywall
+            track("paywall_view", { trigger: "landing_button", ...getAccessProps() });
             setStep("limit");
           }} aria-label="Quiero soltar lo que cargo">
             Quiero soltar lo que cargo
@@ -1727,9 +1760,10 @@ function MePesaMuchoInner() {
                       onClick={async () => {
                         setHeroCodeLoading(true);
                         setHeroCodeError("");
+                        const input = heroCodeInput.trim();
+                        const isEmail = input.includes("@");
+                        track("recover_access_attempt", { method: isEmail ? "email" : "code", location: "hero_landing" });
                         try {
-                          const input = heroCodeInput.trim();
-                          const isEmail = input.includes("@");
                           const body = isEmail ? { email: input } : { code: input.toUpperCase() };
                           const res = await fetch("/api/recover-access", {
                             method: "POST",
@@ -1738,6 +1772,7 @@ function MePesaMuchoInner() {
                           });
                           const data = await res.json();
                           if (data.success) {
+                            track("recover_access_result", { success: true, type: data.type, location: "hero_landing" });
                             if (data.type === "subscription") {
                               activateDayPassSubscription();
                               setDayPass({ active: true, hoursLeft: 720 });
@@ -1747,9 +1782,11 @@ function MePesaMuchoInner() {
                             }
                             setStep("writing");
                           } else {
+                            track("recover_access_result", { success: false, location: "hero_landing" });
                             setHeroCodeError(data.error || "Tu código no existe o ya venció. Puedes suscribirte para tener acceso ilimitado.");
                           }
                         } catch {
+                          track("recover_access_result", { success: false, location: "hero_landing" });
                           setHeroCodeError("Error de conexión. Intenta de nuevo.");
                         }
                         setHeroCodeLoading(false);
@@ -2135,7 +2172,7 @@ function MePesaMuchoInner() {
                   // Check expiration guard before advancing step
                   if (!dayPass.active) {
                     const guard = checkExpirationGuard();
-                    if (guard === "block") { setSessionBlocked(true); return; }
+                    if (guard === "block") { setSessionBlocked(true); track("paywall_view", { trigger: "cierre_expired", ...getAccessProps() }); return; }
                   }
                   setCierreStep(3);
                   generarContinuacion();
@@ -2318,9 +2355,10 @@ function MePesaMuchoInner() {
                       onClick={async () => {
                         setPaywallCodeLoading(true);
                         setPaywallCodeError("");
+                        const input = paywallCodeInput.trim();
+                        const isEmail = input.includes("@");
+                        track("recover_access_attempt", { method: isEmail ? "email" : "code", location: "essay_paywall" });
                         try {
-                          const input = paywallCodeInput.trim();
-                          const isEmail = input.includes("@");
                           const body = isEmail ? { email: input } : { code: input.toUpperCase() };
                           const res = await fetch("/api/recover-access", {
                             method: "POST",
@@ -2329,6 +2367,7 @@ function MePesaMuchoInner() {
                           });
                           const data = await res.json();
                           if (data.success) {
+                            track("recover_access_result", { success: true, type: data.type, location: "essay_paywall" });
                             if (data.type === "subscription") {
                               activateDayPassSubscription();
                               setDayPass({ active: true, hoursLeft: 720 });
@@ -2338,9 +2377,11 @@ function MePesaMuchoInner() {
                             }
                             setContinuacionDesbloqueada(true);
                           } else {
+                            track("recover_access_result", { success: false, location: "essay_paywall" });
                             setPaywallCodeError(data.error || "Código no válido o expirado.");
                           }
                         } catch {
+                          track("recover_access_result", { success: false, location: "essay_paywall" });
                           setPaywallCodeError("Error de conexión.");
                         }
                         setPaywallCodeLoading(false);
