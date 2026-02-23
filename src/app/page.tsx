@@ -492,6 +492,15 @@ function MePesaMuchoInner() {
     console.log("[MPM] localStorage mpm_payment_success:", localStorage.getItem("mpm_payment_success"));
     console.log("[MPM] sessionStorage mpm_payment_pending:", sessionStorage.getItem("mpm_payment_pending"));
 
+    // ── Portal return: clean up checkout artifacts so we don't enter verification ──
+    if (searchParams.get("from") === "portal") {
+      console.log("[MPM] Returning from billing portal — cleaning checkout artifacts");
+      try { localStorage.removeItem("mpm_checkout_pending"); } catch {}
+      try { sessionStorage.removeItem("mpm_checkout_pending"); } catch {}
+      try { sessionStorage.removeItem("mpm_payment_pending"); } catch {}
+      try { localStorage.removeItem("mpm_payment_success"); } catch {}
+    }
+
     // Auto-reset on return: if no payment flow in progress, clear session artifacts
     // so the app feels "first time" (text, checkout, continuation all gone).
     // Preserves: mpm_textsize, mpm_code, mpm_email, mpm_daily_session.
@@ -1145,6 +1154,11 @@ function MePesaMuchoInner() {
                   });
                   const data = await res.json();
                   if (data.ok && data.url) {
+                    // Clean up checkout artifacts so returning from portal doesn't trigger payment verification
+                    try { localStorage.removeItem("mpm_checkout_pending"); } catch {}
+                    try { sessionStorage.removeItem("mpm_checkout_pending"); } catch {}
+                    try { sessionStorage.removeItem("mpm_payment_pending"); } catch {}
+                    try { localStorage.removeItem("mpm_payment_success"); } catch {}
                     window.location.href = data.url;
                   } else {
                     alert(data.error || "No se encontró una suscripción con ese email.");
