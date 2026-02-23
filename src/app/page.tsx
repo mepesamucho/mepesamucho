@@ -1991,7 +1991,7 @@ function MePesaMuchoInner() {
           <h2 className="font-[var(--font-heading)] text-2xl font-medium italic leading-relaxed mb-3">
             ¿Qué es lo que más necesitas en este momento?
           </h2>
-          <p className={`${S.sub} text-sm mb-8 leading-relaxed`}>Esto nos ayuda a centrar tu reflexión en lo que más importa ahora mismo.</p>
+          <p className={`${S.sub} text-sm mb-12 leading-relaxed`}>Esto nos ayuda a centrar tu reflexión en lo que más importa ahora mismo.</p>
 
           <label htmlFor="pregunta-1" className="sr-only">
             Qué necesitas en este momento
@@ -2274,9 +2274,10 @@ function MePesaMuchoInner() {
 
         <div style={{ maxWidth: "680px", width: "100%", margin: "0 auto", paddingLeft: "1.5rem", paddingRight: "1.5rem", paddingTop: "5rem", paddingBottom: "3rem" }}>
 
-          {/* Continuation card */}
-          <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-6 sm:p-8">
-            <div className="leading-loose">
+          {/* Continuation card — same scroll frame as first reflection */}
+          <div className={`relative ${showScrollHint ? "scroll-hint-bottom" : ""}`}>
+          <div ref={scrollCardRef} className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-6 sm:p-8" style={{ maxHeight: "60vh", overflowY: "auto" }}>
+            <div className="font-[var(--font-sans)] text-lg leading-loose" style={{ maxWidth: "52ch", margin: "0 auto" }}>
               {/* Visible paragraphs */}
               {visibleParagraphs.map((p: string, i: number) => {
                 const t = p.trim();
@@ -2301,6 +2302,7 @@ function MePesaMuchoInner() {
                 </>
               ) : null}
             </div>
+          </div>
           </div>
 
           {/* Paywall — fuera del card, centrado en la página */}
