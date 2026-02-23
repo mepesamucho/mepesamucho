@@ -1456,7 +1456,7 @@ function MePesaMuchoInner() {
         {showAbout && <AboutModal />}
         {showResetModal && <ResetModal />}
 
-        {/* Backdrop overlay */}
+        {/* Backdrop overlay + centering wrapper */}
         <div
           style={{
             position: "fixed",
@@ -1464,32 +1464,31 @@ function MePesaMuchoInner() {
             backgroundColor: "rgba(0,0,0,0.45)",
             zIndex: 90,
             backdropFilter: "blur(4px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "20px",
           }}
           onClick={() => { setStep("landing"); }}
-        />
-
-        {/* Paywall modal */}
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="paywall-title"
-          aria-describedby="paywall-desc"
-          className="animate-step-in"
-          style={{
-            position: "fixed",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            zIndex: 100,
-            width: "90vw",
-            maxWidth: "440px",
-            maxHeight: "90vh",
-            overflowY: "auto",
-          }}
-          onKeyDown={(e) => { if (e.key === "Escape") setStep("landing"); }}
-          ref={(el) => { if (el) el.focus(); }}
-          tabIndex={-1}
         >
+          {/* Paywall modal */}
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="paywall-title"
+            aria-describedby="paywall-desc"
+            className="animate-step-in"
+            style={{
+              width: "90%",
+              maxWidth: "500px",
+              maxHeight: "90vh",
+              overflowY: "auto",
+            }}
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => { if (e.key === "Escape") setStep("landing"); }}
+            ref={(el) => { if (el) el.focus(); }}
+            tabIndex={-1}
+          >
           <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-8 sm:p-10" style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
 
             {/* Title */}
@@ -1656,6 +1655,7 @@ function MePesaMuchoInner() {
               </div>
             )}
           </div>
+        </div>
         </div>
       </div>
     );
