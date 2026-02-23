@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef, Suspense } from "react";
+import { createPortal } from "react-dom";
 import { useSearchParams } from "next/navigation";
 import { jsPDF } from "jspdf";
 import { detectarCrisis, CRISIS_RESOURCES } from "@/data/crisis";
@@ -1509,32 +1510,35 @@ function MePesaMuchoInner() {
     </Overlay>
   );
 
-  const CrisisModal = () => (
-    <Overlay>
-      <div className="w-10 h-0.5 bg-[var(--color-crisis)] mx-auto mb-6" />
-      <h2 className="font-[var(--font-heading)] text-2xl font-medium mb-2 leading-snug">{CRISIS_RESOURCES.title}</h2>
-      <p className={`${S.sub} text-sm mb-6`}>{CRISIS_RESOURCES.subtitle}</p>
-      <div className="text-left">
-        {CRISIS_RESOURCES.lines.map((l, i) => (
-          <div key={i} className={`p-3 mb-1 rounded ${i % 2 === 0 ? "bg-[var(--color-crisis-bg)]" : ""}`}>
-            <p className={`${S.sub} text-[0.9rem] uppercase tracking-widest mb-0.5`}>{l.country}</p>
-            <p className="text-[1.05rem] font-medium">{l.name}</p>
-            {l.isWeb ? (
-              <a href={l.url} target="_blank" rel="noopener noreferrer" className={`${S.sub} text-sm text-[var(--color-accent)] underline`}>{l.phone}</a>
-            ) : (
-              <p className="font-[var(--font-sans)] text-lg text-[var(--color-accent)] font-medium tracking-wide">{l.phone}</p>
-            )}
-            {l.note && <p className={`${S.sub} text-sm mt-0.5`}>{l.note}</p>}
-          </div>
-        ))}
+  const CrisisModal = () => createPortal(
+    <div className="fixed inset-0 bg-[var(--color-text)]/40 flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true">
+      <div className="bg-[var(--color-bg)] max-w-[560px] w-full rounded-xl p-8 max-h-[90vh] overflow-y-auto border border-[var(--color-border)]">
+        <div className="w-10 h-0.5 bg-[var(--color-crisis)] mx-auto mb-6" />
+        <h2 className="font-[var(--font-heading)] text-2xl font-medium mb-2 leading-snug">{CRISIS_RESOURCES.title}</h2>
+        <p className={`${S.sub} text-sm mb-6`}>{CRISIS_RESOURCES.subtitle}</p>
+        <div className="text-left">
+          {CRISIS_RESOURCES.lines.map((l, i) => (
+            <div key={i} className={`p-3 mb-1 rounded ${i % 2 === 0 ? "bg-[var(--color-crisis-bg)]" : ""}`}>
+              <p className={`${S.sub} text-[0.9rem] uppercase tracking-widest mb-0.5`}>{l.country}</p>
+              <p className="text-[1.05rem] font-medium">{l.name}</p>
+              {l.isWeb ? (
+                <a href={l.url} target="_blank" rel="noopener noreferrer" className={`${S.sub} text-sm text-[var(--color-accent)] underline`}>{l.phone}</a>
+              ) : (
+                <p className="font-[var(--font-sans)] text-lg text-[var(--color-accent)] font-medium tracking-wide">{l.phone}</p>
+              )}
+              {l.note && <p className={`${S.sub} text-sm mt-0.5`}>{l.note}</p>}
+            </div>
+          ))}
+        </div>
+        <div className="mt-6 pt-6 border-t border-[var(--color-border)] text-center">
+          <p className={`${S.sub} text-sm italic mb-4`}>Si deseas continuar con tu reflexión, puedes hacerlo.</p>
+          <button className={S.btnSecondary} onClick={() => { setShowCrisis(false); setCrisisAck(true); }}>
+            Continuar con mi reflexión
+          </button>
+        </div>
       </div>
-      <div className="mt-6 pt-6 border-t border-[var(--color-border)] text-center">
-        <p className={`${S.sub} text-sm italic mb-4`}>Si deseas continuar con tu reflexión, puedes hacerlo.</p>
-        <button className={S.btnSecondary} onClick={() => { setShowCrisis(false); setCrisisAck(true); }}>
-          Continuar con mi reflexión
-        </button>
-      </div>
-    </Overlay>
+    </div>,
+    document.body
   );
 
   // ── FUENTES CITADAS MODAL ──────────────────────
@@ -1589,7 +1593,7 @@ function MePesaMuchoInner() {
 
   // ── CRISIS BANNER (persistent, non-intrusive) ─
 
-  const CrisisBanner = () => (
+  const CrisisBanner = () => createPortal(
     <div className="fixed top-0 left-0 right-0 z-40 animate-slide-down">
       <div className="bg-[var(--color-crisis)] text-white px-4 py-3 flex items-center justify-between gap-3 shadow-lg">
         <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -1612,7 +1616,8 @@ function MePesaMuchoInner() {
           &times;
         </button>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 
   // ── FONT SIZE TOGGLE ─────────────────────────
@@ -1719,6 +1724,8 @@ function MePesaMuchoInner() {
     return (
       <div className={`${S.page}`} key={fadeKey} style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
         <SiteHeader />
+        {showCrisis && <CrisisModal />}
+        {showCrisisBanner && <CrisisBanner />}
         {showDisclaimer && <DisclaimerModal />}
         {showHowItWorks && <HowItWorksModal />}
         {showAbout && <AboutModal />}
@@ -1935,6 +1942,8 @@ function MePesaMuchoInner() {
     return (
       <div className={`${S.page}`} key={fadeKey} style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
         <SiteHeader />
+        {showCrisis && <CrisisModal />}
+        {showCrisisBanner && <CrisisBanner />}
         {showDisclaimer && <DisclaimerModal />}
         {showHowItWorks && <HowItWorksModal />}
         {showAbout && <AboutModal />}
@@ -2135,8 +2144,6 @@ function MePesaMuchoInner() {
   if (step === "dissolving") {
     return (
       <div className={S.page}>
-        {showCrisisBanner && <CrisisBanner />}
-        {showCrisis && <CrisisModal />}
         <div className={`${S.box} text-left`}>
           <div className="animate-dissolve text-lg leading-relaxed p-5 whitespace-pre-wrap break-words max-h-[60vh] overflow-hidden" aria-live="polite">
             {texto}
@@ -2151,8 +2158,6 @@ function MePesaMuchoInner() {
   if (step === "message") {
     return (
       <div className={`${S.page} animate-step-in`}>
-        {showCrisisBanner && <CrisisBanner />}
-        {showCrisis && <CrisisModal />}
         <div className={`${S.box}`} style={{ textAlign: "center" }}>
           <p
             className="text-2xl text-[var(--color-text-secondary)] italic font-light mb-4"
@@ -2189,8 +2194,8 @@ function MePesaMuchoInner() {
     return (
       <div className={`${S.page} animate-step-in pt-16`} key={fadeKey}>
         <SiteHeader />
-        {showCrisisBanner && <CrisisBanner />}
         {showCrisis && <CrisisModal />}
+        {showCrisisBanner && <CrisisBanner />}
         {showDisclaimer && <DisclaimerModal />}
         {showHowItWorks && <HowItWorksModal />}
         {showAbout && <AboutModal />}
@@ -2236,8 +2241,8 @@ function MePesaMuchoInner() {
     return (
       <div className={`${S.page} animate-fade-in pt-16`} key={`q${fadeKey}`}>
         <SiteHeader />
-        {showCrisisBanner && <CrisisBanner />}
         {showCrisis && <CrisisModal />}
+        {showCrisisBanner && <CrisisBanner />}
         {showDisclaimer && <DisclaimerModal />}
         {showHowItWorks && <HowItWorksModal />}
         {showAbout && <AboutModal />}
@@ -2288,7 +2293,6 @@ function MePesaMuchoInner() {
   if (step === "generating") {
     return (
       <div className={`${S.page} animate-step-in`}>
-        {showCrisisBanner && <CrisisBanner />}
         <div className={`${S.box} text-center flex flex-col items-center`}>
           <div className="relative mb-8">
             <div className="w-16 h-16 rounded-full bg-[var(--color-accent)]/20 animate-breathe-glow" />
@@ -2336,8 +2340,6 @@ function MePesaMuchoInner() {
         {showHowItWorks && <HowItWorksModal />}
         {showAbout && <AboutModal />}
         {showResetModal && <ResetModal />}
-        {showCrisis && <CrisisModal />}
-        {showCrisisBanner && <CrisisBanner />}
         {showFuentes && <FuentesModal />}
         <FontSizeToggle />
 
@@ -2480,7 +2482,6 @@ function MePesaMuchoInner() {
   if (step === "essay" && cierreStep === 3 && continuacionLoading) {
     return (
       <div className={S.page}>
-        {showCrisisBanner && <CrisisBanner />}
         <div className={`${S.box} text-center flex flex-col items-center`}>
           <div className="relative mb-8">
             <div className="w-16 h-16 rounded-full bg-[var(--color-accent)]/20 animate-breathe-glow" />
@@ -2506,6 +2507,8 @@ function MePesaMuchoInner() {
       return (
         <div className={`${S.page} animate-fade-in pt-16`} key={`c3f-${fadeKey}`}>
           <SiteHeader />
+          {showCrisis && <CrisisModal />}
+          {showCrisisBanner && <CrisisBanner />}
           <div className={`${S.box} text-center`}>
             <p className="text-xl italic leading-relaxed mb-2">Lo que estás tocando merece más espacio.</p>
             <p className={`${S.sub} text-base mb-6`}>Puedes seguir profundizando ahora mismo.</p>
@@ -2523,11 +2526,11 @@ function MePesaMuchoInner() {
     return (
       <div className={`min-h-screen bg-[var(--color-bg)] text-[var(--color-text)] font-[var(--font-serif)] animate-fade-in`} key={`c3-${fadeKey}`}>
         <SiteHeader />
+        {showCrisis && <CrisisModal />}
+        {showCrisisBanner && <CrisisBanner />}
         {showDisclaimer && <DisclaimerModal />}
         {showHowItWorks && <HowItWorksModal />}
         {showResetModal && <ResetModal />}
-        {showCrisis && <CrisisModal />}
-        {showCrisisBanner && <CrisisBanner />}
 
         <div style={{ maxWidth: "680px", width: "100%", margin: "0 auto", paddingLeft: "1.5rem", paddingRight: "1.5rem", paddingTop: "5rem", paddingBottom: "3rem" }}>
 
