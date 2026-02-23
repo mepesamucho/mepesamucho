@@ -65,13 +65,15 @@ function ConfirmInner() {
           }
 
           // ── Activate dayPass ──
-          if (data.type === "single" && data.expires_at) {
-            const expiresMs = new Date(data.expires_at).getTime();
-            localStorage.setItem("mpm_daypass", JSON.stringify({ expires: expiresMs }));
+          if (data.type === "single") {
+            // Daypass: 1 extra session, expires end of local day
+            const now = new Date();
+            const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999).getTime();
+            localStorage.setItem("mpm_daypass", JSON.stringify({ sessionsRemaining: 1, expiresAt: endOfDay }));
           } else if (data.type === "monthly") {
-            // Monthly: dayPass 30 days
+            // Subscription: unlimited sessions for 30 days
             const expires30d = Date.now() + 30 * 24 * 60 * 60 * 1000;
-            localStorage.setItem("mpm_daypass", JSON.stringify({ expires: expires30d }));
+            localStorage.setItem("mpm_daypass", JSON.stringify({ expiresAt: expires30d }));
           }
 
           // ── Signal for page.tsx auto-resume ──

@@ -29,22 +29,77 @@ type Step =
 
 // ── LOCAL STORAGE HELPERS ──────────────────────
 
-function getDayPass(): { active: boolean; hoursLeft: number } {
+// ── DAYPASS HELPERS ───────────────────────────────
+// Daypass = 1 extra session purchasable for $0.99
+// Schema: { sessionsRemaining: number, expiresAt: epoch_ms }
+// Subscription uses the same getDayPass() but with long expiresAt (30d/720h)
+
+interface DayPassData {
+  sessionsRemaining?: number; // undefined for subscriptions (unlimited)
+  expiresAt: number;          // epoch ms
+}
+
+function getDayPassRaw(): DayPassData | null {
   try {
     const saved = localStorage.getItem("mpm_daypass");
     if (saved) {
-      const expires = JSON.parse(saved).expires;
-      const remaining = expires - Date.now();
-      if (remaining > 0) return { active: true, hoursLeft: Math.ceil(remaining / 3600000) };
+      const parsed = JSON.parse(saved);
+      const expiresAt = parsed.expiresAt ?? parsed.expires; // backward compat
+      if (typeof expiresAt === "number" && Date.now() < expiresAt) {
+        return { sessionsRemaining: parsed.sessionsRemaining, expiresAt };
+      }
+      // Expired → clean up
+      localStorage.removeItem("mpm_daypass");
     }
   } catch {}
-  return { active: false, hoursLeft: 0 };
+  return null;
 }
 
-function activateDayPass() {
+function getDayPass(): { active: boolean; hoursLeft: number } {
+  const data = getDayPassRaw();
+  if (!data) return { active: false, hoursLeft: 0 };
+  // For subscriptions: sessionsRemaining is undefined → always active
+  // For daypass: active only if sessionsRemaining > 0 OR session already started
+  if (typeof data.sessionsRemaining === "number" && data.sessionsRemaining <= 0) {
+    return { active: false, hoursLeft: 0 };
+  }
+  return { active: true, hoursLeft: Math.ceil((data.expiresAt - Date.now()) / 3600000) };
+}
+
+/** Activate daypass for a single extra session ($0.99) */
+function activateDayPassSingle() {
   try {
-    localStorage.setItem("mpm_daypass", JSON.stringify({ expires: Date.now() + 86400000 }));
+    // Expires at end of local day (23:59:59.999)
+    const now = new Date();
+    const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999).getTime();
+    const data: DayPassData = { sessionsRemaining: 1, expiresAt: endOfDay };
+    localStorage.setItem("mpm_daypass", JSON.stringify(data));
   } catch {}
+}
+
+/** Activate subscription (unlimited sessions for 30 days) */
+function activateDayPassSubscription() {
+  try {
+    const data: DayPassData = { expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000 };
+    localStorage.setItem("mpm_daypass", JSON.stringify(data));
+  } catch {}
+}
+
+/** Consume 1 session from daypass. Call when starting a session via daypass. */
+function consumeDaypassSession(): boolean {
+  const data = getDayPassRaw();
+  if (!data) return false;
+  // Subscription: unlimited, nothing to decrement
+  if (typeof data.sessionsRemaining !== "number") return true;
+  if (data.sessionsRemaining <= 0) return false;
+  // Decrement and persist
+  try {
+    localStorage.setItem("mpm_daypass", JSON.stringify({
+      ...data,
+      sessionsRemaining: data.sessionsRemaining - 1,
+    }));
+  } catch {}
+  return true;
 }
 
 // activateSinglePass/getSinglePass/useSinglePass removed in FASE 1
@@ -460,8 +515,10 @@ function MePesaMuchoInner() {
           const { type: confirmedType } = JSON.parse(confirmData);
           console.log("[MPM] Auto-resume from /confirm, type:", confirmedType);
 
-          // dayPass already activated by /confirm page — just refresh state
+          // dayPass already activated by /confirm page — refresh state and unblock
           setDayPass(getDayPass());
+          setSessionBlocked(false);
+          setContinuacionDesbloqueada(true);
 
           // Check for saved continuation
           const savedCont = sessionStorage.getItem("mpm_continuacion") || localStorage.getItem("mpm_continuacion");
@@ -615,9 +672,16 @@ function MePesaMuchoInner() {
 
     function handlePaymentSuccess(paymentType: string, paymentSid: string) {
       console.log("[MPM] handlePaymentSuccess:", paymentType, paymentSid);
-      if (paymentType === "daypass") { activateDayPass(); setDayPass({ active: true, hoursLeft: 24 }); }
-      if (paymentType === "single") { activateDayPass(); setDayPass({ active: true, hoursLeft: 1 }); }
-      if (paymentType === "subscription") { activateDayPass(); setDayPass({ active: true, hoursLeft: 720 }); }
+      if (paymentType === "subscription") {
+        activateDayPassSubscription();
+        setDayPass({ active: true, hoursLeft: 720 });
+      } else {
+        // "single" or "daypass" → 1 extra session
+        activateDayPassSingle();
+        setDayPass({ active: true, hoursLeft: Math.ceil((new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate(), 23, 59, 59, 999).getTime() - Date.now()) / 3600000) });
+      }
+      // Unblock if session was blocked by expiration guard
+      setSessionBlocked(false);
 
       // Save payment success to localStorage so it survives any re-mounts
       try {
@@ -809,8 +873,16 @@ function MePesaMuchoInner() {
       setCitasUsadas(data.citasUsadas || []);
       setStep("essay");
       setShowScrollHint(true);
-      if (!dayPass.active) registerFreeSessionStart(); // 1 free session per 24h
-      setContinuacionDesbloqueada(true); // free session includes continuation
+      // Register session: free slot → mark free session; daypass → consume 1 session
+      if (canStartFreeSession()) {
+        registerFreeSessionStart(); // 1 free session per 24h
+      } else if (getDayPass().active) {
+        consumeDaypassSession(); // decrement sessionsRemaining
+        setDayPass(getDayPass()); // refresh state after decrement
+        // Create a daily_session entry for this daypass session (enables guard)
+        registerFreeSessionStart();
+      }
+      setContinuacionDesbloqueada(true); // all sessions include continuation
     } catch {
       setApiError("Hubo un error generando tu reflexión. Intenta de nuevo.");
       setStep("framework");
@@ -1513,14 +1585,11 @@ function MePesaMuchoInner() {
                           const data = await res.json();
                           if (data.success) {
                             if (data.type === "subscription") {
-                              activateDayPass();
+                              activateDayPassSubscription();
                               setDayPass({ active: true, hoursLeft: 720 });
-                            } else if (data.type === "daypass" && data.expiresAt) {
-                              localStorage.setItem("mpm_daypass", JSON.stringify({ expires: data.expiresAt }));
-                              setDayPass({ active: true, hoursLeft: data.hoursLeft || 24 });
-                            } else if (data.type === "single") {
-                              activateDayPass();
-                              setDayPass({ active: true, hoursLeft: 1 });
+                            } else if (data.type === "daypass" || data.type === "single") {
+                              activateDayPassSingle();
+                              setDayPass(getDayPass());
                             }
                             setContinuacionDesbloqueada(true);
                             setStep("writing");
@@ -1582,7 +1651,18 @@ function MePesaMuchoInner() {
             </div>
           )}
 
-          <button className={`${S.btn} text-lg px-10 py-4 hero-stagger-3`} onClick={() => { if (!canStartFreeSession() && !dayPass.active) { setStep("limit"); } else { setStep("writing"); } }} aria-label="Quiero soltar lo que cargo">
+          <button className={`${S.btn} text-lg px-10 py-4 hero-stagger-3`} onClick={() => {
+            // 1) Free session available → use it
+            if (canStartFreeSession()) { setStep("writing"); return; }
+            // 2) Daypass with sessions remaining → consume and proceed
+            const dp = getDayPassRaw();
+            if (dp && (typeof dp.sessionsRemaining !== "number" || dp.sessionsRemaining > 0)) {
+              setStep("writing");
+              return;
+            }
+            // 3) No access → paywall
+            setStep("limit");
+          }} aria-label="Quiero soltar lo que cargo">
             Quiero soltar lo que cargo
           </button>
 
@@ -1659,14 +1739,11 @@ function MePesaMuchoInner() {
                           const data = await res.json();
                           if (data.success) {
                             if (data.type === "subscription") {
-                              activateDayPass();
+                              activateDayPassSubscription();
                               setDayPass({ active: true, hoursLeft: 720 });
-                            } else if (data.type === "daypass" && data.expiresAt) {
-                              localStorage.setItem("mpm_daypass", JSON.stringify({ expires: data.expiresAt }));
-                              setDayPass({ active: true, hoursLeft: data.hoursLeft || 24 });
-                            } else if (data.type === "single") {
-                              activateDayPass();
-                              setDayPass({ active: true, hoursLeft: 1 });
+                            } else if (data.type === "daypass" || data.type === "single") {
+                              activateDayPassSingle();
+                              setDayPass(getDayPass());
                             }
                             setStep("writing");
                           } else {
@@ -2253,14 +2330,11 @@ function MePesaMuchoInner() {
                           const data = await res.json();
                           if (data.success) {
                             if (data.type === "subscription") {
-                              activateDayPass();
+                              activateDayPassSubscription();
                               setDayPass({ active: true, hoursLeft: 720 });
-                            } else if (data.type === "daypass" && data.expiresAt) {
-                              localStorage.setItem("mpm_daypass", JSON.stringify({ expires: data.expiresAt }));
-                              setDayPass({ active: true, hoursLeft: data.hoursLeft || 24 });
-                            } else if (data.type === "single") {
-                              activateDayPass();
-                              setDayPass({ active: true, hoursLeft: 1 });
+                            } else if (data.type === "daypass" || data.type === "single") {
+                              activateDayPassSingle();
+                              setDayPass(getDayPass());
                             }
                             setContinuacionDesbloqueada(true);
                           } else {
