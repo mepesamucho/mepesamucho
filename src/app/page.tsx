@@ -6,7 +6,7 @@ import { jsPDF } from "jspdf";
 import { detectarCrisis, CRISIS_RESOURCES } from "@/data/crisis";
 import { MARCOS, type Marco } from "@/data/citas";
 import { softReset, autoReset } from "@/lib/sessionManager";
-import { canStartFreeSession, hasFreeSessionActive, registerFreeSessionStart, msUntilNextFreeSession, formatCountdown } from "@/lib/freeUsageManager";
+import { canStartFreeSession, hasFreeSessionActive, registerFreeSessionStart, msUntilNextFreeSession, formatCountdown, checkExpirationGuard, isSessionFullyExpired } from "@/lib/freeUsageManager";
 import ThemeToggle from "@/components/ThemeToggle";
 
 // Module-level guard: survives Suspense re-mounts within the same page load
@@ -367,6 +367,8 @@ function MePesaMuchoInner() {
   const [dialogCerrado, setDialogCerrado] = useState(false);
   const [allCitas, setAllCitas] = useState<{ source: string; text: string }[]>([]);
   const [globalTextSize, setGlobalTextSize] = useState<"normal" | "large" | "xlarge">("normal");
+  // Expiration guard: true when session expired AND final grace turn was used
+  const [sessionBlocked, setSessionBlocked] = useState(false);
   const [verifyingPayment, setVerifyingPayment] = useState(false);
   const paymentDataRef = useRef<{ sid: string; type: string } | null>(null);
   const textoOriginalRef = useRef(""); // in-memory only — never persisted to storage
@@ -439,6 +441,10 @@ function MePesaMuchoInner() {
     // Unlock continuation if free session is active (user reloaded mid-session)
     if (hasFreeSessionActive() || getDayPass().active) {
       setContinuacionDesbloqueada(true);
+    }
+    // Expiration guard: if user refreshed after grace turn was used, block immediately
+    if (!getDayPass().active && isSessionFullyExpired()) {
+      setSessionBlocked(true);
     }
     // Restore text size preference
     try {
@@ -815,6 +821,16 @@ function MePesaMuchoInner() {
 
   // Generate continuation reflection
   const generarContinuacion = useCallback(async () => {
+    // ── Expiration guard (Regla B) ──
+    // Paid users bypass; free users get checked
+    if (!dayPass.active) {
+      const guard = checkExpirationGuard();
+      if (guard === "block") {
+        setSessionBlocked(true);
+        return;
+      }
+      // "grace" or "allow" → proceed normally
+    }
     setContinuacionLoading(true);
     setContinuacion("");
     setContinuacionCitas([]);
@@ -850,12 +866,24 @@ function MePesaMuchoInner() {
       setContinuacion("");
     }
     setContinuacionLoading(false);
-  }, [texto, marco, reflexion, cierreTexto, cierreTexto2, crisisDetectedInText, citasUsadas]);
+  }, [texto, marco, reflexion, cierreTexto, cierreTexto2, crisisDetectedInText, citasUsadas, dayPass.active]);
 
   // Dialog: send message
   const DIALOG_ACTIVE_LIMIT = 6; // After this many user turns, switch to open mode
   const enviarDialogo = useCallback(async (mensaje: string) => {
     if (!mensaje.trim() || dialogLoading) return;
+    // ── Expiration guard (Regla B) ──
+    // Paid users bypass; free users get checked before every send
+    if (!dayPass.active) {
+      const guard = checkExpirationGuard();
+      if (guard === "block") {
+        setSessionBlocked(true);
+        // Do NOT clear dialogInput — preserve user's text
+        return;
+      }
+      // "grace" → final turn allowed, next call will block
+      // "allow" → session still valid
+    }
     const nuevoTurno: { role: "user" | "assistant"; content: string; cita?: { source: string; text: string } } = { role: "user", content: mensaje };
     const turnosActualizados = [...dialogTurnos, nuevoTurno];
     setDialogTurnos(turnosActualizados);
@@ -895,7 +923,7 @@ function MePesaMuchoInner() {
       setDialogTurnos((prev) => [...prev, { role: "assistant", content: "Hubo un error. ¿Quieres intentar de nuevo?" }]);
     }
     setDialogLoading(false);
-  }, [dialogTurnos, dialogLoading, marco, citasUsadas, continuacionCitas, crisisDetectedInText]);
+  }, [dialogTurnos, dialogLoading, marco, citasUsadas, continuacionCitas, crisisDetectedInText, dayPass.active]);
 
   // Close dialog and collect all citas
   const cerrarDialogo = useCallback(() => {
@@ -1989,13 +2017,56 @@ function MePesaMuchoInner() {
         {showCrisis && <CrisisModal />}
         {showCrisisBanner && <CrisisBanner />}
         <div className={`${S.box} text-center`}>
-          <h2 className="font-[var(--font-heading)] text-2xl font-medium italic leading-relaxed mb-8">{PREGUNTAS_CIERRE[cIdx]}</h2>
-          <label htmlFor="cierre-resp" className="sr-only">Responder reflexión</label>
-          <textarea id="cierre-resp" value={cierreTexto} onChange={handleCierreTextoChange} placeholder="Escribe lo que quieras..." autoFocus className={S.textarea} aria-label="Responder reflexión" />
-          <div className="mt-5 flex flex-col items-center gap-4">
-            {cierreTexto.trim() && <button className={S.btn} onClick={() => { setCierreStep(3); generarContinuacion(); }}>Continuar</button>}
-            <button className={`${S.link} text-sm`} onClick={() => { setCierreStep(0); setShowCierreInput(false); }}>Volver a mi reflexión</button>
-          </div>
+          {sessionBlocked ? (
+            /* ── Inline paywall: session expired at cierre step ── */
+            <div className="animate-fade-in text-center">
+              <div className="w-10 h-px bg-[var(--color-accent)] mx-auto mb-5" />
+              <p className="font-[var(--font-heading)] text-lg font-medium italic leading-relaxed mb-2">
+                Tu sesión de hoy ha terminado
+              </p>
+              <p className={`${S.sub} text-sm mb-5`}>
+                Tu conversación se mantiene guardada. Puedes continuar mañana o acceder ahora.
+              </p>
+              <div className="flex flex-col gap-3 items-center" style={{ maxWidth: "320px", margin: "0 auto" }}>
+                <button
+                  className={`${S.btn} btn-primary-glow w-full text-base py-3`}
+                  onClick={() => { setCheckoutError(""); checkout("single", undefined, setCheckoutError); }}
+                  aria-label="Comprar 1 sesión extra hoy por $0.99 USD"
+                >
+                  1 sesión extra hoy — $0.99
+                </button>
+                <button
+                  className={`${S.btnSecondary} w-full text-base py-3`}
+                  onClick={() => { setCheckoutError(""); checkout("subscription", undefined, setCheckoutError); }}
+                  aria-label="Suscribirme por $4.99 USD al mes para sesiones ilimitadas"
+                >
+                  Ilimitado este mes — $4.99/mes
+                </button>
+                {checkoutError && (
+                  <p className="font-[var(--font-sans)] text-[0.8rem] text-red-700 mt-1">{checkoutError}</p>
+                )}
+              </div>
+              <button className={`${S.link} text-sm mt-6`} onClick={() => { setCierreStep(0); setShowCierreInput(false); }}>Volver a mi reflexión</button>
+            </div>
+          ) : (
+            <>
+              <h2 className="font-[var(--font-heading)] text-2xl font-medium italic leading-relaxed mb-8">{PREGUNTAS_CIERRE[cIdx]}</h2>
+              <label htmlFor="cierre-resp" className="sr-only">Responder reflexión</label>
+              <textarea id="cierre-resp" value={cierreTexto} onChange={handleCierreTextoChange} placeholder="Escribe lo que quieras..." autoFocus className={S.textarea} aria-label="Responder reflexión" />
+              <div className="mt-5 flex flex-col items-center gap-4">
+                {cierreTexto.trim() && <button className={S.btn} onClick={() => {
+                  // Check expiration guard before advancing step
+                  if (!dayPass.active) {
+                    const guard = checkExpirationGuard();
+                    if (guard === "block") { setSessionBlocked(true); return; }
+                  }
+                  setCierreStep(3);
+                  generarContinuacion();
+                }}>Continuar</button>}
+                <button className={`${S.link} text-sm`} onClick={() => { setCierreStep(0); setShowCierreInput(false); }}>Volver a mi reflexión</button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     );
@@ -2264,6 +2335,43 @@ function MePesaMuchoInner() {
                     ))}
                   </div>
                 </div>
+              ) : sessionBlocked ? (
+                /* ── Inline paywall: session expired + grace turn used ── */
+                <div className="mt-6 animate-fade-in text-center">
+                  <div className="w-10 h-px bg-[var(--color-accent)] mx-auto mb-5" />
+                  <p className="font-[var(--font-heading)] text-lg font-medium italic leading-relaxed mb-2">
+                    Tu sesión de hoy ha terminado
+                  </p>
+                  <p className={`${S.sub} text-sm mb-5`}>
+                    Tu conversación se mantiene guardada. Puedes continuar mañana o acceder ahora.
+                  </p>
+                  <div className="flex flex-col gap-3 items-center" style={{ maxWidth: "320px", margin: "0 auto" }}>
+                    <button
+                      className={`${S.btn} btn-primary-glow w-full text-base py-3`}
+                      onClick={() => { setCheckoutError(""); checkout("single", undefined, setCheckoutError); }}
+                      aria-label="Comprar 1 sesión extra hoy por $0.99 USD"
+                    >
+                      1 sesión extra hoy — $0.99
+                    </button>
+                    <button
+                      className={`${S.btnSecondary} w-full text-base py-3`}
+                      onClick={() => { setCheckoutError(""); checkout("subscription", undefined, setCheckoutError); }}
+                      aria-label="Suscribirme por $4.99 USD al mes para sesiones ilimitadas"
+                    >
+                      Ilimitado este mes — $4.99/mes
+                    </button>
+                    {checkoutError && (
+                      <p className="font-[var(--font-sans)] text-[0.8rem] text-red-700 mt-1">{checkoutError}</p>
+                    )}
+                    <div className="flex items-center justify-center gap-1.5 mt-2">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" stroke="var(--color-text-tertiary)" strokeWidth="1.5"/>
+                        <path d="M9 12l2 2 4-4" stroke="var(--color-text-tertiary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      <p className="font-[var(--font-sans)] text-[0.75rem] text-[var(--color-text-tertiary)]">Cobro seguro vía Stripe</p>
+                    </div>
+                  </div>
+                </div>
               ) : (
                 <div className="mt-4">
                   <label htmlFor="dialog-input" className="sr-only">Responder reflexión</label>
@@ -2274,6 +2382,7 @@ function MePesaMuchoInner() {
                     placeholder="Escribe lo que quieras..."
                     className={S.textarea}
                     aria-label="Responder reflexión"
+                    disabled={sessionBlocked}
                     onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && dialogInput.trim()) { e.preventDefault(); enviarDialogo(dialogInput); } }}
                   />
                   <div className="flex items-center justify-between mt-3">

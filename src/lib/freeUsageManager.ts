@@ -5,6 +5,11 @@
  * A "session" = initial reflection + continuation + dialog (unlimited interactions).
  * The paywall only appears BEFORE starting a new session, never mid-session.
  *
+ * EXPIRATION GUARD (Regla B):
+ * If expiresAt is reached mid-session, the user gets exactly 1 additional turn
+ * (finalTurnGranted). After that turn completes, the next send attempt is blocked
+ * and the paywall is shown inline — without losing conversation state.
+ *
  * Uses localStorage key: mpm_daily_session
  * Migrates from legacy key: mpm_free_usage (old 2-reflection model)
  *
@@ -16,8 +21,9 @@ const LEGACY_KEY = "mpm_free_usage";
 const WINDOW_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 interface DailySessionData {
-  startedAt: number; // epoch ms when reflection was generated
-  expiresAt: number; // startedAt + 24h
+  startedAt: number;          // epoch ms when reflection was generated
+  expiresAt: number;          // startedAt + 24h
+  finalTurnGranted?: boolean; // true after the 1 grace turn post-expiration
 }
 
 // ── Internal helpers ──────────────────────────────────────────────────────────
@@ -106,6 +112,7 @@ export function registerFreeSessionStart(): void {
   saveData({
     startedAt: now,
     expiresAt: now + WINDOW_MS,
+    finalTurnGranted: false,
   });
 }
 
@@ -117,6 +124,54 @@ export function msUntilNextFreeSession(): number {
   const data = loadData();
   if (!data) return 0;
   return Math.max(0, data.expiresAt - Date.now());
+}
+
+// ── Expiration Guard (Regla B) ────────────────────────────────────────────────
+
+/**
+ * Mid-session expiration guard.
+ * Call BEFORE every send (continuation, dialog) to determine if the turn is allowed.
+ *
+ * Returns:
+ *   "allow"   — session still valid OR no session data (nothing to guard)
+ *   "grace"   — session expired, granting final turn (persists finalTurnGranted=true)
+ *   "block"   — session expired AND final turn already used → show paywall
+ *
+ * This function is idempotent for "allow" and "block" states.
+ * The "grace" state transitions to "block" on next call (one-shot).
+ */
+export function checkExpirationGuard(): "allow" | "grace" | "block" {
+  const data = loadData();
+
+  // No session data → nothing to guard (user hasn't started free session)
+  if (!data) return "allow";
+
+  // Session still within 24h window → allow freely
+  if (Date.now() <= data.expiresAt) return "allow";
+
+  // ── Session has expired ──
+
+  // Final turn already granted → block
+  if (data.finalTurnGranted) return "block";
+
+  // Grant exactly 1 final turn — persist immediately to survive refresh
+  saveData({
+    ...data,
+    finalTurnGranted: true,
+  });
+  return "grace";
+}
+
+/**
+ * Check if the session is expired and fully exhausted (no more turns allowed).
+ * Use this for UI state (disabling inputs, showing inline paywall).
+ * Does NOT mutate state — safe to call in render.
+ */
+export function isSessionFullyExpired(): boolean {
+  const data = loadData();
+  if (!data) return false;
+  if (Date.now() <= data.expiresAt) return false;
+  return !!data.finalTurnGranted;
 }
 
 /**
