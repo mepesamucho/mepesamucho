@@ -1,0 +1,17 @@
+{
+  "name": "mepesamucho — Suelta lo que cargas",
+  "short_name": "mepesamucho",
+  "description": "Espacio de reflexión personal. Escribe lo que te pesa y recibe sabiduría verificada.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#162424",
+  "theme_color": "#162424",
+  "lang": "es",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64",
+      "type": "image/x-icon"
+    }
+  ]
+}
