@@ -59,7 +59,14 @@ REGLAS:
 7. NO uses formato markdown (ni #, ##, **, etc.). Solo texto plano con parrafos separados por lineas vacias.
 8. Si el turno indica "modo_abierto", la pregunta final debe ser: "¿Hay algo mas que quieras agregar?"
 9. Recordatorio de privacidad: incluye UNA VEZ cada 3-4 turnos una referencia sutil a la privacidad (ej: "Este espacio es solo tuyo" o "Nada de lo que compartas aqui se guarda").
-10. Si el turno indica "SUGERIR_CIERRE", tu respuesta debe sentirse como un cierre natural: resume con calidez lo conversado, incluye la cita como regalo de despedida, y termina con una frase de cierre (NO una pregunta). Ejemplo: "Llevate esta frase contigo..." o "Este espacio siempre estara aqui cuando lo necesites."
+10. Si el turno indica "SUGERIR_CIERRE", cambia la ESTRUCTURA completamente:
+   - NO sigas la estructura de 4 pasos. En su lugar:
+   a) Resume con calidez lo conversado (1 parrafo)
+   b) Incluye la cita como regalo de despedida
+   c) Termina con una frase de cierre calida y definitiva
+   - PROHIBIDO terminar con pregunta. La ultima oracion DEBE ser una afirmacion de cierre.
+   - Ejemplos de finales validos: "Llevate esta frase contigo.", "Este espacio siempre estara aqui cuando lo necesites.", "Cuidate mucho. Aqui estaremos."
+   - Ejemplos de finales INVALIDOS: "¿Que te llevas de esta conversacion?", "¿Como te sientes ahora?"
 
 REGLA DE SEGURIDAD:
 - JAMAS alientes conductas autodestructivas. Si detectas crisis, orienta hacia la esperanza y lineas de ayuda.`;
@@ -141,7 +148,7 @@ ${recentHistory}
 Lo que el usuario acaba de responder: "${respuestaUsuario.slice(0, 500)}"
 
 Turno actual: ${turnoActual}
-${turnoActual >= 3 ? "SUGERIR_CIERRE: Esta conversacion ya tiene profundidad suficiente. Ofrece un cierre calido y natural. Incluye la cita como regalo de despedida. Termina con una frase de cierre, NO con una pregunta. Si el usuario quiere seguir, puede hacerlo, pero tu tono debe invitar al descanso." : modoAbierto ? "MODO ABIERTO: Termina preguntando '¿Hay algo más que quieras agregar?'" : "Termina con una pregunta reflexiva que invite a profundizar."}
+${turnoActual >= 3 ? "SUGERIR_CIERRE: Esta conversacion ya tiene profundidad suficiente. NO sigas la estructura de 4 pasos. Resume con calidez, incluye la cita como regalo de despedida, y termina con una FRASE DE CIERRE (NUNCA una pregunta). Tu ultima oracion DEBE ser una afirmacion calida, no un signo de interrogacion. Si el usuario quiere seguir, puede hacerlo, pero tu tono debe invitar al descanso." : modoAbierto ? "MODO ABIERTO: Termina preguntando '¿Hay algo más que quieras agregar?'" : "Termina con una pregunta reflexiva que invite a profundizar."}
 
 CITA DISPONIBLE (usa exactamente esta):
 "${citaSeleccionada.text}" — ${citaSeleccionada.source}

@@ -1361,11 +1361,11 @@ function MePesaMuchoInner() {
             <LogoIcon size={24} />
             <span className="text-lg font-light tracking-tight text-[var(--color-text)]">mepesamucho</span>
           </button>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {notOnLanding && (
               <button
                 onClick={() => setShowResetModal(true)}
-                className="font-[var(--font-sans)] text-[0.8rem] text-[var(--color-text-tertiary)] bg-transparent border border-[var(--color-border)] rounded-full px-3 py-1 cursor-pointer hover:bg-[var(--color-secondary-bg)] hover:text-[var(--color-text-secondary)] transition-colors"
+                className="hidden sm:inline-flex font-[var(--font-sans)] text-[0.8rem] text-[var(--color-text-tertiary)] bg-transparent border border-[var(--color-border)] rounded-full px-3 py-1 cursor-pointer hover:bg-[var(--color-secondary-bg)] hover:text-[var(--color-text-secondary)] transition-colors"
                 aria-label="Empezar de nuevo"
               >
                 Empezar de nuevo
@@ -1380,9 +1380,12 @@ function MePesaMuchoInner() {
               <span className="text-[0.75rem]">Aa</span>
               <span className="text-[0.7rem]">{globalTextSize === "normal" ? "" : globalTextSize === "large" ? "+" : "++"}</span>
             </button>
-            <button className={`${S.link} text-[0.9rem]`} onClick={() => setShowHowItWorks(!showHowItWorks)}>Cómo funciona</button>
+            <button className={`${S.link} text-[0.8rem] sm:text-[0.9rem]`} onClick={() => setShowHowItWorks(!showHowItWorks)}>
+              <span className="hidden sm:inline">Cómo funciona</span>
+              <span className="sm:hidden">Info</span>
+            </button>
             <button
-              className="font-[var(--font-sans)] text-[0.8rem] text-[var(--color-text-tertiary)] bg-transparent border border-[var(--color-border)] rounded-full px-3 py-1 cursor-pointer hover:bg-[var(--color-secondary-bg)] hover:text-[var(--color-text-secondary)] transition-colors"
+              className="font-[var(--font-sans)] text-[0.75rem] sm:text-[0.8rem] text-[var(--color-text-tertiary)] bg-transparent border border-[var(--color-border)] rounded-full px-2 sm:px-3 py-1 cursor-pointer hover:bg-[var(--color-secondary-bg)] hover:text-[var(--color-text-secondary)] transition-colors"
               onClick={async () => {
                 const email = localStorage.getItem("mpm_email") || prompt("Ingresa el email que usaste al pagar:");
                 if (!email) return;
@@ -1408,7 +1411,8 @@ function MePesaMuchoInner() {
                 }
               }}
             >
-              Mi suscripción
+              <span className="hidden sm:inline">Mi suscripción</span>
+              <span className="sm:hidden">Cuenta</span>
             </button>
             <ThemeToggle />
           </div>
@@ -2373,21 +2377,14 @@ function MePesaMuchoInner() {
               Quiero responder
             </button>
 
-            {/* Download PDF — disabled for non-subscribers */}
-            {dayPass.active ? (
-              <button
-                className={`${S.link} text-sm`}
-                onClick={() => descargarReflexionPDF(reflexion, citasUsadas, MARCOS[marco!]?.nombre || "", resp1)}
-                aria-label="Descargar reflexión en formato PDF"
-              >
-                Descargar reflexión (PDF)
-              </button>
-            ) : (
-              <span className="font-[var(--font-sans)] text-sm text-[var(--color-text-tertiary)] font-light cursor-default" title="Disponible con suscripción" aria-label="Descarga de PDF disponible con suscripción">
-                <span style={{ opacity: 0.5 }}>Descargar reflexión (PDF)</span>
-                <span className="block text-[0.9rem] text-[var(--color-text-tertiary)] mt-0.5 italic">Disponible con suscripción</span>
-              </span>
-            )}
+            {/* Download PDF — available for subscribers and free sessions */}
+            <button
+              className={`${S.link} text-sm`}
+              onClick={() => descargarReflexionPDF(reflexion, citasUsadas, MARCOS[marco!]?.nombre || "", resp1)}
+              aria-label="Descargar reflexión en formato PDF"
+            >
+              Descargar reflexión (PDF)
+            </button>
           </div>
 
           {/* Clean closing — just back button */}
