@@ -802,16 +802,27 @@ function MePesaMuchoInner() {
     return () => clearInterval(interval);
   }, [step]);
 
-  // Scroll hint: hide when user scrolls the card
+  // Scroll hint: hide when user scrolls near the bottom or content fits without scroll
   useEffect(() => {
     const card = scrollCardRef.current;
     if (!card) return;
+    // If content fits without scrolling, hide hint immediately
+    const checkFit = () => {
+      if (card.scrollHeight <= card.clientHeight + 10) {
+        setShowScrollHint(false);
+      }
+    };
+    checkFit();
     const onScroll = () => {
-      if (card.scrollTop > 30) setShowScrollHint(false);
+      const nearBottom = card.scrollTop + card.clientHeight >= card.scrollHeight - 30;
+      if (nearBottom) setShowScrollHint(false);
+      else if (card.scrollTop === 0 && card.scrollHeight > card.clientHeight + 10) setShowScrollHint(true);
     };
     card.addEventListener("scroll", onScroll);
-    return () => card.removeEventListener("scroll", onScroll);
-  }, [step]);
+    // Re-check after content might have rendered
+    const timer = setTimeout(checkFit, 500);
+    return () => { card.removeEventListener("scroll", onScroll); clearTimeout(timer); };
+  }, [step, reflexion]);
 
   // ── CRISIS CHECK (universal — used on ALL textareas) ─
 
@@ -2271,8 +2282,8 @@ function MePesaMuchoInner() {
                 const t = p.trim();
                 const isCita = t.startsWith("<<") || t.startsWith("\u00AB") || t.startsWith('"');
                 const isAttrib = t.startsWith("\u2014") || t.startsWith("--");
-                if (isCita) return <blockquote key={i} className="my-6 py-4 px-5 bg-[var(--color-secondary-bg)]/50 rounded-r-md italic leading-loose" style={{ fontSize: "1.1rem", borderLeftWidth: "3px", borderLeftStyle: "solid", borderLeftColor: "var(--color-accent)" }}>{t}</blockquote>;
-                if (isAttrib) return <p key={i} className={`${S.sub} text-sm pl-5 mb-5 font-medium`}>{t}</p>;
+                if (isCita) return <blockquote key={i} className="my-8 py-5 px-6 bg-[var(--color-secondary-bg)]/50 rounded-r-md italic leading-loose" style={{ fontSize: fs.cita, borderLeftWidth: "3px", borderLeftStyle: "solid", borderLeftColor: "var(--color-accent)" }}>{t}</blockquote>;
+                if (isAttrib) return <p key={i} className={`${S.sub} text-sm pl-6 mb-6 font-medium`}>{t}</p>;
                 return <p key={i} className="mb-5 text-justify leading-loose" style={{ fontSize: "1.2rem" }}>{t}</p>;
               })}
 
@@ -2283,8 +2294,8 @@ function MePesaMuchoInner() {
                     const t = p.trim();
                     const isCita = t.startsWith("<<") || t.startsWith("\u00AB") || t.startsWith('"');
                     const isAttrib = t.startsWith("\u2014") || t.startsWith("--");
-                    if (isCita) return <blockquote key={`u${i}`} className="my-6 py-4 px-5 bg-[var(--color-secondary-bg)]/50 rounded-r-md italic leading-loose" style={{ fontSize: "1.1rem", borderLeftWidth: "3px", borderLeftStyle: "solid", borderLeftColor: "var(--color-accent)" }}>{t}</blockquote>;
-                    if (isAttrib) return <p key={`u${i}`} className={`${S.sub} text-sm pl-5 mb-5 font-medium`}>{t}</p>;
+                    if (isCita) return <blockquote key={`u${i}`} className="my-8 py-5 px-6 bg-[var(--color-secondary-bg)]/50 rounded-r-md italic leading-loose" style={{ fontSize: fs.cita, borderLeftWidth: "3px", borderLeftStyle: "solid", borderLeftColor: "var(--color-accent)" }}>{t}</blockquote>;
+                    if (isAttrib) return <p key={`u${i}`} className={`${S.sub} text-sm pl-6 mb-6 font-medium`}>{t}</p>;
                     return <p key={`u${i}`} className="mb-5 text-justify leading-loose" style={{ fontSize: "1.2rem" }}>{t}</p>;
                   })}
                 </>
@@ -2416,7 +2427,7 @@ function MePesaMuchoInner() {
                 <div key={i} className={`mb-5 animate-fade-in ${turno.role === "user" ? "text-right" : "text-left"}`}>
                   {turno.role === "user" ? (
                     <div className="inline-block text-left bg-[var(--color-secondary-bg)]/60 rounded-xl p-4 max-w-[85%]">
-                      <p className="text-[0.95rem] leading-relaxed">{turno.content}</p>
+                      <p className="leading-loose" style={{ fontSize: "1.2rem" }}>{turno.content}</p>
                     </div>
                   ) : (
                     <div className="max-w-[95%]">
@@ -2425,9 +2436,9 @@ function MePesaMuchoInner() {
                         if (!t) return null;
                         const isCita = t.startsWith("<<") || t.startsWith("\u00AB") || t.startsWith('"');
                         const isAttrib = t.startsWith("\u2014") || t.startsWith("--");
-                        if (isCita) return <blockquote key={j} className="my-4 py-3 px-4 bg-[var(--color-secondary-bg)]/40 rounded-r-md italic text-[0.95rem] leading-relaxed" style={{ borderLeftWidth: "2px", borderLeftStyle: "solid", borderLeftColor: "var(--color-accent)" }}>{t}</blockquote>;
-                        if (isAttrib) return <p key={j} className={`${S.sub} text-sm pl-4 mb-3 font-medium`}>{t}</p>;
-                        return <p key={j} className="mb-3 text-[0.95rem] leading-relaxed">{t}</p>;
+                        if (isCita) return <blockquote key={j} className="my-8 py-5 px-6 bg-[var(--color-secondary-bg)]/50 rounded-r-md italic leading-loose" style={{ fontSize: fs.cita, borderLeftWidth: "3px", borderLeftStyle: "solid", borderLeftColor: "var(--color-accent)" }}>{t}</blockquote>;
+                        if (isAttrib) return <p key={j} className={`${S.sub} text-sm pl-6 mb-6 font-medium`}>{t}</p>;
+                        return <p key={j} className="mb-5 text-justify leading-loose" style={{ fontSize: "1.2rem" }}>{t}</p>;
                       })}
                     </div>
                   )}
