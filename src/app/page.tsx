@@ -10,9 +10,10 @@ import { canStartFreeSession, hasFreeSessionActive, registerFreeSessionStart, ms
 import ThemeToggle from "@/components/ThemeToggle";
 import { track, flushQueue, startSession, getSessionId, getSessionMeta, incrementTurns } from "@/lib/analytics";
 
-// Module-level guard: survives Suspense re-mounts within the same page load
-// but resets on new navigations (which is exactly what we want)
+// Module-level guards: survive Suspense re-mounts within the same page load
+// but reset on new navigations (which is exactly what we want)
 let _hasProcessedPayment = false;
+let _hasTrackedCancel = false;
 
 // ── TYPES ──────────────────────────────────────
 
@@ -573,7 +574,8 @@ function MePesaMuchoInner() {
     let sid = searchParams.get("session_id");
     let type = searchParams.get("type");
     const wasCanceled = searchParams.get("canceled");
-    if (wasCanceled) {
+    if (wasCanceled && !_hasTrackedCancel) {
+      _hasTrackedCancel = true;
       // Don't use replaceState — it causes Next.js App Router to re-mount the component
       // Just proceed normally; the query params in the URL are harmless
       track("purchase_cancel", {});
@@ -769,8 +771,14 @@ function MePesaMuchoInner() {
           _hasProcessedPayment = true;
           setLastSessionId(data.sid || "");
           setLastPaymentType(data.type);
-          if (data.type === "daypass") setDayPass({ active: true, hoursLeft: 24 });
-          if (data.type === "subscription") setDayPass({ active: true, hoursLeft: 720 });
+          if (data.type === "subscription") {
+            activateDayPassSubscription();
+            setDayPass({ active: true, hoursLeft: 720 });
+          } else {
+            // "single" or "daypass" → 1 extra session
+            activateDayPassSingle();
+            setDayPass(getDayPass());
+          }
           setStep("access_choice");
           // Clean up after recovery
           localStorage.removeItem("mpm_payment_success");

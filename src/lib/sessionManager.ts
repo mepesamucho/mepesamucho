@@ -35,6 +35,7 @@ const ALL_LOCAL_KEYS = [
 const ALL_SESSION_KEYS = [
   "mpm_checkout_pending",
   "mpm_payment_pending",
+  "mpm_payment_confirmed",
   "mpm_texto",
   "mpm_continuacion",
 ];
