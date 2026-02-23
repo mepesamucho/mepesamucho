@@ -8,8 +8,27 @@ function getAnthropic() {
 }
 
 // ── Farewell detection ──
-// Matches common Spanish farewell/closure phrases (case-insensitive, trimmed)
-const FAREWELL_RE = /^(nada|no|gracias|muchas gracias|listo|eso es todo|ya estoy bien|nada mas|nada más|estoy bien|hasta luego|adios|adiós|bye|chao|me voy|no gracias|no,? gracias|nada,? gracias|ya no|ya está|ya esta|con eso basta|suficiente|es todo|todo bien|ok gracias|okay gracias)\.?$/i;
+// Detects common Spanish farewell/closure phrases, including combinations
+// like "gracias, eso es todo" or "listo, muchas gracias"
+const FAREWELL_PHRASES = new Set([
+  "nada", "no", "gracias", "muchas gracias", "listo", "eso es todo",
+  "ya estoy bien", "nada mas", "nada más", "estoy bien", "hasta luego",
+  "adios", "adiós", "bye", "chao", "me voy", "no gracias", "nada gracias",
+  "ya no", "ya está", "ya esta", "con eso basta", "suficiente", "es todo",
+  "todo bien", "ok gracias", "okay gracias", "ok", "okay", "vale",
+  "gracias por todo", "listo gracias", "eso es todo gracias",
+]);
+
+function isFarewell(msg: string): boolean {
+  const clean = msg.replace(/[.,!?;:]+$/g, "").toLowerCase().trim();
+  if (!clean || clean.length > 80) return false;
+  // Direct match
+  if (FAREWELL_PHRASES.has(clean)) return true;
+  // Split by comma, period, or " y " and check if ALL parts are farewell phrases
+  const parts = clean.split(/\s*[,.]\s*|\s+y\s+/).map(p => p.trim()).filter(Boolean);
+  if (parts.length > 1 && parts.length <= 4 && parts.every(p => FAREWELL_PHRASES.has(p))) return true;
+  return false;
+}
 
 const FAREWELL_CLOSINGS = [
   "Gracias por compartir lo que traías. Este espacio siempre va a estar aquí cuando lo necesites. Llévate contigo lo que resonó — a veces una sola frase puede acompañarte más de lo que imaginas.",
@@ -82,7 +101,7 @@ export async function POST(req: NextRequest) {
 
     // ── Farewell detection: short-circuit before calling the LLM ──
     const trimmed = respuestaUsuario.trim();
-    if (FAREWELL_RE.test(trimmed)) {
+    if (isFarewell(trimmed)) {
       const closing = FAREWELL_CLOSINGS[Math.floor(Math.random() * FAREWELL_CLOSINGS.length)];
       return NextResponse.json({
         respuesta: closing,
