@@ -1662,6 +1662,7 @@ function MePesaMuchoInner() {
         <div className="flex justify-center gap-4 mt-3 flex-wrap">
           <button className={`${S.link} text-[0.85rem]`} onClick={() => setShowAbout(true)}>Acerca de</button>
           <button className={`${S.link} text-[0.85rem]`} onClick={() => setShowDisclaimer(true)}>Aviso legal y privacidad</button>
+          <a href="mailto:admon@mepesamucho.com" className={`${S.link} text-[0.85rem]`}>Contacto</a>
         </div>
       </footer>
     );
