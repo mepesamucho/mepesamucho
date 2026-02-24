@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 interface Props {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 }
 
 const ARTICULOS = {
@@ -428,8 +428,9 @@ export function generateStaticParams() {
   }));
 }
 
-export function generateMetadata({ params }: Props): Metadata {
-  const articulo = ARTICULOS[params.slug as keyof typeof ARTICULOS];
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  const articulo = ARTICULOS[slug as keyof typeof ARTICULOS];
 
   if (!articulo) {
     return {
@@ -444,19 +445,20 @@ export function generateMetadata({ params }: Props): Metadata {
     openGraph: {
       title: articulo.titulo,
       description: articulo.descripcion,
-      url: `https://mepesamucho.com/reflexiones/${params.slug}`,
+      url: `https://mepesamucho.com/reflexiones/${slug}`,
       type: "article",
       authors: ["mepesamucho"],
       publishedTime: "2026-02-23T00:00:00Z",
     },
     alternates: {
-      canonical: `https://mepesamucho.com/reflexiones/${params.slug}`,
+      canonical: `https://mepesamucho.com/reflexiones/${slug}`,
     },
   };
 }
 
-export default function ArticuloPage({ params }: Props) {
-  const articulo = ARTICULOS[params.slug as keyof typeof ARTICULOS];
+export default async function ArticuloPage({ params }: Props) {
+  const { slug } = await params;
+  const articulo = ARTICULOS[slug as keyof typeof ARTICULOS];
 
   if (!articulo) {
     return null;
