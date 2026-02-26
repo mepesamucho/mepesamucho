@@ -54,6 +54,7 @@ function isRateLimited(ip: string): boolean {
 const ALLOWED_EVENTS = new Set([
   "session_start",
   "session_end",
+  "reflection_complete",
   "paywall_view",
   "checkout_start",
   "purchase_success",

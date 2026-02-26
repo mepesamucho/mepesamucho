@@ -1160,6 +1160,11 @@ function MePesaMuchoInner() {
       setCitasUsadas(data.citasUsadas || []);
       setStep("essay");
       setShowScrollHint(true);
+      // ── Analytics: reflection_complete ──
+      track("reflection_complete", { marco, sessionId: getSessionId() });
+      if (typeof window !== "undefined" && typeof window.gtag === "function") {
+        window.gtag("event", "reflection_complete", { tradition: marco });
+      }
       // Register session: free slot → mark free session; daypass → consume 1 session
       if (canStartFreeSession()) {
         registerFreeSessionStart(); // 1 free session per 24h
