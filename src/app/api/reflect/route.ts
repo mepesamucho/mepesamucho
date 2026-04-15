@@ -91,7 +91,7 @@ No tienes que pasar por esto solo."
     const userMessage = `CONTEXTO DEL USUARIO:
 Lo que escribio (su desahogo): "${texto.slice(0, 1500)}"
 
-Marco espiritual elegido: ${marco === "biblica" ? "Tradicion biblica" : marco === "estoica" ? "Filosofia clasica (estoicismo)" : "Espiritualidad universal"}
+Marco elegido: ${marco === "biblica" ? "Tradicion biblica (sabiduria judeocristiana)" : marco === "estoica" ? "Filosofia clasica grecorromana (estoicos, Aristoteles, Platon, Epicuro, cinicos, escepticos, presocraticos, neoplatonicos). Elige la voz cuyo enfoque resuene mejor con lo que el usuario trae; no privilegies al estoicismo por defecto." : "Espiritualidad universal y psicologia (contemplativos de oriente y occidente, misticos, psicologia humanista, existencial, profunda y contemporanea). Elige las voces que mejor dialoguen con la situacion; varia las tradiciones a lo largo de la conversacion."}
 
 Respuesta a "Que es lo que mas necesitas en este momento?": "${respuesta1?.slice(0, 500) || "No respondio"}"
 

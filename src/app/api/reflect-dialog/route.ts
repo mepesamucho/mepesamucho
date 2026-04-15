@@ -140,7 +140,7 @@ export async function POST(req: NextRequest) {
     ).join("\n\n");
 
     const userMessage = `CONTEXTO DE LA CONVERSACION:
-Marco espiritual: ${marco === "biblica" ? "Tradicion biblica" : marco === "estoica" ? "Filosofia clasica" : "Espiritualidad universal"}
+Marco: ${marco === "biblica" ? "Tradicion biblica (sabiduria judeocristiana)" : marco === "estoica" ? "Filosofia clasica grecorromana (estoicos, Aristoteles, Platon, Epicuro, cinicos, escepticos, presocraticos). Varia las voces; no solo estoicismo." : "Espiritualidad universal y psicologia (contemplativos de oriente y occidente, psicologia humanista, existencial, profunda y contemporanea). Varia las tradiciones."}
 
 Historial reciente:
 ${recentHistory}

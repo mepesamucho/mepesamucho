@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
 
 Lo que el usuario escribio originalmente: "${textoOriginal.slice(0, 1000)}"
 
-Marco espiritual: ${marco === "biblica" ? "Tradicion biblica" : marco === "estoica" ? "Filosofia clasica (estoicismo)" : "Espiritualidad universal"}
+Marco: ${marco === "biblica" ? "Tradicion biblica (sabiduria judeocristiana)" : marco === "estoica" ? "Filosofia clasica grecorromana amplia (estoicos, Aristoteles, Platon, Epicuro, cinicos, escepticos, presocraticos). Elige la voz que mejor dialogue con lo que el usuario trae; no privilegies al estoicismo por defecto." : "Espiritualidad universal y psicologia (contemplativos orientales y occidentales, psicologia humanista, existencial, profunda y contemporanea). Varia las voces y tradiciones."}
 
 Reflexion que ya recibio (NO repitas ideas de aqui): "${reflexionOriginal.slice(0, 1500)}"
 
